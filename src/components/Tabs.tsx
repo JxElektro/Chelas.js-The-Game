@@ -10,9 +10,9 @@ interface TabsProps {
 
 const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange }) => {
   return (
-    <div className="flex flex-col sm:flex-row h-full">
-      {/* Panel de pestañas vertical */}
-      <div className="flex flex-col border-r border-chelas-gray-dark min-w-[200px]">
+    <div className="flex flex-col w-full">
+      {/* Panel de pestañas horizontal al estilo Windows */}
+      <div className="flex border-b border-chelas-gray-dark">
         {tabs.map((label, i) => {
           const isActive = i === activeTab;
           return (
@@ -20,22 +20,29 @@ const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange }) => {
               key={label}
               onClick={() => onChange(i)}
               className={`
-                px-4 py-3 
-                text-left
+                px-4 py-2
+                text-center
                 text-black
-                ${isActive ? 'bg-chelas-gray-light font-bold' : 'bg-chelas-gray-medium'}
-                border-b border-chelas-gray-dark
-                shadow-win95-button 
-                hover:bg-chelas-button-face
+                border-l border-r border-t border-chelas-gray-dark
+                ${isActive ? 
+                  'bg-chelas-button-face font-bold -mb-[1px] border-b border-b-chelas-button-face' : 
+                  'bg-chelas-gray-light'
+                }
+                ${i > 0 ? '-ml-[1px]' : ''}
+                rounded-t-sm
                 transition-colors
               `}
-              whileTap={{ scale: 0.95 }}
-              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
             >
               {label}
             </motion.button>
           );
         })}
+      </div>
+      
+      {/* Contenedor para el contenido de la pestaña activa */}
+      <div className="bg-chelas-button-face border-x border-b border-chelas-gray-dark p-4">
+        {/* El contenido de la pestaña se mostrará aquí */}
       </div>
     </div>
   );

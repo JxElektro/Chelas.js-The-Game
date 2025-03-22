@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -13,19 +12,11 @@ import { useNavigate } from 'react-router-dom';
 
 /** Definición de pestañas y a qué categorías mapean */
 const TABS = [
-  { label: 'Entretenimiento', categories: ['movies', 'series_anime'] },
-  { label: 'Música',          categories: ['music'] },
-  { label: 'Libros',          categories: ['books'] },
-  { label: 'Gastronomía',     categories: ['food'] },
-  { label: 'Viajes',          categories: ['travel'] },
-  { label: 'Deportes',        categories: ['sports'] },
-  { label: 'Arte',            categories: ['art'] },
-  { label: 'Tecnología',      categories: ['tech'] },
-  { label: 'Hobbies',         categories: ['hobbies'] },
-  { label: 'Actualidad',      categories: ['trends'] },
-  { label: 'Humor',           categories: ['humor'] },
-  { label: 'Otros',           categories: ['other'] },
-  { label: 'Evitar',          categories: ['avoid'] },
+  { label: 'General', categories: ['movies', 'series_anime', 'music', 'books'] },
+  { label: 'Ocio', categories: ['food', 'travel', 'sports', 'hobbies'] },
+  { label: 'Cultura', categories: ['art', 'tech', 'trends', 'humor'] },
+  { label: 'Otros', categories: ['other'] },
+  { label: 'Evitar', categories: ['avoid'] },
   { label: 'Opciones Avanzadas IA', categories: ['externalAnalysis'] },
 ];
 
@@ -202,11 +193,6 @@ const InterestsPage = () => {
     avoidInterests.includes(interest.id)
   );
 
-  // Actualiza la descripción personal (si se usa en otro componente)
-  const handlePersonalNoteUpdate = (newNote: string) => {
-    setPersonalNote(newNote);
-  };
-
   if (!userAuthenticated) {
     return (
       <Layout>
@@ -225,9 +211,9 @@ const InterestsPage = () => {
         className="flex flex-col items-center justify-center min-h-[80vh] w-full p-4"
       >
         <h1 className="text-chelas-yellow text-2xl mb-6">Configura Tus Intereses</h1>
-        <WindowFrame title="TUS PREFERENCIAS" className="w-full max-w-full sm:max-w-3xl p-4">
-          <div className="flex flex-col sm:flex-row h-[500px]">
-            {/* Componente de pestañas verticales */}
+        <WindowFrame title="PROPIEDADES DE INTERESES" className="w-full max-w-full sm:max-w-3xl">
+          <div className="flex flex-col h-full">
+            {/* Componente de pestañas horizontales estilo Windows */}
             <Tabs
               tabs={TABS.map(t => t.label)}
               activeTab={currentTab}
@@ -235,11 +221,11 @@ const InterestsPage = () => {
             />
             
             {/* Contenido de la pestaña activa */}
-            <div className="flex-1 p-4 overflow-auto">
+            <div className="p-4 flex-1 overflow-auto bg-chelas-button-face">
               {loading ? (
                 <p className="text-sm text-black mb-4">Cargando...</p>
               ) : (
-                <div className="mt-4 flex flex-col space-y-4">
+                <div className="flex flex-col space-y-4">
                   {isAnalysisTab ? (
                     // Mostrar el componente de análisis en modo "response"
                     userProfile && (
@@ -287,9 +273,13 @@ const InterestsPage = () => {
                       )}
                     </div>
                   )}
-                  <div className="flex justify-end">
+                  
+                  <div className="flex justify-between mt-4">
+                    <Button variant="secondary" onClick={() => navigate('/lobby')}>
+                      Cancelar
+                    </Button>
                     <Button variant="primary" onClick={handleSave} disabled={loading || isAnalysisTab}>
-                      {loading ? 'Guardando...' : 'Guardar'}
+                      {loading ? 'Guardando...' : 'Aceptar'}
                     </Button>
                   </div>
                 </div>
