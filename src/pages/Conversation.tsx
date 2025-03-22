@@ -8,14 +8,30 @@ import Button from '@/components/Button';
 import Avatar, { AvatarType } from '@/components/Avatar';
 import Timer from '@/components/Timer';
 import ConversationPrompt from '@/components/ConversationPrompt';
+import ConversationTopicWithOptions from '@/components/ConversationTopicWithOptions';
 import MatchPercentage from '@/components/MatchPercentage';
-import { generateConversationTopic, generateMockTopic } from '@/services/deepseekService';
+import { 
+  generateConversationTopic, 
+  generateMockTopic, 
+  generateTopicWithOptions,
+  mockTopicsWithOptions
+} from '@/services/deepseekService';
 import { ArrowLeft, RefreshCw, Clock, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Profile, Conversation as ConversationType, InterestOption } from '@/types/supabase';
+import { Profile, Conversation as ConversationType } from '@/types/supabase';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Json } from '@/integrations/supabase/types';
+
+interface TopicOption {
+  emoji: string;
+  text: string;
+}
+
+interface TopicWithOptions {
+  question: string;
+  options: TopicOption[];
+}
 
 const BOT_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -24,13 +40,15 @@ const Conversation = () => {
   const { userId } = useParams<{ userId: string }>();
   const [isLoading, setIsLoading] = useState(true);
   const [topics, setTopics] = useState<string[]>([]);
+  const [topicsWithOptions, setTopicsWithOptions] = useState<TopicWithOptions[]>([]);
   const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
   const [otherUserProfile, setOtherUserProfile] = useState<Profile | null>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<Profile | null>(null);
   const [matchPercentage, setMatchPercentage] = useState(0);
   const [matchCount, setMatchCount] = useState(0);
-  const [allInterests, setAllInterests] = useState<InterestOption[]>([]);
+  const [allInterests, setAllInterests] = useState<any[]>([]);
   const [showAllTopics, setShowAllTopics] = useState(false);
+  const [useTopicsWithOptions, setUseTopicsWithOptions] = useState(true);
   const conversationIdRef = useRef<string | null>(null);
   const isMobile = useIsMobile();
   
@@ -98,7 +116,7 @@ const Conversation = () => {
             temas_preferidos: [],
             descripcion_personal: 'Soy ChelasBot, un bot conversacional para ayudar a practicar tus habilidades sociales.',
             analisis_externo: null,
-            super_profile: null,
+            super_profile: {} as Json,
           } as Profile);
           return;
         }
@@ -207,14 +225,40 @@ const Conversation = () => {
       try {
         console.log('Iniciando conversación con el usuario:', otherUserProfile.id);
         
-        // Generate multiple topics instead of just one
-        const mockTopics = generateMockTopic();
-        
-        setTimeout(() => {
-          setTopics(mockTopics);
-          setCurrentTopicIndex(0);
-          setIsLoading(false);
-        }, 1500);
+        if (useTopicsWithOptions) {
+          // Generar temas con opciones usando los perfiles completos
+          let topicsOptions;
+          
+          try {
+            topicsOptions = await generateTopicWithOptions({
+              userAProfile: currentUserProfile,
+              userBProfile: otherUserProfile,
+              matchPercentage
+            });
+            
+            if (!topicsOptions || topicsOptions.length === 0) {
+              throw new Error('No se pudieron generar temas con opciones');
+            }
+          } catch (error) {
+            console.error('Error al generar temas con opciones:', error);
+            topicsOptions = mockTopicsWithOptions();
+          }
+          
+          setTimeout(() => {
+            setTopicsWithOptions(topicsOptions);
+            setCurrentTopicIndex(0);
+            setIsLoading(false);
+          }, 1500);
+        } else {
+          // Generate regular topics (fallback)
+          const mockTopics = generateMockTopic();
+          
+          setTimeout(() => {
+            setTopics(mockTopics);
+            setCurrentTopicIndex(0);
+            setIsLoading(false);
+          }, 1500);
+        }
 
         // Create the conversation record
         if (otherUserProfile && currentUserProfile) {
@@ -248,22 +292,35 @@ const Conversation = () => {
               }
             }
             
-            // Save all topics in the database
-            const topicPromises = mockTopics.map(topic => {
-              return supabase
-                .from('conversation_topics')
-                .insert({
-                  conversation_id: conversation.id,
-                  topic: topic
-                });
-            });
-            
-            await Promise.all(topicPromises);
+            // Save topics in the database - modify for topics with options
+            if (useTopicsWithOptions && topicsWithOptions.length > 0) {
+              const topicPromises = topicsWithOptions.map(topic => {
+                return supabase
+                  .from('conversation_topics')
+                  .insert({
+                    conversation_id: conversation.id,
+                    topic: topic.question
+                  });
+              });
+              
+              await Promise.all(topicPromises);
+            } else if (topics.length > 0) {
+              const topicPromises = topics.map(topic => {
+                return supabase
+                  .from('conversation_topics')
+                  .insert({
+                    conversation_id: conversation.id,
+                    topic: topic
+                  });
+              });
+              
+              await Promise.all(topicPromises);
+            }
           }
         }
       } catch (error) {
         console.error('Error al generar tema:', error);
-        setTopics(["¿Cuál es tu parte favorita del desarrollo JavaScript?"]);
+        setTopicsWithOptions(mockTopicsWithOptions());
         setIsLoading(false);
       }
     };
@@ -274,30 +331,54 @@ const Conversation = () => {
   const handleNewTopic = () => {
     setIsLoading(true);
     setTimeout(() => {
-      const newTopics = generateMockTopic();
-      setTopics(newTopics);
-      setCurrentTopicIndex(0);
+      if (useTopicsWithOptions) {
+        const newTopicsWithOptions = mockTopicsWithOptions();
+        setTopicsWithOptions(newTopicsWithOptions);
+        setCurrentTopicIndex(0);
+      } else {
+        const newTopics = generateMockTopic();
+        setTopics(newTopics);
+        setCurrentTopicIndex(0);
+      }
       setIsLoading(false);
       
       // Save new topics to database if we have a conversation ID
       if (conversationIdRef.current) {
-        newTopics.forEach(topic => {
-          supabase
-            .from('conversation_topics')
-            .insert({
-              conversation_id: conversationIdRef.current as string,
-              topic: topic
-            })
-            .then(({ error }) => {
-              if (error) console.error('Error al guardar nuevo tema:', error);
-            });
-        });
+        if (useTopicsWithOptions) {
+          topicsWithOptions.forEach(topic => {
+            supabase
+              .from('conversation_topics')
+              .insert({
+                conversation_id: conversationIdRef.current as string,
+                topic: topic.question
+              })
+              .then(({ error }) => {
+                if (error) console.error('Error al guardar nuevo tema:', error);
+              });
+          });
+        } else {
+          topics.forEach(topic => {
+            supabase
+              .from('conversation_topics')
+              .insert({
+                conversation_id: conversationIdRef.current as string,
+                topic: topic
+              })
+              .then(({ error }) => {
+                if (error) console.error('Error al guardar nuevo tema:', error);
+              });
+          });
+        }
       }
     }, 1500);
   };
   
   const handleNextTopic = () => {
-    if (currentTopicIndex < topics.length - 1) {
+    const maxIndex = useTopicsWithOptions 
+      ? topicsWithOptions.length - 1 
+      : topics.length - 1;
+      
+    if (currentTopicIndex < maxIndex) {
       setCurrentTopicIndex(currentTopicIndex + 1);
     } else {
       // If we're at the end, cycle back to the first topic
@@ -324,10 +405,20 @@ const Conversation = () => {
     
     navigate('/lobby');
   };
+  
+  const handleSelectOption = (option: TopicOption) => {
+    toast.success(`Seleccionaste: ${option.text}`);
+    // Aquí podrías implementar lógica adicional para guardar la selección o pasar al siguiente tema
+  };
 
-  const getTopicDisplay = () => {
-    if (topics.length === 0) return "";
-    return topics[currentTopicIndex];
+  const getCurrentTopic = () => {
+    if (useTopicsWithOptions) {
+      if (topicsWithOptions.length === 0) return null;
+      return topicsWithOptions[currentTopicIndex];
+    } else {
+      if (topics.length === 0) return "";
+      return topics[currentTopicIndex];
+    }
   };
 
   if (!otherUserProfile) return null;
@@ -381,9 +472,20 @@ const Conversation = () => {
           onExtend={() => console.log('Tiempo extendido')}
         />
 
-        <ConversationPrompt prompt={getTopicDisplay()} isLoading={isLoading} />
+        {useTopicsWithOptions ? (
+          <ConversationTopicWithOptions 
+            topic={getCurrentTopic() as TopicWithOptions} 
+            isLoading={isLoading}
+            onSelectOption={handleSelectOption}
+          />
+        ) : (
+          <ConversationPrompt 
+            prompt={getCurrentTopic() as string} 
+            isLoading={isLoading} 
+          />
+        )}
         
-        {topics.length > 1 && (
+        {(useTopicsWithOptions ? topicsWithOptions.length > 1 : topics.length > 1) && (
           <div className="mb-4">
             <Button
               variant="outline"
@@ -398,7 +500,7 @@ const Conversation = () => {
               ) : (
                 <>
                   <ChevronDown size={16} className="mr-1" />
-                  Ver todos los temas ({topics.length})
+                  Ver todos los temas ({useTopicsWithOptions ? topicsWithOptions.length : topics.length})
                 </>
               )}
             </Button>
@@ -407,19 +509,35 @@ const Conversation = () => {
               <div className="mt-2 p-3 bg-white border border-chelas-gray-dark rounded-sm">
                 <p className="text-sm font-medium mb-2 text-black">Todos los temas disponibles:</p>
                 <div className="space-y-2">
-                  {topics.map((topic, index) => (
-                    <div 
-                      key={index}
-                      className={`p-2 cursor-pointer text-sm rounded-sm
-                        ${index === currentTopicIndex ? 
-                          'bg-chelas-yellow text-black' : 
-                          'bg-chelas-button-face hover:bg-chelas-gray-light/30 text-black'}
-                      `}
-                      onClick={() => setCurrentTopicIndex(index)}
-                    >
-                      {topic}
-                    </div>
-                  ))}
+                  {useTopicsWithOptions ? (
+                    topicsWithOptions.map((topic, index) => (
+                      <div 
+                        key={index}
+                        className={`p-2 cursor-pointer text-sm rounded-sm
+                          ${index === currentTopicIndex ? 
+                            'bg-chelas-yellow text-black' : 
+                            'bg-chelas-button-face hover:bg-chelas-gray-light/30 text-black'}
+                        `}
+                        onClick={() => setCurrentTopicIndex(index)}
+                      >
+                        {topic.question}
+                      </div>
+                    ))
+                  ) : (
+                    topics.map((topic, index) => (
+                      <div 
+                        key={index}
+                        className={`p-2 cursor-pointer text-sm rounded-sm
+                          ${index === currentTopicIndex ? 
+                            'bg-chelas-yellow text-black' : 
+                            'bg-chelas-button-face hover:bg-chelas-gray-light/30 text-black'}
+                        `}
+                        onClick={() => setCurrentTopicIndex(index)}
+                      >
+                        {topic}
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}
@@ -427,7 +545,7 @@ const Conversation = () => {
         )}
 
         <div className="flex flex-col sm:flex-row justify-center gap-3 mt-auto">
-          {topics.length > 1 && (
+          {(useTopicsWithOptions ? topicsWithOptions.length > 1 : topics.length > 1) && (
             <Button 
               variant="default"
               onClick={handleNextTopic}

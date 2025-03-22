@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { SuperProfile } from '@/utils/superProfileUtils';
+import { Json } from '@/integrations/supabase/types';
 
 // En la primera versión, estamos utilizando la API key directamente como se especificó en los requisitos
 const DEEPSEEK_API_KEY = 'sk-c01fb7d8647b401c877020522f9a6c22';
@@ -8,6 +10,20 @@ interface GenerateTopicParams {
   userBInterests: string[];
   avoidTopics: string[];
   matchPercentage: number;
+}
+
+interface GenerateTopicWithOptionsParams {
+  userAProfile: any;
+  userBProfile: any;
+  matchPercentage: number;
+}
+
+interface TopicWithOptions {
+  question: string;
+  options: {
+    emoji: string;
+    text: string;
+  }[];
 }
 
 export const generateConversationTopic = async ({
@@ -56,6 +72,86 @@ export const generateConversationTopic = async ({
   }
 };
 
+// Nueva función para generar temas con opciones de respuesta
+export const generateTopicWithOptions = async ({
+  userAProfile,
+  userBProfile,
+  matchPercentage
+}: GenerateTopicWithOptionsParams): Promise<TopicWithOptions[]> => {
+  try {
+    // Extraer información relevante de los perfiles
+    const profileA = typeof userAProfile.super_profile === 'string' 
+      ? JSON.parse(userAProfile.super_profile) 
+      : userAProfile.super_profile;
+    
+    const profileB = typeof userBProfile.super_profile === 'string' 
+      ? JSON.parse(userBProfile.super_profile) 
+      : userBProfile.super_profile;
+    
+    const descriptionA = userAProfile.descripcion_personal || '';
+    const descriptionB = userBProfile.descripcion_personal || '';
+
+    const prompt = `
+      Perfil Usuario A: ${JSON.stringify(profileA)}
+      Descripción Personal Usuario A: ${descriptionA}
+      
+      Perfil Usuario B: ${JSON.stringify(profileB)}
+      Descripción Personal Usuario B: ${descriptionB}
+      
+      Porcentaje de coincidencia: ${matchPercentage}%
+      
+      Basándote en los perfiles detallados de ambos usuarios, genera 3 preguntas de conversación interesantes.
+      Para cada pregunta, proporciona 3 opciones de respuesta que sean relevantes para los intereses de ambos.
+      
+      El formato de tu respuesta debe ser en JSON con la siguiente estructura:
+      [
+        {
+          "question": "¿Pregunta interesante basada en ambos perfiles?",
+          "options": [
+            { "emoji": "emoji relevante", "text": "Primera opción de respuesta" },
+            { "emoji": "emoji relevante", "text": "Segunda opción de respuesta" },
+            { "emoji": "emoji relevante", "text": "Tercera opción de respuesta" }
+          ]
+        },
+        // más preguntas con opciones...
+      ]
+      
+      Las preguntas deben ser abiertas, específicas y fomentar una conversación profunda.
+      Todas las preguntas y opciones deben estar en español, ser concisas y atractivas.
+      Usa emojis relevantes para cada opción.
+    `;
+
+    const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
+      model: 'deepseek-chat',
+      messages: [
+        { 
+          role: 'system', 
+          content: 'Eres un generador de preguntas de conversación que crea temas personalizados con opciones de respuesta basadas en los perfiles de los usuarios.' 
+        },
+        { role: 'user', content: prompt }
+      ]
+    }, {
+      headers: {
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const content = response.data.choices[0].message.content.trim();
+    try {
+      // Intentamos parsear el JSON devuelto por la API
+      return JSON.parse(content);
+    } catch (e) {
+      console.error('Error al parsear la respuesta JSON:', e);
+      // Si hay un error en el parseo, devolvemos un tema predeterminado
+      return mockTopicsWithOptions();
+    }
+  } catch (error) {
+    console.error('Error generando temas con opciones:', error);
+    return mockTopicsWithOptions();
+  }
+};
+
 // Función simulada para pruebas cuando la API no está disponible
 export const generateMockTopic = (): string[] => {
   const topicSets = [
@@ -87,6 +183,36 @@ export const generateMockTopic = (): string[] => {
   ];
   
   return topicSets[Math.floor(Math.random() * topicSets.length)];
+};
+
+// Nueva función mock para temas con opciones
+export const mockTopicsWithOptions = (): TopicWithOptions[] => {
+  return [
+    {
+      question: "¿Qué actividad te gustaría aprender o probar que nunca hayas hecho antes?",
+      options: [
+        { emoji: "🎨", text: "Aprender una habilidad artística, como pintura o escultura." },
+        { emoji: "🪂", text: "Realizar un deporte extremo, como paracaidismo o escalada." },
+        { emoji: "🌊", text: "Probar una actividad acuática, como buceo o surf." }
+      ]
+    },
+    {
+      question: "¿Cómo crees que la inteligencia artificial cambiará tu campo profesional?",
+      options: [
+        { emoji: "🚀", text: "Automatizará tareas repetitivas y me permitirá enfocarme en trabajo creativo." },
+        { emoji: "🔄", text: "Transformará completamente los flujos de trabajo actuales." },
+        { emoji: "👥", text: "Servirá como asistente que potenciará mis capacidades actuales." }
+      ]
+    },
+    {
+      question: "Si pudieras trabajar en cualquier proyecto tecnológico, ¿cuál elegirías?",
+      options: [
+        { emoji: "🧠", text: "Un proyecto de inteligencia artificial aplicada a educación." },
+        { emoji: "🌐", text: "Una plataforma que conecte personas con intereses similares." },
+        { emoji: "🛠️", text: "Una herramienta que ayude a desarrolladores a ser más productivos." }
+      ]
+    }
+  ];
 };
 
 // Nueva función para formatear el análisis del perfil con DeepSeek API
