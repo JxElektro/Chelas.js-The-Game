@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Check, Search, Tag, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -8,12 +7,7 @@ import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
 import { Textarea } from './ui/textarea';
-
-interface InterestOption {
-  id: string;
-  label: string;
-  category?: string;
-}
+import { InterestOption, TopicCategory } from '@/types/supabase';
 
 interface InterestSelectorProps {
   title: string;

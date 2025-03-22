@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -76,7 +75,6 @@ const Interests = () => {
   const [userMessage, setUserMessage] = useState('');
   const [conversation, setConversation] = useState<ChatMessage[]>([]);
 
-  // Función para transformar los intereses predefinidos en el formato requerido
   const transformPredefinedInterests = () => {
     const result: InterestOption[] = [];
     let id = 1;
@@ -94,7 +92,6 @@ const Interests = () => {
     return result;
   };
   
-  // Mapear categorías amigables a categorías de la base de datos
   const mapCategoryToDbCategory = (category: string): TopicCategory => {
     const categoryMap: Record<string, TopicCategory> = {
       entretenimiento: 'movies',
@@ -119,13 +116,11 @@ const Interests = () => {
       try {
         setLoading(true);
         
-        // Obtenemos todos los intereses excepto los de categoría 'avoid'
         const { data: allInterests, error: interestsError } = await supabase
           .from('interests')
           .select('*')
           .not('category', 'eq', 'avoid');
           
-        // Para la categoría avoid, usaremos los mismos intereses pero los marcaremos como "para evitar"
         const { data: regularInterests, error: avoidError } = await supabase
           .from('interests')
           .select('*')
@@ -134,17 +129,14 @@ const Interests = () => {
         if (interestsError) throw interestsError;
         if (avoidError) throw avoidError;
         
-        // Combinamos los intereses de la base de datos con los predefinidos
         const predefinedOptions = transformPredefinedInterests();
         
-        // Formateamos los intereses para el componente InterestSelector
         const dbInterestOptions = (allInterests || []).map((interest: Interest) => ({
           id: interest.id,
           label: interest.name,
           category: interest.category
         }));
         
-        // Combinamos y eliminamos duplicados basados en la etiqueta
         const combinedOptions = [...dbInterestOptions];
         predefinedOptions.forEach(option => {
           if (!combinedOptions.some(dbOption => dbOption.label.toLowerCase() === option.label.toLowerCase())) {
@@ -154,7 +146,6 @@ const Interests = () => {
         
         setInterestOptions(combinedOptions);
         
-        // Usamos los mismos intereses para "evitar" pero con una categoría simulada 'avoid'
         setAvoidOptions(
           (regularInterests || []).slice(0, 20).map((interest: Interest) => ({
             id: interest.id,
@@ -162,8 +153,6 @@ const Interests = () => {
             category: 'avoid' as TopicCategory
           }))
         );
-        
-        // En una aplicación real, cargaríamos los intereses seleccionados del usuario desde Supabase
         
       } catch (error) {
         console.error('Error al cargar intereses:', error);
@@ -180,11 +169,8 @@ const Interests = () => {
     e.preventDefault();
     
     try {
-      // En una aplicación real, guardaríamos estas preferencias en Supabase
       console.log('Guardando preferencias:', { interests, avoidTopics });
       toast.success('Preferencias guardadas correctamente');
-      
-      // Navegamos al lobby
       navigate('/lobby');
     } catch (error) {
       console.error('Error al guardar preferencias:', error);
@@ -193,17 +179,14 @@ const Interests = () => {
   };
 
   const handleCustomInterestAdd = (interest: string) => {
-    // Crear un nuevo interés personalizado
     const newInterest: InterestOption = {
       id: `custom-${Date.now()}`,
       label: interest,
       category: 'other'
     };
     
-    // Añadir a las opciones disponibles
     setInterestOptions(prev => [...prev, newInterest]);
     
-    // Seleccionar automáticamente
     if (interests.length < 5) {
       setInterests(prev => [...prev, newInterest.id]);
     }
@@ -214,7 +197,6 @@ const Interests = () => {
   const handleSendMessage = () => {
     if (!userMessage.trim()) return;
     
-    // Actualizar la conversación con el mensaje del usuario
     const newConversation: ChatMessage[] = [
       ...conversation,
       { role: 'user', content: userMessage }
@@ -222,7 +204,6 @@ const Interests = () => {
     setConversation(newConversation);
     setUserMessage('');
     
-    // Simulación de respuesta de IA
     setTimeout(() => {
       const aiResponse: ChatMessage = {
         role: 'ai',
@@ -278,7 +259,6 @@ const Interests = () => {
                 />
               </div>
               
-              {/* Botón para activar el chat con IA */}
               <Button 
                 type="button"
                 variant="outline"
@@ -289,7 +269,6 @@ const Interests = () => {
                 {showAIChat ? 'Ocultar asistente de IA' : 'Explorar más intereses con ayuda de IA'}
               </Button>
               
-              {/* Sección de chat con IA */}
               {showAIChat && (
                 <WindowFrame title="ASISTENTE DE INTERESES" className="mb-4 p-2">
                   <div className="bg-chelas-gray-dark/20 p-2 rounded-sm mb-2 h-60 overflow-y-auto">
