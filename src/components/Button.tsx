@@ -8,6 +8,9 @@ interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>
   size?: 'sm' | 'default' | 'lg';
   className?: string;
   children: React.ReactNode;
+  onClick?: () => void;
+  type?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -15,6 +18,9 @@ const Button: React.FC<ButtonProps> = ({
   size = 'default',
   className = '',
   children,
+  onClick,
+  type = 'button',
+  disabled = false,
   ...props
 }) => {
   const baseClasses = 'win95-button select-none focus:outline-none inline-flex items-center justify-center font-ms-sans transition-shadow';
@@ -42,6 +48,9 @@ const Button: React.FC<ButtonProps> = ({
         sizeClasses[size],
         className
       )}
+      onClick={onClick}
+      type={type}
+      disabled={disabled}
       {...props as any}
     >
       {children}
