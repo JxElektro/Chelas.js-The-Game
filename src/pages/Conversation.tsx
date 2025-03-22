@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -165,7 +164,6 @@ const Conversation = () => {
   
   const updateConversationMatchPercentage = async (userA: string, userB: string, percentage: number) => {
     try {
-      // First, check if a conversation already exists
       const { data: existingConversation, error: findError } = await supabase
         .from('conversations')
         .select('id')
@@ -179,11 +177,10 @@ const Conversation = () => {
         return;
       }
       
-      // If conversation exists, update it
       if (existingConversation && existingConversation.length > 0) {
         const { error: updateError } = await supabase
           .from('conversations')
-          .update({ match_percentage })
+          .update({ match_percentage: percentage })
           .eq('id', existingConversation[0].id);
           
         if (updateError) {
@@ -211,7 +208,6 @@ const Conversation = () => {
         }, 1500);
 
         if (otherUserProfile && currentUserProfile) {
-          // Create conversation first without match_percentage
           const { data: conversation, error } = await supabase
             .from('conversations')
             .insert({
@@ -226,7 +222,6 @@ const Conversation = () => {
             return;
           }
           
-          // Then update with match_percentage in a separate query
           if (conversation && matchPercentage > 0) {
             const { error: updateError } = await supabase
               .from('conversations')
