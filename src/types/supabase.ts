@@ -3,7 +3,10 @@
 import type { Database } from '@/integrations/supabase/types';
 
 // Profile type derived from Database type
-export type Profile = Database['public']['Tables']['profiles']['Row'];
+export type Profile = Database['public']['Tables']['profiles']['Row'] & {
+  temas_preferidos?: string[];
+  descripcion_personal?: string;
+};
 
 // Interest type derived from Database type
 export type Interest = Database['public']['Tables']['interests']['Row'];

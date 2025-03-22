@@ -1,3 +1,4 @@
+
 // src/pages/InterestsPage.tsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
@@ -8,6 +9,7 @@ import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
 import Tabs from '@/components/Tabs';
 import { TopicCategory } from '@/types/supabase';
+import { useNavigate } from 'react-router-dom';
 
 /** Estructura interna para mostrar intereses en la UI */
 interface InterestOption {
@@ -34,16 +36,30 @@ const TABS = [
 ];
 
 const InterestsPage = () => {
+  const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState(0);
   const [allInterests, setAllInterests] = useState<InterestOption[]>([]);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [personalNote, setPersonalNote] = useState(''); // Texto personal
   const [loading, setLoading] = useState(false);
-
+  const [userAuthenticated, setUserAuthenticated] = useState(false);
+  
   useEffect(() => {
+    checkAuthStatus();
     fetchInterests();
     fetchUserProfile();
   }, []);
+
+  /** Verifica si el usuario está autenticado */
+  const checkAuthStatus = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      toast.error('Debes iniciar sesión para acceder a esta página');
+      navigate('/login');
+      return;
+    }
+    setUserAuthenticated(true);
+  };
 
   /** Carga todos los intereses desde la tabla "interests" en Supabase */
   const fetchInterests = async () => {
@@ -81,10 +97,19 @@ const InterestsPage = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('temas_preferidos, descripcion_personal')
-        .eq('id', user.id) // Asegúrate de que "id" en la tabla "profiles" sea UUID
+        .eq('id', user.id)
         .single();
 
-      if (!error && data) {
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No se encontró un perfil, puede ser un usuario nuevo
+          console.log('No se encontró perfil para el usuario, puede ser nuevo');
+          return;
+        }
+        throw error;
+      }
+
+      if (data) {
         if (data.temas_preferidos) {
           setSelectedInterests(data.temas_preferidos);
         }
@@ -93,7 +118,8 @@ const InterestsPage = () => {
         }
       }
     } catch (err) {
-      console.error(err);
+      console.error('Error al cargar perfil de usuario:', err);
+      toast.error('Error al cargar tu perfil');
     }
   };
 
@@ -111,13 +137,24 @@ const InterestsPage = () => {
   /** Guarda los cambios en Supabase */
   const handleSave = async () => {
     try {
+      if (!userAuthenticated) {
+        toast.error('Debes iniciar sesión para guardar tus preferencias');
+        navigate('/login');
+        return;
+      }
+
       setLoading(true);
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData.session?.user;
       if (!user) {
         toast.error('No estás autenticado');
+        navigate('/login');
         return;
       }
+
+      console.log('Guardando preferencias para usuario:', user.id);
+      console.log('Intereses seleccionados:', selectedInterests);
+      console.log('Descripción personal:', personalNote);
 
       // Actualizar la tabla "profiles"
       const { error } = await supabase
@@ -128,11 +165,35 @@ const InterestsPage = () => {
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error al actualizar perfil:', error);
+        
+        // Si el error es porque el perfil no existe, lo creamos
+        if (error.code === 'PGRST116') {
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              name: user.email?.split('@')[0] || 'Usuario',
+              avatar: 'user',
+              temas_preferidos: selectedInterests,
+              descripcion_personal: personalNote
+            });
 
-      toast.success('Intereses y nota personal guardados');
+          if (insertError) throw insertError;
+          toast.success('Perfil creado y preferencias guardadas');
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success('Intereses y nota personal guardados');
+      }
+      
+      // Redirigir al Lobby después de guardar exitosamente
+      navigate('/lobby');
+      
     } catch (err) {
-      console.error(err);
+      console.error('Error al guardar datos:', err);
       toast.error('Error al guardar datos');
     } finally {
       setLoading(false);
@@ -142,8 +203,16 @@ const InterestsPage = () => {
   /** Obtiene las categorías definidas en la pestaña actual y filtra */
   const categories = TABS[currentTab].categories;
   const filteredInterests = allInterests.filter(opt =>
-    categories.includes(opt.category)
+    categories.includes(opt.category as string)
   );
+
+  if (!userAuthenticated) {
+    return <Layout>
+      <div className="flex items-center justify-center min-h-[80vh]">
+        <p>Verificando sesión...</p>
+      </div>
+    </Layout>;
+  }
 
   return (
     <Layout>
@@ -208,7 +277,7 @@ const InterestsPage = () => {
                   onClick={handleSave}
                   disabled={loading}
                 >
-                  Guardar
+                  {loading ? 'Guardando...' : 'Guardar'}
                 </Button>
               </div>
             </div>
