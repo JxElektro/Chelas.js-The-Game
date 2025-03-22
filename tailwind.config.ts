@@ -85,7 +85,8 @@ export default {
 			fontFamily: {
 				'ms-sans': ['"MS Sans Serif"', 'Arial', 'sans-serif'],
 				'pixel': ['"Press Start 2P"', 'cursive'],
-				'system': ['"System"', 'monospace']
+				'system': ['"System"', 'monospace'],
+				'publicsans': ['Public Sans', 'sans-serif'] // Added this line
 			},
 			boxShadow: {
 				'win95': 'inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px grey, inset 2px 2px #fff',
