@@ -31,6 +31,12 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.email || !formData.password) {
+      setError('Por favor completa todos los campos.');
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     
@@ -46,7 +52,11 @@ const Login = () => {
       navigate('/lobby');
     } catch (error: any) {
       console.error('Error al iniciar sesión:', error);
-      setError(error.message || 'Error al iniciar sesión');
+      if (error.message.includes('Invalid login credentials')) {
+        setError('Credenciales incorrectas. Verifica tu email y contraseña.');
+      } else {
+        setError(error.message || 'Error al iniciar sesión');
+      }
       toast.error('Error al iniciar sesión');
     } finally {
       setLoading(false);

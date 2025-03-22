@@ -71,7 +71,9 @@ const Register = () => {
               id: data.user.id,
               name: formData.name,
               avatar: formData.avatar,
-              is_available: true
+              is_available: true,
+              temas_preferidos: [],  // Add empty array for preferred topics
+              descripcion_personal: ''  // Add empty string for personal description
             });
             
           if (profileError) {

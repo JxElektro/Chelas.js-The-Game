@@ -69,7 +69,9 @@ const Lobby = () => {
               id: userId,
               name: sessionData.session.user.email?.split('@')[0] || 'Usuario',
               avatar: 'user',
-              is_available: true
+              is_available: true,
+              temas_preferidos: [],
+              descripcion_personal: ''
             });
 
           if (insertError) {
