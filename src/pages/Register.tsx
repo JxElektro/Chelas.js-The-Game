@@ -5,7 +5,8 @@ import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
 import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
-import AvatarSelector, { AvatarType } from '@/components/AvatarSelector';
+import AvatarSelector from '@/components/AvatarSelector';
+import { AvatarType } from '@/components/Avatar';
 import { User, Mail, Lock, ChevronRight, ArrowLeft } from 'lucide-react';
 
 const Register = () => {

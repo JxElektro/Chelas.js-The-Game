@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import Avatar, { AvatarType } from './Avatar';
 import { motion } from 'framer-motion';
 
@@ -41,4 +41,5 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
   );
 };
 
+export type { AvatarType };
 export default AvatarSelector;

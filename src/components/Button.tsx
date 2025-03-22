@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, keyof HTMLMotionProps<"button">> {
   variant?: 'default' | 'primary' | 'ghost' | 'outline' | 'link';
   size?: 'sm' | 'default' | 'lg';
   className?: string;
@@ -42,7 +42,7 @@ const Button: React.FC<ButtonProps> = ({
         sizeClasses[size],
         className
       )}
-      {...props}
+      {...props as any}
     >
       {children}
     </motion.button>
