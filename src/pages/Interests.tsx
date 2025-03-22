@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -246,8 +247,6 @@ const InterestsPage = () => {
                     profile={userProfile}
                     selectedInterests={selectedInterestsObjects}
                     avoidTopics={avoidInterestsObjects}
-                    personalNote={personalNote}
-                    onPersonalNoteChange={handlePersonalNoteUpdate}
                     onSaveResponse={async (text) => {
                       setUserProfile({ ...userProfile, analisis_externo: text });
                     }}
@@ -287,7 +286,7 @@ const InterestsPage = () => {
                 </div>
               )}
               <div className="flex justify-end">
-                <Button variant="primary" onClick={handleSave} disabled={loading}>
+                <Button variant="primary" onClick={handleSave} disabled={loading || isAnalysisTab}>
                   {loading ? 'Guardando...' : 'Guardar'}
                 </Button>
               </div>

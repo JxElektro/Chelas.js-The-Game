@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Copy, Check, Send } from 'lucide-react';
 import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
@@ -21,6 +22,10 @@ interface AiAnalysisUnifiedProps {
   onSaveResponse?: (response: string) => Promise<void>;
   // userId, por ejemplo para guardar en la BD (modo "response")
   userId?: string;
+  // Descripción personal
+  personalNote?: string;
+  // Callback para actualizar la descripción personal
+  onPersonalNoteChange?: (note: string) => void;
 }
 
 const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
@@ -31,6 +36,8 @@ const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
   customPrompt,
   onSaveResponse,
   userId,
+  personalNote = '',
+  onPersonalNoteChange,
 }) => {
   const [copied, setCopied] = useState(false);
   const [analysisText, setAnalysisText] = useState('');
@@ -38,6 +45,45 @@ const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
   const [loading, setLoading] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [promptCopied, setPromptCopied] = useState(false);
+  const [isFetchingExisting, setIsFetchingExisting] = useState(true);
+
+  // Cargar el análisis existente cuando se monta el componente
+  useEffect(() => {
+    if (mode === 'response' && userId) {
+      fetchExistingAnalysis();
+    }
+  }, [mode, userId]);
+
+  // Función para cargar el análisis existente
+  const fetchExistingAnalysis = async () => {
+    if (!userId) return;
+    
+    try {
+      setIsFetchingExisting(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('analisis_externo')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        if (error.code !== 'PGRST116') { // No encontrado
+          console.error('Error al cargar análisis existente:', error);
+        }
+        return;
+      }
+      
+      if (data && data.analisis_externo) {
+        setAnalysisText(data.analisis_externo);
+        // Si hay un análisis existente, podemos marcar la casilla de confirmación
+        setChecked(true);
+      }
+    } catch (err) {
+      console.error('Error al obtener análisis:', err);
+    } finally {
+      setIsFetchingExisting(false);
+    }
+  };
 
   // Prompt fijo para modo "response" (se indica que se trata de mi perfil)
   const fixedPrompt = `ChatGPT, necesito que generes un perfil completo y detallado **de mí** utilizando la siguiente información personal y profesional. Por favor, incluye las siguientes secciones:
@@ -70,8 +116,8 @@ No incluyas información sensible (como contraseñas o datos privados).`;
     const avoidText = avoidTopics.length > 0
       ? avoidTopics.map(i => i.label).join(', ')
       : 'Ninguno';
-    const personalDescription = profile?.descripcion_personal?.trim()
-      ? profile.descripcion_personal
+    const personalDescription = personalNote?.trim()
+      ? personalNote
       : 'No he proporcionado una descripción personal.';
     return `
 Genera un perfil completo y detallado **de mí** utilizando la siguiente información. Incluye las secciones de:
@@ -140,13 +186,20 @@ Utiliza esta información para generar un perfil que me represente de forma aut�
     }
   };
 
+  // Función para manejar el cambio en la descripción personal
+  const handlePersonalNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (onPersonalNoteChange) {
+      onPersonalNoteChange(e.target.value);
+    }
+  };
+
   return (
     <WindowFrame title={mode === 'prompt' ? "ANÁLISIS DE IA: MI PERFIL" : "ANÁLISIS IA"} className="mt-6">
       <div className="p-2">
         {/* Botones separados para Mostrar/Ocultar prompt y Copiar prompt */}
         <div className="flex items-center justify-between mb-4">
           <Button 
-            variant="secondary" 
+            variant="default" 
             size="sm"
             onClick={() => setShowPrompt(!showPrompt)}
           >
@@ -171,6 +224,20 @@ Utiliza esta información para generar un perfil que me represente de forma aut�
           </div>
         )}
 
+        {mode === 'prompt' && (
+          <div className="mt-4">
+            <label className="text-sm text-black mb-2 block">
+              <strong>Cuéntanos algo personal sobre ti (opcional):</strong>
+            </label>
+            <Textarea
+              value={personalNote}
+              onChange={handlePersonalNoteChange}
+              placeholder="Descríbete brevemente. Esta información ayudará a generar un perfil más preciso."
+              className="win95-inset w-full h-32 p-2 text-black"
+            />
+          </div>
+        )}
+
         {mode === 'response' && (
           <>
             <div className="bg-chelas-yellow/20 p-2 border border-chelas-yellow text-sm mb-4">
@@ -182,12 +249,16 @@ Utiliza esta información para generar un perfil que me represente de forma aut�
               <p className="text-sm text-black mb-2">
                 <strong>Pega aquí la respuesta de ChatGPT:</strong>
               </p>
-              <Textarea
-                value={analysisText}
-                onChange={(e) => setAnalysisText(e.target.value)}
-                placeholder="Pega aquí el perfil generado por ChatGPT..."
-                className="win95-inset w-full h-48 p-2 text-black"
-              />
+              {isFetchingExisting ? (
+                <p className="text-sm text-gray-500 mb-2">Cargando análisis guardado...</p>
+              ) : (
+                <Textarea
+                  value={analysisText}
+                  onChange={(e) => setAnalysisText(e.target.value)}
+                  placeholder="Pega aquí el perfil generado por ChatGPT..."
+                  className="win95-inset w-full h-48 p-2 text-black"
+                />
+              )}
             </div>
             <div className="flex items-center space-x-2 mt-4">
               <input

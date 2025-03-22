@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Copy, Check, ArrowDownToLine, Send } from 'lucide-react';
 import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Textarea } from './ui/textarea';
 
 /**
  * Props:
@@ -22,6 +23,48 @@ const AiAnalysisPersonal: React.FC<AiAnalysisPersonalProps> = ({ userId, current
   const [loading, setLoading] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [promptCopied, setPromptCopied] = useState(false);
+  const [isFetchingExisting, setIsFetchingExisting] = useState(true);
+
+  // Cargar análisis existente al iniciar
+  useEffect(() => {
+    if (!currentAnalysis) {
+      fetchExistingAnalysis();
+    } else {
+      setIsFetchingExisting(false);
+      if (currentAnalysis) {
+        setChecked(true);
+      }
+    }
+  }, [currentAnalysis, userId]);
+
+  // Función para cargar el análisis existente de Supabase
+  const fetchExistingAnalysis = async () => {
+    try {
+      setIsFetchingExisting(true);
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('analisis_externo')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        if (error.code !== 'PGRST116') { // No encontrado
+          console.error('Error al cargar análisis existente:', error);
+        }
+        return;
+      }
+      
+      if (data && data.analisis_externo) {
+        setAnalysisText(data.analisis_externo);
+        setChecked(true);
+      }
+    } catch (err) {
+      console.error('Error al obtener análisis:', err);
+    } finally {
+      setIsFetchingExisting(false);
+    }
+  };
 
   // Texto de prompt para ChatGPT
   const chatGptPrompt = `ChatGPT, necesito que generes un perfil completo y detallado de un usuario utilizando información pública y profesional. Por favor, incluye las siguientes secciones:
@@ -86,7 +129,7 @@ Asegúrate de utilizar datos genéricos o ficticios, y de no incluir ninguna inf
   };
 
   return (
-    <WindowFrame title="ANÁLISIS EXTERNO (IA)" className="mt-4">
+    <WindowFrame title="ANÁLISIS IA" className="mt-4">
       <div className="flex flex-col space-y-4 p-4">
         <div className="bg-chelas-black/20 p-3 border border-chelas-yellow rounded">
           <p className="text-sm text-white mb-2">
@@ -96,7 +139,7 @@ Asegúrate de utilizar datos genéricos o ficticios, y de no incluir ninguna inf
           
           <div className="flex gap-2">
             <Button 
-              variant="primary" 
+              variant="default" 
               size="sm" 
               onClick={() => setShowPrompt(!showPrompt)}
               className="flex items-center"
@@ -137,12 +180,16 @@ Asegúrate de utilizar datos genéricos o ficticios, y de no incluir ninguna inf
           <p className="text-sm text-black mb-2">
             <strong>Pega aquí la respuesta de ChatGPT:</strong>
           </p>
-          <textarea
-            className="win95-inset w-full h-48 p-2 text-black"
-            value={analysisText}
-            onChange={(e) => setAnalysisText(e.target.value)}
-            placeholder="Pega aquí el perfil generado por ChatGPT..."
-          />
+          {isFetchingExisting ? (
+            <p className="text-sm text-gray-500 mb-2">Cargando análisis guardado...</p>
+          ) : (
+            <Textarea
+              className="win95-inset w-full h-48 p-2 text-black"
+              value={analysisText}
+              onChange={(e) => setAnalysisText(e.target.value)}
+              placeholder="Pega aquí el perfil generado por ChatGPT..."
+            />
+          )}
         </div>
 
         <div className="flex items-start space-x-2">
