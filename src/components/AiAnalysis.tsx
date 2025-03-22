@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { Profile, InterestOption } from '@/types/supabase';
@@ -19,35 +18,38 @@ const AiAnalysis: React.FC<AiAnalysisProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
-  // Generar el prompt de análisis basado en los intereses y la descripción personal
+  // Generar el prompt de análisis para crear un perfil completo sin datos sensibles
   const generateAnalysisPrompt = () => {
     const interestsText = selectedInterests.length > 0 
-      ? `Temas que me interesan: ${selectedInterests.map(i => i.label).join(', ')}.` 
-      : 'No he seleccionado temas de interés específicos.';
+      ? selectedInterests.map(i => i.label).join(', ')
+      : 'Ninguno';
     
     const avoidText = avoidTopics.length > 0 
-      ? `Temas que prefiero evitar: ${avoidTopics.map(i => i.label).join(', ')}.` 
-      : 'No he especificado temas que prefiera evitar.';
+      ? avoidTopics.map(i => i.label).join(', ')
+      : 'Ninguno';
     
     const personalDescription = profile.descripcion_personal && profile.descripcion_personal.trim()
-      ? `Sobre mí: ${profile.descripcion_personal}`
-      : 'No he proporcionado una descripción personal.';
+      ? profile.descripcion_personal
+      : 'No se ha proporcionado descripción personal.';
 
     return `
-## Mi Perfil para Conversaciones
+Genera un perfil completo y detallado de un usuario utilizando la siguiente información. Incluye las secciones de:
+- Datos Generales  
+- Formación Académica  
+- Experiencia Laboral  
+- Habilidades  
+- Logros e Intereses  
+- Resumen Personal
 
-Hola, soy ${profile.name}. Este es un resumen de mis intereses para ayudar a generar conversaciones:
+No incluyas información sensible como contraseñas, números de teléfono u otros datos privados.
 
-${interestsText}
+Datos disponibles:
+- Nombre: ${profile.name}
+- Descripción personal: ${personalDescription}
+- Temas de interés: ${interestsText}
+- Temas que se prefieren evitar: ${avoidText}
 
-${avoidText}
-
-${personalDescription}
-
-Basado en esta información, ¿podrías ayudarme a:
-1. Entender qué tipo de conversaciones podrían ser más interesantes para mí?
-2. Sugerir algunos temas específicos o preguntas que podría plantear en una conversación con otra persona?
-3. Identificar qué temas podrían conectar bien con personas con intereses similares?
+Utiliza esta información para generar un perfil que permita a alguien que no conoce al usuario entablar una conversación y conocer más sobre él.
     `.trim();
   };
 
