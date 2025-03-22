@@ -21,6 +21,8 @@ import { Profile, Conversation as ConversationType, InterestOption } from '@/typ
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Json } from '@/integrations/supabase/types';
+import { SuperProfile } from '@/utils/superProfileUtils';
+import { createInterestSummary } from '@/utils/interestSummaryUtils';
 
 interface TopicOption {
   emoji: string;
@@ -427,7 +429,7 @@ const Conversation = () => {
       return "Un asistente de chat para practicar tus habilidades sociales.";
     }
     
-    return "Tu compañero de conversación para practicar tus habilidades sociales.";
+    return createInterestSummary(otherUserProfile.super_profile as SuperProfile);
   };
 
   if (!otherUserProfile) return null;
