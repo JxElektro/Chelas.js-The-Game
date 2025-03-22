@@ -1,4 +1,3 @@
-
 import { TopicCategory } from '@/types/supabase';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -215,7 +214,7 @@ export const interestTabs: InterestTab[] = [
   },
 ];
 
-// Funciones adicionales para sembrar intereses en la base de datos
+// Lista de intereses predefinidos
 export const PREDEFINED_INTERESTS: Record<string, string[]> = {
   entretenimiento: [
     'Películas', 'Series de TV', 'Anime', 'Documentales', 'Comedia', 
@@ -270,6 +269,7 @@ export const PREDEFINED_INTERESTS: Record<string, string[]> = {
   ]
 };
 
+// Función para mapear categorías a categorías de Supabase
 export const mapCategoryToDbCategory = (category: string): TopicCategory => {
   const categoryMap: Record<string, TopicCategory> = {
     entretenimiento: 'movies',
@@ -290,6 +290,7 @@ export const mapCategoryToDbCategory = (category: string): TopicCategory => {
   return categoryMap[category] || 'other';
 };
 
+// Función para transformar intereses predefinidos a formato de Supabase
 export const transformPredefinedInterests = () => {
   const result = [];
   let id = 1;
@@ -307,6 +308,90 @@ export const transformPredefinedInterests = () => {
   return result;
 };
 
+/**
+ * Guarda los intereses seleccionados por el usuario en Supabase
+ * @param userId ID del usuario en Supabase
+ * @param selectedInterests Array de IDs de intereses seleccionados
+ * @param avoidTopics Array de IDs de temas a evitar
+ * @param aiAnalysis Texto del análisis de ChatGPT (opcional)
+ * @param personalNote Descripción personal del usuario (opcional)
+ */
+export const saveUserInterests = async (
+  userId: string,
+  selectedInterests: string[],
+  avoidTopics: string[],
+  aiAnalysis?: string,
+  personalNote?: string
+) => {
+  try {
+    console.log('Guardando intereses para usuario:', userId);
+
+    // 1. Primero actualizamos el perfil del usuario con el análisis y la descripción
+    const profileUpdate: any = {};
+    
+    if (personalNote !== undefined) {
+      profileUpdate.descripcion_personal = personalNote;
+    }
+    
+    if (aiAnalysis !== undefined) {
+      profileUpdate.analisis_externo = aiAnalysis;
+    }
+    
+    // Guardar todos los intereses (seleccionados y evitar) en temas_preferidos
+    const allInterests = [...selectedInterests, ...avoidTopics];
+    if (allInterests.length > 0) {
+      profileUpdate.temas_preferidos = allInterests;
+    }
+    
+    // Solo actualizar si hay algo que actualizar
+    if (Object.keys(profileUpdate).length > 0) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update(profileUpdate)
+        .eq('id', userId);
+      
+      if (profileError) throw profileError;
+    }
+
+    // 2. Luego creamos las relaciones usuario-interés en user_interests
+    // Primero eliminamos las relaciones existentes para este usuario
+    const { error: deleteError } = await supabase
+      .from('user_interests')
+      .delete()
+      .eq('user_id', userId);
+    
+    if (deleteError) throw deleteError;
+    
+    // Preparamos los registros para insertar
+    const interestRelations = [
+      ...selectedInterests.map(interestId => ({
+        user_id: userId,
+        interest_id: interestId,
+        is_avoided: false
+      })),
+      ...avoidTopics.map(topicId => ({
+        user_id: userId,
+        interest_id: topicId,
+        is_avoided: true
+      }))
+    ];
+    
+    // Solo insertamos si hay intereses para guardar
+    if (interestRelations.length > 0) {
+      const { error: insertError } = await supabase
+        .from('user_interests')
+        .insert(interestRelations);
+      
+      if (insertError) throw insertError;
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error al guardar intereses:', error);
+    return { success: false, error };
+  }
+};
+
 // Nueva función para insertar los intereses en la base de datos
 export const seedInterests = async () => {
   const interests = transformPredefinedInterests();
@@ -321,4 +406,70 @@ export const seedInterests = async () => {
     .insert(toInsert);
 
   return { success: !error, error };
+};
+
+/**
+ * Carga los intereses del usuario desde Supabase
+ * @param userId ID del usuario
+ * @returns Objeto con los intereses seleccionados y temas a evitar
+ */
+export const loadUserInterests = async (userId: string) => {
+  try {
+    // Primero intentamos cargar desde la tabla user_interests (relaciones)
+    const { data: userInterests, error: relationsError } = await supabase
+      .from('user_interests')
+      .select('interest_id, is_avoided')
+      .eq('user_id', userId);
+    
+    if (relationsError) throw relationsError;
+    
+    // Si no hay relaciones, intentamos cargar desde el array temas_preferidos
+    if (!userInterests || userInterests.length === 0) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('temas_preferidos')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError && profileError.code !== 'PGRST116') {
+        throw profileError;
+      }
+      
+      if (profile && profile.temas_preferidos && Array.isArray(profile.temas_preferidos)) {
+        // Por ahora no tenemos forma de distinguir entre intereses y temas a evitar
+        // en el array temas_preferidos, así que los tratamos todos como intereses
+        return {
+          selectedInterests: profile.temas_preferidos,
+          avoidTopics: []
+        };
+      }
+      
+      // Si no hay datos, devolvemos arrays vacíos
+      return {
+        selectedInterests: [],
+        avoidTopics: []
+      };
+    }
+    
+    // Separamos intereses regulares de temas a evitar
+    const selectedInterests = userInterests
+      .filter(item => !item.is_avoided)
+      .map(item => item.interest_id);
+    
+    const avoidTopics = userInterests
+      .filter(item => item.is_avoided)
+      .map(item => item.interest_id);
+    
+    return {
+      selectedInterests,
+      avoidTopics
+    };
+  } catch (error) {
+    console.error('Error al cargar intereses:', error);
+    return {
+      selectedInterests: [],
+      avoidTopics: [],
+      error
+    };
+  }
 };

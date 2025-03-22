@@ -1,3 +1,4 @@
+
 // FILE: src/pages/Interests.tsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
@@ -8,10 +9,15 @@ import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
 import { useNavigate } from 'react-router-dom';
 import Tabs from '@/components/Tabs';
-import { seedInterests } from '@/utils/interestUtils';
-
-// Importamos las tabs y la data fija
-import { interestTabs, InterestTab, Category, SubInterest } from '@/utils/interestUtils';
+import { 
+  interestTabs, 
+  Category, 
+  SubInterest,
+  seedInterests,
+  saveUserInterests,
+  loadUserInterests
+} from '@/utils/interestUtils';
+import AiAnalysisUnified from '@/components/AiAnalysisUnified';
 
 const InterestsPage = () => {
   const navigate = useNavigate();
@@ -23,6 +29,7 @@ const InterestsPage = () => {
 
   // Info adicional del usuario
   const [personalNote, setPersonalNote] = useState('');
+  const [aiAnalysis, setAiAnalysis] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false); // Para mostrar botón admin
   const [userAuthenticated, setUserAuthenticated] = useState(false);
@@ -55,9 +62,10 @@ const InterestsPage = () => {
   const fetchUserProfile = async (userId: string) => {
     try {
       setLoading(true);
+      // Cargar el perfil básico
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('descripcion_personal, analisis_externo')
         .eq('id', userId)
         .single();
 
@@ -68,23 +76,17 @@ const InterestsPage = () => {
       }
 
       if (data) {
-        const { temas_preferidos, descripcion_personal } = data;
-        // Separa intereses de "Evitar" del resto
-        if (Array.isArray(temas_preferidos)) {
-          // Ej: "avoid" agrupa los ID que son de "Evitar"
-          const avoided = temas_preferidos.filter((id: string) =>
-            // Tu lógica: si es algo que corresponde a la categoría "avoid"
-            // O si tu app los marcó así. Ej:
-            id.includes('avoid-') // o la condición que uses
-          );
+        if (data.descripcion_personal) setPersonalNote(data.descripcion_personal);
+        if (data.analisis_externo) setAiAnalysis(data.analisis_externo);
+      }
 
-          setAvoidInterests(avoided);
-
-          // El resto:
-          const normal = temas_preferidos.filter((id: string) => !avoided.includes(id));
-          setSelectedInterests(normal);
-        }
-        if (descripcion_personal) setPersonalNote(descripcion_personal);
+      // Cargar intereses usando la nueva función
+      const interests = await loadUserInterests(userId);
+      if (interests.selectedInterests.length > 0) {
+        setSelectedInterests(interests.selectedInterests);
+      }
+      if (interests.avoidTopics.length > 0) {
+        setAvoidInterests(interests.avoidTopics);
       }
     } catch (err) {
       console.error('Error al cargar perfil de usuario:', err);
@@ -114,24 +116,23 @@ const InterestsPage = () => {
     }
   };
 
-  // Guardar en Supabase la unión de todos los intereses marcados
+  // Guardar en Supabase utilizando la nueva función
   const handleSave = async () => {
     if (!profileId) return;
     try {
       setLoading(true);
 
-      // Todos los intereses en un solo array
-      const allInterests = [...selectedInterests, ...avoidInterests];
+      const result = await saveUserInterests(
+        profileId,
+        selectedInterests,
+        avoidInterests,
+        aiAnalysis,
+        personalNote
+      );
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          temas_preferidos: allInterests,
-          descripcion_personal: personalNote,
-        })
-        .eq('id', profileId);
-
-      if (error) throw error;
+      if (!result.success) {
+        throw result.error;
+      }
 
       toast.success('Preferencias guardadas correctamente');
       navigate('/lobby');
@@ -160,23 +161,35 @@ const InterestsPage = () => {
     }
   };
 
+  // Actualizar el análisis de ChatGPT
+  const handleAiAnalysisChange = async (analysis: string) => {
+    setAiAnalysis(analysis);
+  };
+
   // Renderizado de la pestaña actual
   const renderCurrentTab = () => {
     const tabData = interestTabs[currentTabIndex];
     if (!tabData) return null;
 
-    // Si es la pestaña "Opciones Avanzadas IA" -> tu lógica
+    // Si es la pestaña "Opciones Avanzadas IA"
     const isAiTab = tabData.categories.some(
       (cat) => cat.categoryId === 'externalAnalysis'
     );
 
     if (isAiTab) {
+      // Usando el componente AiAnalysisUnified en modo 'prompt'
       return (
         <div className="p-2">
-          <p className="text-sm text-black mb-4">
-            Aquí colocarías tu componente de análisis de IA, por ejemplo <strong>AiAnalysisUnified</strong> o el que uses.
-          </p>
-          {/* Lógica para tu componente IA */}
+          <AiAnalysisUnified
+            mode="prompt"
+            userId={profileId || undefined}
+            personalNote={personalNote}
+            onPersonalNoteChange={setPersonalNote}
+            // Convertir IDs de intereses a objetos InterestOption para AiAnalysisUnified
+            selectedInterests={selectedInterests.map(id => ({ id, label: id, category: 'other' }))}
+            avoidTopics={avoidInterests.map(id => ({ id, label: id, category: 'avoid' }))}
+            onSaveResponse={handleAiAnalysisChange}
+          />
         </div>
       );
     }
@@ -269,7 +282,7 @@ const InterestsPage = () => {
                   <>
                     {renderCurrentTab()}
 
-                    {/* Campo de descripción personal */}
+                    {/* Campo de descripción personal (excepto en la pestaña IA) */}
                     {currentTabIndex !== interestTabs.length - 1 && (
                       <div className="mt-6">
                         <label className="block text-sm text-black font-medium mb-2">
@@ -288,7 +301,7 @@ const InterestsPage = () => {
                       <Button variant="default" onClick={() => navigate('/lobby')} className="mr-2">
                         Cancelar
                       </Button>
-                      <Button variant="primary" onClick={handleSave} disabled={loading || currentTabIndex === interestTabs.length - 1}>
+                      <Button variant="primary" onClick={handleSave} disabled={loading}>
                         {loading ? 'Guardando...' : 'Aceptar'}
                       </Button>
                     </div>
