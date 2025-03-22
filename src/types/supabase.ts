@@ -15,7 +15,9 @@ export type Interest = Database['public']['Tables']['interests']['Row'];
 export type UserInterest = Database['public']['Tables']['user_interests']['Row'];
 
 // Conversation type derived from Database type
-export type Conversation = Database['public']['Tables']['conversations']['Row'];
+export type Conversation = Database['public']['Tables']['conversations']['Row'] & {
+  match_percentage?: number;
+};
 
 // ConversationTopic type derived from Database type
 export type ConversationTopic = Database['public']['Tables']['conversation_topics']['Row'];

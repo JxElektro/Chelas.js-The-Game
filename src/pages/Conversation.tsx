@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -16,7 +15,6 @@ import { Profile, Conversation as ConversationType, InterestOption } from '@/typ
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-// ID del bot predefinido
 const BOT_ID = '00000000-0000-0000-0000-000000000000';
 
 const Conversation = () => {
@@ -77,7 +75,6 @@ const Conversation = () => {
     }
   };
   
-  // Obtener el perfil del otro usuario
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!userId) {
@@ -86,7 +83,6 @@ const Conversation = () => {
       }
 
       try {
-        // Para el bot, usamos datos predefinidos
         if (userId === BOT_ID) {
           setOtherUserProfile({
             id: BOT_ID,
@@ -100,7 +96,6 @@ const Conversation = () => {
           return;
         }
 
-        // Para otros usuarios, consultamos la base de datos
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -124,7 +119,6 @@ const Conversation = () => {
     fetchUserProfile();
   }, [userId, navigate]);
 
-  // Calcular el porcentaje de coincidencia
   useEffect(() => {
     if (currentUserProfile && otherUserProfile && allInterests.length > 0) {
       calculateMatchPercentage();
@@ -138,7 +132,6 @@ const Conversation = () => {
       return;
     }
     
-    // Eliminar temas a evitar (categoría "avoid") de la lista
     const avoidIds = allInterests
       .filter(interest => interest.category === 'avoid')
       .map(interest => interest.id);
@@ -151,15 +144,12 @@ const Conversation = () => {
       id => !avoidIds.includes(id)
     );
     
-    // Encontrar las coincidencias
     const matches = currentUserInterests.filter(id => 
       otherUserInterests.includes(id)
     );
     
-    // Calcular el total de temas únicos entre ambos usuarios
     const uniqueInterests = [...new Set([...currentUserInterests, ...otherUserInterests])];
     
-    // Calcular el porcentaje
     const percentage = uniqueInterests.length > 0
       ? Math.round((matches.length / uniqueInterests.length) * 100)
       : 0;
@@ -167,7 +157,6 @@ const Conversation = () => {
     setMatchPercentage(percentage);
     setMatchCount(matches.length);
     
-    // Si es una conversación real, actualizar el valor en la base de datos
     if (userId !== BOT_ID && currentUserProfile.id) {
       updateConversationMatchPercentage(currentUserProfile.id, userId as string, percentage);
     }
@@ -189,7 +178,6 @@ const Conversation = () => {
       }
       
       if (data && data.length > 0) {
-        // Actualizar el porcentaje de coincidencia
         await supabase
           .from('conversations')
           .update({ match_percentage: percentage })
@@ -208,24 +196,19 @@ const Conversation = () => {
       try {
         console.log('Iniciando conversación con el usuario:', otherUserProfile.id);
         
-        // Para fines de demostración, usamos la función simulada
         const mockTopic = generateMockTopic();
         
-        // Simulamos el retraso de la API
         setTimeout(() => {
           setTopic(mockTopic);
           setIsLoading(false);
         }, 1500);
 
-        // En una aplicación real, guardaríamos la conversación en Supabase
         if (otherUserProfile && currentUserProfile) {
-          // Crear una nueva conversación
           const { data: conversation, error } = await supabase
             .from('conversations')
             .insert({
               user_a: currentUserProfile.id,
-              user_b: otherUserProfile.id,
-              match_percentage: matchPercentage
+              user_b: otherUserProfile.id
             })
             .select()
             .single();
@@ -235,8 +218,14 @@ const Conversation = () => {
             return;
           }
           
-          // Guardar el tema de la conversación
           if (conversation) {
+            if (matchPercentage > 0) {
+              await supabase
+                .from('conversations')
+                .update({ match_percentage: matchPercentage })
+                .eq('id', conversation.id);
+            }
+            
             await supabase
               .from('conversation_topics')
               .insert({
@@ -257,24 +246,19 @@ const Conversation = () => {
 
   const handleNewTopic = () => {
     setIsLoading(true);
-    // Simulamos la llamada a la API
     setTimeout(() => {
       const newTopic = generateMockTopic();
       setTopic(newTopic);
       setIsLoading(false);
-      
-      // En una aplicación real, guardaríamos el nuevo tema en Supabase
     }, 1500);
   };
 
   const handleTimeUp = () => {
-    // En una aplicación real, actualizaríamos el estado de la conversación en Supabase
     console.log('¡Se acabó el tiempo!');
     toast.info('Se acabó el tiempo de esta conversación');
   };
 
   const handleEndConversation = () => {
-    // En una aplicación real, actualizaríamos el estado de la conversación en Supabase
     navigate('/lobby');
   };
 
@@ -308,7 +292,6 @@ const Conversation = () => {
           </div>
         </WindowFrame>
 
-        {/* Mostrar el porcentaje de coincidencia */}
         {matchPercentage > 0 && (
           <MatchPercentage 
             percentage={matchPercentage} 
