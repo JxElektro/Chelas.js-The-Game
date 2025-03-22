@@ -8,12 +8,12 @@ import Button from '@/components/Button';
 import InterestSelector from '@/components/InterestSelector';
 import { Tag, AlertTriangle, ChevronRight, ArrowLeft, MessageSquare } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Interest, InterestOption } from '@/types/supabase';
+import { Interest, InterestOption, TopicCategory, ChatMessage } from '@/types/supabase';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Textarea } from '@/components/ui/textarea';
 
-const PREDEFINED_INTERESTS = {
+const PREDEFINED_INTERESTS: Record<string, string[]> = {
   entretenimiento: [
     'Películas', 'Series de TV', 'Anime', 'Documentales', 'Comedia', 
     'Dramáticos', 'Ciencia ficción', 'Fantasía'
@@ -74,7 +74,7 @@ const Interests = () => {
   const [showAIChat, setShowAIChat] = useState(false);
   const [aiMessage, setAiMessage] = useState('Hola, puedo ayudarte a descubrir más intereses que quizás no hayas considerado. Cuéntame un poco sobre tus pasatiempos favoritos o actividades que disfrutas.');
   const [userMessage, setUserMessage] = useState('');
-  const [conversation, setConversation] = useState<{role: 'ai' | 'user', content: string}[]>([]);
+  const [conversation, setConversation] = useState<ChatMessage[]>([]);
 
   // Función para transformar los intereses predefinidos en el formato requerido
   const transformPredefinedInterests = () => {
@@ -95,8 +95,8 @@ const Interests = () => {
   };
   
   // Mapear categorías amigables a categorías de la base de datos
-  const mapCategoryToDbCategory = (category: string): string => {
-    const categoryMap: Record<string, string> = {
+  const mapCategoryToDbCategory = (category: string): TopicCategory => {
+    const categoryMap: Record<string, TopicCategory> = {
       entretenimiento: 'movies',
       musica: 'music',
       libros: 'books',
@@ -159,7 +159,7 @@ const Interests = () => {
           (regularInterests || []).slice(0, 20).map((interest: Interest) => ({
             id: interest.id,
             label: interest.name,
-            category: 'avoid'
+            category: 'avoid' as TopicCategory
           }))
         );
         
@@ -194,7 +194,7 @@ const Interests = () => {
 
   const handleCustomInterestAdd = (interest: string) => {
     // Crear un nuevo interés personalizado
-    const newInterest = {
+    const newInterest: InterestOption = {
       id: `custom-${Date.now()}`,
       label: interest,
       category: 'other'
@@ -215,7 +215,7 @@ const Interests = () => {
     if (!userMessage.trim()) return;
     
     // Actualizar la conversación con el mensaje del usuario
-    const newConversation = [
+    const newConversation: ChatMessage[] = [
       ...conversation,
       { role: 'user', content: userMessage }
     ];
@@ -224,8 +224,8 @@ const Interests = () => {
     
     // Simulación de respuesta de IA
     setTimeout(() => {
-      const aiResponse = {
-        role: 'ai' as const,
+      const aiResponse: ChatMessage = {
+        role: 'ai',
         content: `Basándome en lo que me cuentas, te sugiero explorar intereses como: "Fotografía de paisajes", "Ciencia de datos" o "Cocina asiática". ¿Alguno de estos te interesa?`
       };
       setConversation([...newConversation, aiResponse]);

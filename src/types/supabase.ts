@@ -21,7 +21,7 @@ export type ConversationTopic = Database['public']['Tables']['conversation_topic
 export type InterestOption = {
   id: string;
   label: string;
-  category?: string;
+  category: TopicCategory;
 };
 
 // Category enum for topics
@@ -40,3 +40,9 @@ export type TopicCategory =
   | 'humor'
   | 'other'
   | 'avoid';
+
+// Type for AI chat conversations
+export type ChatMessage = {
+  role: 'ai' | 'user';
+  content: string;
+};
