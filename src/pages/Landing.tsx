@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -29,6 +28,8 @@ const Landing = () => {
           <h1 className="text-chelas-yellow text-4xl md:text-5xl mb-2 animate-windows-startup">
             CHELAS.JS
           </h1>
+          {/* Texto "The Game" en rojo */}
+          <p className="text-red-500 text-lg md:text-xl">The Game</p>
         </motion.div>
 
         <motion.div
