@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -24,16 +23,23 @@ const Conversation = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [topic, setTopic] = useState('');
   const [otherUserProfile, setOtherUserProfile] = useState<Profile | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const isMobile = useIsMobile();
   
-  // En una aplicación real, esto sería el usuario actual con sesión iniciada en Supabase
-  const currentUser = {
-    id: '7',
-    name: 'Tú',
-    avatar: 'user' as AvatarType,
-    interests: ['javascript', 'react', 'webdev'],
-    avoidTopics: ['política', 'religión']
-  };
+  // En lugar de usar un ID hardcoded, obtenemos el ID del usuario actual
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setCurrentUserId(session.user.id);
+      } else {
+        // Redirigir al login si no hay sesión
+        navigate('/login');
+      }
+    };
+    
+    fetchCurrentUser();
+  }, [navigate]);
   
   // Obtener el perfil del otro usuario
   useEffect(() => {
@@ -84,11 +90,13 @@ const Conversation = () => {
   }, [userId, navigate]);
 
   useEffect(() => {
-    if (!otherUserProfile) return;
+    if (!otherUserProfile || !currentUserId) return;
 
     const generateTopic = async () => {
       setIsLoading(true);
       try {
+        console.log('Iniciando conversación con el usuario:', otherUserProfile.id);
+        
         // En una aplicación real, usaríamos la API DeepSeek
         // const newTopic = await generateConversationTopic({
         //   userAInterests: currentUser.interests,
@@ -106,12 +114,12 @@ const Conversation = () => {
         }, 1500);
 
         // En una aplicación real, guardaríamos la conversación en Supabase
-        if (otherUserProfile) {
+        if (otherUserProfile && currentUserId) {
           // Crear una nueva conversación
           const { data: conversation, error } = await supabase
             .from('conversations')
             .insert({
-              user_a: currentUser.id,
+              user_a: currentUserId,
               user_b: otherUserProfile.id
             })
             .select()
@@ -140,7 +148,7 @@ const Conversation = () => {
     };
 
     generateTopic();
-  }, [otherUserProfile]);
+  }, [otherUserProfile, currentUserId]);
 
   const handleNewTopic = () => {
     setIsLoading(true);

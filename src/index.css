@@ -1,8 +1,7 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 @font-face {
   font-family: 'MS Sans Serif';
-  src: url('https://unpkg.com/react95@2.0.0/dist/fonts/ms_sans_serif.woff2') format('woff2');
+  src: url('https://fonts.gstatic.com/s/publicsans/v14/ijwRs572Xtc6ZYQws9YVwnNGfJ4.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -10,7 +9,7 @@
 
 @font-face {
   font-family: 'MS Sans Serif';
-  src: url('https://unpkg.com/react95@2.0.0/dist/fonts/ms_sans_serif_bold.woff2') format('woff2');
+  src: url('https://fonts.gstatic.com/s/publicsans/v14/ijwGs572Xtc6ZYQws9YVwllKVG8.woff2') format('woff2');
   font-weight: bold;
   font-style: normal;
   font-display: swap;
@@ -18,7 +17,7 @@
 
 @font-face {
   font-family: 'System';
-  src: url('https://unpkg.com/98.css@0.1.4/dist/System.woff') format('woff');
+  src: url('https://fonts.gstatic.com/s/vt323/v17/pxiKyp0ihIEF2isQFJ.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -98,7 +97,7 @@
   }
 
   body {
-    @apply bg-chelas-black text-white font-ms-sans overflow-x-hidden;
+    @apply bg-chelas-black text-white font-publicsans overflow-x-hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {

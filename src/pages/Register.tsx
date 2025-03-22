@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -197,6 +196,7 @@ const Register = () => {
                       onChange={handleChange}
                       className="win95-inset flex-1 px-2 py-1 text-black focus:outline-none"
                       placeholder="••••••••"
+                      autoComplete="new-password"
                     />
                   </div>
                 </div>

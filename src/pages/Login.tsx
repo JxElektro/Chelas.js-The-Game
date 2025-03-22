@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -25,7 +24,6 @@ const Login = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error when user types
     if (error) setError(null);
   };
 
@@ -154,6 +152,7 @@ const Login = () => {
                     onChange={handleChange}
                     className="win95-inset flex-1 px-2 py-1 text-black focus:outline-none"
                     placeholder="••••••••"
+                    autoComplete="current-password"
                   />
                 </div>
               </div>
