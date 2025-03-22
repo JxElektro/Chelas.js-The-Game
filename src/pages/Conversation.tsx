@@ -429,7 +429,7 @@ const Conversation = () => {
       return "Un asistente de chat para practicar tus habilidades sociales.";
     }
     
-    return createInterestSummary(otherUserProfile.super_profile as SuperProfile);
+    return createInterestSummary(otherUserProfile.super_profile);
   };
 
   if (!otherUserProfile) return null;
