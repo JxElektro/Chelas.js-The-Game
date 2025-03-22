@@ -1,5 +1,6 @@
 
 import { TopicCategory } from '@/types/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 export const PREDEFINED_INTERESTS: Record<string, string[]> = {
   entretenimiento: [
@@ -48,6 +49,10 @@ export const PREDEFINED_INTERESTS: Record<string, string[]> = {
   otros: [
     'Filosofía', 'Psicología', 'Política', 'Medio ambiente', 'Desarrollo personal',
     'Relaciones y vida social'
+  ],
+  evitar: [
+    'Polémicas religiosas', 'Política controversial', 'Deportes violentos',
+    'Contenido sensible', 'Temas familiares personales'
   ]
 };
 
@@ -64,7 +69,8 @@ export const mapCategoryToDbCategory = (category: string): TopicCategory => {
     hobbies: 'hobbies',
     actualidad: 'trends',
     humor: 'humor',
-    otros: 'other'
+    otros: 'other',
+    evitar: 'avoid'
   };
   
   return categoryMap[category] || 'other';
@@ -85,4 +91,20 @@ export const transformPredefinedInterests = () => {
   });
   
   return result;
+};
+
+// Nueva función para insertar los intereses en la base de datos
+export const seedInterests = async () => {
+  const interests = transformPredefinedInterests();
+  const toInsert = interests.map(item => ({
+    name: item.label,
+    category: item.category
+  }));
+
+  // Insertar en la base de datos
+  const { error } = await supabase
+    .from('interests')
+    .insert(toInsert);
+
+  return { success: !error, error };
 };
