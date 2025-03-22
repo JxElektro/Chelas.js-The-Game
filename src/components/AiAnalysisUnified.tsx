@@ -1,12 +1,11 @@
-
 import React, { useState } from 'react';
-import { Copy, Check, ArrowDownToLine, Send } from 'lucide-react';
+import { Copy, Check, Send } from 'lucide-react';
 import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, InterestOption } from '@/types/supabase';
-// Importa la función para formatear el análisis usando IA
+// Función que formatea el análisis usando IA (por ejemplo, DeepSeek)
 import { formatProfileAnalysis } from '@/services/deepseekService';
 import { Textarea } from './ui/textarea';
 
@@ -22,10 +21,6 @@ interface AiAnalysisUnifiedProps {
   onSaveResponse?: (response: string) => Promise<void>;
   // userId, por ejemplo para guardar en la BD (modo "response")
   userId?: string;
-  // Información personal del usuario
-  personalNote?: string;
-  // Callback para actualizar la nota personal
-  onPersonalNoteChange?: (note: string) => void;
 }
 
 const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
@@ -36,55 +31,50 @@ const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
   customPrompt,
   onSaveResponse,
   userId,
-  personalNote = '',
-  onPersonalNoteChange
 }) => {
   const [copied, setCopied] = useState(false);
   const [analysisText, setAnalysisText] = useState('');
   const [checked, setChecked] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
   const [promptCopied, setPromptCopied] = useState(false);
-  const [localPersonalNote, setLocalPersonalNote] = useState(personalNote);
 
-  // Prompt fijo para el modo 'response'
-  const fixedPrompt = `ChatGPT, necesito que generes un perfil completo y detallado de un usuario utilizando información pública y profesional. Por favor, incluye las siguientes secciones:
+  // Prompt fijo para modo "response" (se indica que se trata de mi perfil)
+  const fixedPrompt = `ChatGPT, necesito que generes un perfil completo y detallado **de mí** utilizando la siguiente información personal y profesional. Por favor, incluye las siguientes secciones:
 
 1. **Datos Generales:**  
-   - Nombre (ficticio o genérico)  
+   - Nombre  
    - Edad o rango de edad  
-   - Ubicación aproximada (ciudad o país)
+   - Ubicación (ciudad o país)
 
 2. **Formación Académica y Experiencia Laboral:**  
    - Estudios realizados y títulos obtenidos  
-   - Principales puestos de trabajo y responsabilidades
+   - Puestos de trabajo y principales responsabilidades
 
 3. **Habilidades y Competencias:**  
-   - Habilidades técnicas (ej. lenguajes de programación, herramientas, etc.)  
-   - Habilidades blandas (comunicación, trabajo en equipo, liderazgo, etc.)
+   - Habilidades técnicas  
+   - Habilidades blandas
 
 4. **Logros e Intereses:**  
    - Proyectos destacados o reconocimientos  
    - Intereses personales y profesionales
 
-Asegúrate de utilizar datos genéricos o ficticios, y de no incluir ninguna información sensible como contraseñas, números de identificación o datos de contacto reales. La idea es tener un perfil completo y descriptivo que resalte los aspectos públicos y profesionales del usuario.`;
+No incluyas información sensible (como contraseñas o datos privados).`;
 
-  // Función para generar el prompt basado en el perfil (modo "prompt")
+  // Función para generar el prompt a partir de mi información (modo "prompt")
   const generatePromptFromProfile = (): string => {
     if (customPrompt) return customPrompt;
-    const interestsText = selectedInterests.length > 0 
+    const interestsText = selectedInterests.length > 0
       ? selectedInterests.map(i => i.label).join(', ')
       : 'Ninguno';
-    
-    const avoidText = avoidTopics.length > 0 
+    const avoidText = avoidTopics.length > 0
       ? avoidTopics.map(i => i.label).join(', ')
       : 'Ninguno';
-    
-    const personalDescription = localPersonalNote?.trim() 
-      ? localPersonalNote 
-      : 'No se ha proporcionado descripción personal.';
-    
+    const personalDescription = profile?.descripcion_personal?.trim()
+      ? profile.descripcion_personal
+      : 'No he proporcionado una descripción personal.';
     return `
-Genera un perfil completo y detallado de un usuario utilizando la siguiente información. Incluye las secciones de:
+Genera un perfil completo y detallado **de mí** utilizando la siguiente información. Incluye las secciones de:
 - Datos Generales  
 - Formación Académica  
 - Experiencia Laboral  
@@ -92,24 +82,22 @@ Genera un perfil completo y detallado de un usuario utilizando la siguiente info
 - Logros e Intereses  
 - Resumen Personal
 
-No incluyas información sensible como contraseñas, números de teléfono u otros datos privados.
-
-Datos disponibles:
-- Nombre: ${profile?.name || 'Nombre no disponible'}
+Mis datos disponibles:
+- Nombre: ${profile?.name || 'No disponible'}
 - Descripción personal: ${personalDescription}
 - Temas de interés: ${interestsText}
-- Temas que se prefieren evitar: ${avoidText}
+- Temas que prefiero evitar: ${avoidText}
 
-Utiliza esta información para generar un perfil que permita a alguien que no conoce al usuario entablar una conversación y conocer más sobre él.
+Utiliza esta información para generar un perfil que me represente de forma auténtica y facilite iniciar una conversación conmigo.
     `.trim();
   };
 
-  // Seleccionamos el prompt a usar según el modo
+  // Seleccionamos el prompt según el modo
   const analysisPrompt = mode === 'prompt'
     ? generatePromptFromProfile()
     : fixedPrompt;
 
-  // Función para copiar el prompt (para ambos modos)
+  // Función para copiar el prompt (común para ambos modos)
   const handleCopyPrompt = () => {
     navigator.clipboard.writeText(analysisPrompt);
     setCopied(true);
@@ -117,30 +105,12 @@ Utiliza esta información para generar un perfil que permita a alguien que no co
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Función para copiar el prompt fijo en modo response
-  const copyPromptToClipboard = () => {
-    navigator.clipboard.writeText(fixedPrompt);
-    setPromptCopied(true);
-    toast.success('Prompt copiado al portapapeles');
-    setTimeout(() => setPromptCopied(false), 2000);
-  };
-
   // Función para abrir ChatGPT en una nueva pestaña
   const openChatGPT = () => {
     window.open('https://chat.openai.com/', '_blank');
   };
 
-  // Manejar cambios en la nota personal
-  const handlePersonalNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    setLocalPersonalNote(newValue);
-    if (onPersonalNoteChange) {
-      onPersonalNoteChange(newValue);
-    }
-  };
-
-  // Función para guardar la respuesta del análisis (modo "response")
-  // Se utiliza la IA para formatear el texto antes de guardarlo en Supabase
+  // Función para guardar la respuesta formateada con IA
   const handleSaveResponse = async () => {
     if (!checked) {
       toast.error('Debes confirmar que el texto no contiene información sensible');
@@ -152,20 +122,15 @@ Utiliza esta información para generar un perfil que permita a alguien que no co
     }
     setLoading(true);
     try {
-      // Llamada a la IA para formatear el análisis recibido
       const formattedText = await formatProfileAnalysis(analysisText);
-      
-      // Actualizar la columna "analisis_externo" y la descripción personal en Supabase
       const { error } = await supabase
         .from('profiles')
-        .update({ 
-          analisis_externo: formattedText,
-          descripcion_personal: localPersonalNote
+        .update({
+          analisis_externo: formattedText
         })
         .eq('id', userId);
-        
       if (error) throw error;
-      toast.success('Análisis y descripción personal guardados correctamente');
+      toast.success('Análisis guardado correctamente');
       if (onSaveResponse) await onSaveResponse(formattedText);
     } catch (err) {
       console.error('Error al guardar el análisis:', err);
@@ -176,61 +141,55 @@ Utiliza esta información para generar un perfil que permita a alguien que no co
   };
 
   return (
-    <WindowFrame title={mode === 'prompt' ? "ANÁLISIS DE IA: TU PERFIL" : "ANÁLISIS IA"} className="mt-6">
+    <WindowFrame title={mode === 'prompt' ? "ANÁLISIS DE IA: MI PERFIL" : "ANÁLISIS IA"} className="mt-6">
       <div className="p-2">
-        {/* Campo para la descripción personal */}
-        <div className="mb-4">
-          <label className="block text-xs text-black mb-1">
-            Cuéntanos algo personal sobre ti (opcional)
-          </label>
-          <Textarea
-            value={localPersonalNote}
-            onChange={handlePersonalNoteChange}
-            placeholder="Me encanta cocinar platos italianos y coleccionar cómics de superhéroes..."
-            className="win95-inset w-full h-24 p-2 text-black"
-          />
-        </div>
-
-        <p className="text-black text-sm mb-4">
-          Este es el texto que la IA utiliza para entender tu perfil. Puedes copiarlo y pegarlo en ChatGPT u otra herramienta de IA para obtener más información o sugerencias personalizadas.
-        </p>
-
-        <div className="win95-inset bg-white p-3 mb-4 relative">
-          <pre className="text-black text-xs whitespace-pre-wrap">
-            {analysisPrompt}
-          </pre>
-          <Button
-            variant="primary"
+        {/* Botones separados para Mostrar/Ocultar prompt y Copiar prompt */}
+        <div className="flex items-center justify-between mb-4">
+          <Button 
+            variant="secondary" 
             size="sm"
-            className="absolute top-2 right-2"
-            onClick={mode === 'prompt' ? handleCopyPrompt : copyPromptToClipboard}
+            onClick={() => setShowPrompt(!showPrompt)}
           >
-            {copied || promptCopied ? <Check size={14} /> : <Copy size={14} />}
-            {copied || promptCopied ? 'Copiado' : 'Copiar'}
+            {showPrompt ? "Ocultar prompt" : "Mostrar prompt"}
           </Button>
+          {showPrompt && (
+            <Button 
+              variant="primary" 
+              size="sm"
+              onClick={handleCopyPrompt}
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+              {copied ? 'Copiado' : 'Copiar'}
+            </Button>
+          )}
         </div>
+        {showPrompt && (
+          <div className="win95-inset bg-white p-2 mb-4">
+            <pre className="text-black text-xs whitespace-pre-wrap">
+              {analysisPrompt}
+            </pre>
+          </div>
+        )}
 
         {mode === 'response' && (
           <>
             <div className="bg-chelas-yellow/20 p-2 border border-chelas-yellow text-sm mb-4">
               <p className="text-white">
-                <strong>Sugerencia:</strong> Usa este prompt en ChatGPT para obtener recomendaciones de temas de conversación o para entender mejor cómo te ve la IA.
-                <br />
-                Luego, pega la respuesta generada en el siguiente campo.
+                Usa el prompt copiado en ChatGPT para generar un perfil que me represente. Luego, pega la respuesta en el campo de abajo.
               </p>
             </div>
-            <div className="mt-4">
+            <div className="mt-2">
               <p className="text-sm text-black mb-2">
                 <strong>Pega aquí la respuesta de ChatGPT:</strong>
               </p>
-              <textarea
-                className="win95-inset w-full h-48 p-2 text-black"
+              <Textarea
                 value={analysisText}
                 onChange={(e) => setAnalysisText(e.target.value)}
                 placeholder="Pega aquí el perfil generado por ChatGPT..."
+                className="win95-inset w-full h-48 p-2 text-black"
               />
             </div>
-            <div className="flex items-start space-x-2 mt-4">
+            <div className="flex items-center space-x-2 mt-4">
               <input
                 type="checkbox"
                 id="sensitiveCheck"
@@ -239,7 +198,7 @@ Utiliza esta información para generar un perfil que permita a alguien que no co
                 className="mt-1"
               />
               <label htmlFor="sensitiveCheck" className="text-sm text-black">
-                Confirmo que este texto no contiene información sensible o privada.
+                Confirmo que este texto no contiene información sensible.
               </label>
             </div>
             <div className="flex justify-end mt-4">

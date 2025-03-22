@@ -63,16 +63,13 @@ const InterestsPage = () => {
       const { data, error } = await supabase
         .from('interests')
         .select('*');
-
       if (error) throw error;
-
       // Convertir data en el formato InterestOption
       const mapped = (data || []).map((i: any) => ({
         id: i.id,
         label: i.name,
         category: i.category
       })) as InterestOption[];
-
       setAllInterests(mapped);
     } catch (err) {
       console.error(err);
@@ -90,7 +87,6 @@ const InterestsPage = () => {
         .select('*')  
         .eq('id', userId)
         .single();
-
       if (error) {
         if (error.code === 'PGRST116') {
           console.log('No se encontró perfil para el usuario, puede ser nuevo');
@@ -98,31 +94,22 @@ const InterestsPage = () => {
         }
         throw error;
       }
-
       if (data) {
         const profile = data as Profile;
         setUserProfile(profile);
-        
         if (profile.temas_preferidos) {
           setSelectedInterests(profile.temas_preferidos);
         }
-        
-        // Separar los intereses que son para evitar
+        // Separar los intereses de evitar
         if (profile.temas_preferidos) {
           const allPreferredIds = profile.temas_preferidos;
-          
-          // Primero, identifiquemos qué IDs son de la categoría "avoid"
           const avoidInterestIds = allInterests
             .filter(interest => interest.category === 'avoid' && allPreferredIds.includes(interest.id))
             .map(interest => interest.id);
-          
-          // Luego, configuramos los intereses normales y los de "avoid" por separado
           const normalInterestIds = allPreferredIds.filter(id => !avoidInterestIds.includes(id));
-          
           setSelectedInterests(normalInterestIds);
           setAvoidInterests(avoidInterestIds);
         }
-        
         if (profile.descripcion_personal) {
           setPersonalNote(profile.descripcion_personal);
         }
@@ -135,23 +122,14 @@ const InterestsPage = () => {
 
   /** Maneja el check/uncheck de cada interés */
   const handleToggleInterest = (interestId: string, isAvoidCategory: boolean) => {
-    // Determinar si estamos manejando un interés normal o uno a evitar
     if (isAvoidCategory) {
-      setAvoidInterests(prev => {
-        if (prev.includes(interestId)) {
-          return prev.filter(id => id !== interestId);
-        } else {
-          return [...prev, interestId];
-        }
-      });
+      setAvoidInterests(prev =>
+        prev.includes(interestId) ? prev.filter(id => id !== interestId) : [...prev, interestId]
+      );
     } else {
-      setSelectedInterests(prev => {
-        if (prev.includes(interestId)) {
-          return prev.filter(id => id !== interestId);
-        } else {
-          return [...prev, interestId];
-        }
-      });
+      setSelectedInterests(prev =>
+        prev.includes(interestId) ? prev.filter(id => id !== interestId) : [...prev, interestId]
+      );
     }
   };
 
@@ -163,7 +141,6 @@ const InterestsPage = () => {
         navigate('/login');
         return;
       }
-
       setLoading(true);
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData.session?.user;
@@ -172,15 +149,8 @@ const InterestsPage = () => {
         navigate('/login');
         return;
       }
-
-      // Combinar los intereses normales y los de evitar
+      // Combinar los intereses normales y de evitar
       const allInterestsToSave = [...selectedInterests, ...avoidInterests];
-
-      console.log('Guardando preferencias para usuario:', user.id);
-      console.log('Intereses seleccionados:', allInterestsToSave);
-      console.log('Descripción personal:', personalNote);
-
-      // Actualizar la tabla "profiles"
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -188,10 +158,8 @@ const InterestsPage = () => {
           descripcion_personal: personalNote
         })
         .eq('id', user.id);
-
       if (error) {
         console.error('Error al actualizar perfil:', error);
-        
         if (error.code === 'PGRST116') {
           const { error: insertError } = await supabase
             .from('profiles')
@@ -202,7 +170,6 @@ const InterestsPage = () => {
               temas_preferidos: allInterestsToSave,
               descripcion_personal: personalNote
             });
-
           if (insertError) throw insertError;
           toast.success('Perfil creado y preferencias guardadas');
         } else {
@@ -211,9 +178,7 @@ const InterestsPage = () => {
       } else {
         toast.success('Intereses y nota personal guardados');
       }
-      
       navigate('/lobby');
-      
     } catch (err) {
       console.error('Error al guardar datos:', err);
       toast.error('Error al guardar datos');
@@ -222,39 +187,33 @@ const InterestsPage = () => {
     }
   };
 
-  /** Obtiene las categorías definidas en la pestaña actual y filtra */
+  // Filtrado según la pestaña actual
   const currentTabData = TABS[currentTab];
   const isAnalysisTab = currentTabData.categories.includes('externalAnalysis');
-  
-  // Filtrar intereses por categoría (excepto para las pestañas de análisis)
   const filteredInterests = !isAnalysisTab
     ? allInterests.filter(opt => currentTabData.categories.includes(opt.category as string))
     : [];
-  
-  // Determinar si estamos en la pestaña de "Evitar"
   const isAvoidTab = currentTabData.categories.includes('avoid');
-
-  // Obtener los intereses seleccionados como objetos completos
-  const selectedInterestsObjects = allInterests.filter(interest => 
+  const selectedInterestsObjects = allInterests.filter(interest =>
     selectedInterests.includes(interest.id)
   );
-  
-  // Obtener los intereses a evitar como objetos completos
-  const avoidInterestsObjects = allInterests.filter(interest => 
+  const avoidInterestsObjects = allInterests.filter(interest =>
     avoidInterests.includes(interest.id)
   );
 
-  // Función para actualizar la descripción personal desde el componente AiAnalysisUnified
+  // Actualiza la descripción personal (si se usa en otro componente)
   const handlePersonalNoteUpdate = (newNote: string) => {
     setPersonalNote(newNote);
   };
 
   if (!userAuthenticated) {
-    return <Layout>
-      <div className="flex items-center justify-center min-h-[80vh]">
-        <p>Verificando sesión...</p>
-      </div>
-    </Layout>;
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[80vh]">
+          <p>Verificando sesión...</p>
+        </div>
+      </Layout>
+    );
   }
 
   return (
@@ -264,24 +223,22 @@ const InterestsPage = () => {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col items-center justify-center min-h-[80vh] w-full p-4"
       >
-        <h1 className="text-chelas-yellow text-2xl mb-6">
-          Configura Tus Intereses
-        </h1>
-
-        <WindowFrame title="TUS PREFERENCIAS" className="w-full max-w-3xl p-4">
-          {/* Tabs para cambiar de categoría */}
-          <Tabs
-            tabs={TABS.map(t => t.label)}
-            activeTab={currentTab}
-            onChange={setCurrentTab}
-          />
-
+        <h1 className="text-chelas-yellow text-2xl mb-6">Configura Tus Intereses</h1>
+        <WindowFrame title="TUS PREFERENCIAS" className="w-full max-w-full sm:max-w-3xl p-4">
+          {/* Contenedor de Tabs con scroll horizontal en mobile */}
+          <div className="w-full overflow-x-auto mb-4">
+            <Tabs
+              tabs={TABS.map(t => t.label)}
+              activeTab={currentTab}
+              onChange={setCurrentTab}
+            />
+          </div>
           {loading ? (
             <p className="text-sm text-black mb-4">Cargando...</p>
           ) : (
             <div className="mt-4 flex flex-col space-y-4">
               {isAnalysisTab ? (
-                // Mostrar el componente unificado de análisis en modo "response"
+                // Mostrar el componente de análisis en modo "response"
                 userProfile && (
                   <AiAnalysisUnified 
                     mode="response"
@@ -292,10 +249,7 @@ const InterestsPage = () => {
                     personalNote={personalNote}
                     onPersonalNoteChange={handlePersonalNoteUpdate}
                     onSaveResponse={async (text) => {
-                      setUserProfile({
-                        ...userProfile,
-                        analisis_externo: text
-                      });
+                      setUserProfile({ ...userProfile, analisis_externo: text });
                     }}
                   />
                 )
@@ -303,27 +257,19 @@ const InterestsPage = () => {
                 // Mostrar la lista de intereses filtrada
                 <div className="max-h-[250px] overflow-y-auto p-2 border border-chelas-gray-dark bg-white">
                   {filteredInterests.length === 0 ? (
-                    <p className="text-sm text-black">
-                      No hay temas para esta categoría.
-                    </p>
+                    <p className="text-sm text-black">No hay temas para esta categoría.</p>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {filteredInterests.map(opt => {
-                        // Determinar si este interés está seleccionado
-                        const isSelected = isAvoidTab 
+                        const isSelected = isAvoidTab
                           ? avoidInterests.includes(opt.id)
                           : selectedInterests.includes(opt.id);
-                        
                         return (
                           <motion.div
                             key={opt.id}
                             whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.99 }}
-                            className={`
-                              p-2 cursor-pointer flex items-center gap-2
-                              ${isSelected ? 'bg-chelas-yellow/20 text-black' : 'bg-chelas-button-face text-black'}
-                              border border-chelas-gray-dark shadow-win95-button rounded-sm
-                            `}
+                            className="p-2 cursor-pointer flex items-center gap-2 border border-chelas-gray-dark shadow-win95-button rounded-sm bg-chelas-button-face text-black"
                             onClick={() => handleToggleInterest(opt.id, isAvoidTab)}
                           >
                             <input
@@ -332,7 +278,7 @@ const InterestsPage = () => {
                               onChange={() => handleToggleInterest(opt.id, isAvoidTab)}
                               className="mr-2"
                             />
-                            <span className="text-sm text-black">{opt.label}</span>
+                            <span className="text-sm text-black break-words">{opt.label}</span>
                           </motion.div>
                         );
                       })}
@@ -340,13 +286,8 @@ const InterestsPage = () => {
                   )}
                 </div>
               )}
-
               <div className="flex justify-end">
-                <Button
-                  variant="primary"
-                  onClick={handleSave}
-                  disabled={loading}
-                >
+                <Button variant="primary" onClick={handleSave} disabled={loading}>
                   {loading ? 'Guardando...' : 'Guardar'}
                 </Button>
               </div>
