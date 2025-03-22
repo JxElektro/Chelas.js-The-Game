@@ -24,25 +24,13 @@ const Landing = () => {
             damping: 20,
             delay: 0.2
           }}
+          className="text-center"
         >
-          <h1 className="text-chelas-yellow text-4xl md:text-5xl mb-2 animate-windows-startup">
+          <h1 className="text-chelas-yellow text-4xl md:text-5xl mb-4 animate-windows-startup">
             CHELAS.JS
           </h1>
-          {/* Texto "The Game" en rojo */}
-          <p className="text-red-500 text-lg md:text-xl">The Game</p>
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mb-8 text-center"
-        >
-          <p className="text-chelas-gray-light mb-2">
-            Conecta con otros entusiastas de JavaScript
-          </p>
-          <p className="text-sm text-chelas-gray-medium">
-            Inicios de conversación impulsados por IA para eventos de tecnología
+          <p className="text-red-500 text-3xl md:text-4xl font-bold">
+            The Game
           </p>
         </motion.div>
 
@@ -50,7 +38,7 @@ const Landing = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="grid grid-cols-1 gap-4 w-full max-w-xs"
+          className="grid grid-cols-1 gap-4 w-full max-w-xs mt-8"
         >
           <div className="grid grid-cols-2 gap-4">
             <Link to="/register" className="w-full">

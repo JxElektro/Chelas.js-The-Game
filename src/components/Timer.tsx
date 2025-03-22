@@ -1,10 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Timer as TimerIcon, Plus } from 'lucide-react';
 import Button from './Button';
 import { motion } from 'framer-motion';
 import { Progress } from './ui/progress';
-import { Skeleton } from './ui/skeleton';
 
 interface TimerProps {
   initialMinutes?: number;
@@ -21,101 +19,131 @@ const Timer: React.FC<TimerProps> = ({
   autoStart = false,
   isLoading = false
 }) => {
-  const [seconds, setSeconds] = useState(initialMinutes * 60);
+  // Duración de la cuenta regresiva en modo conversación (en segundos)
+  const conversationDuration = initialMinutes * 60;
+  // Duración del modo loading: 15 segundos
+  const loadingDuration = 15;
+
+  // Definimos el modo actual: "conversation" o "loading"
+  const [mode, setMode] = useState<"conversation" | "loading">(isLoading ? "loading" : "conversation");
+
+  // Tiempo restante en modo conversación
+  const [conversationTimeLeft, setConversationTimeLeft] = useState(conversationDuration);
+  // Tiempo transcurrido en modo loading (para calcular el progreso)
+  const [loadingElapsed, setLoadingElapsed] = useState(0);
+
+  // Bandera para controlar si el temporizador de conversación está activo
   const [isRunning, setIsRunning] = useState(autoStart);
+  // Estado para controlar el parpadeo cuando quedan pocos segundos
   const [isBlinking, setIsBlinking] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
 
-  // Reset timer when autoStart changes
-  useEffect(() => {
-    if (autoStart && !isRunning) {
-      setIsRunning(true);
-      setSeconds(initialMinutes * 60);
-    }
-  }, [autoStart, initialMinutes]);
-
-  // Loading animation effect
+  // Al detectar cambios en la prop isLoading, cambiamos el modo
   useEffect(() => {
     if (isLoading) {
-      const duration = 8000; // 8 seconds
-      const increment = 100 / (duration / 100); // Calculate increment per 100ms
-      const interval = setInterval(() => {
-        setLoadingProgress(prev => {
-          const newValue = prev + increment;
-          return newValue >= 100 ? 100 : newValue;
-        });
-      }, 100);
-
-      return () => {
-        clearInterval(interval);
-        setLoadingProgress(0);
-      };
+      // Si se activa el loading, cambiamos al modo loading y reiniciamos el contador de carga
+      setMode("loading");
+      setLoadingElapsed(0);
+    } else {
+      // Al finalizar el loading, volvemos al modo conversación sin modificar el tiempo restante
+      setMode("conversation");
     }
   }, [isLoading]);
 
-  // Timer countdown effect
+  // Efecto para actualizar el temporizador según el modo
   useEffect(() => {
-    if (!isRunning || seconds <= 0) {
-      if (seconds <= 0 && isRunning) {
-        onTimeUp?.();
-      }
-      
-      if (seconds <= 0) {
-        setIsRunning(false);
-      }
-      
-      return;
+    let interval: NodeJS.Timeout | null = null;
+
+    if (mode === "conversation" && isRunning) {
+      // Modo conversación: actualizamos cada 1 segundo
+      interval = setInterval(() => {
+        setConversationTimeLeft(prev => {
+          if (prev <= 1) {
+            onTimeUp?.();
+            setIsRunning(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else if (mode === "loading") {
+      // Modo loading: actualizamos cada 100ms para una animación más suave
+      interval = setInterval(() => {
+        setLoadingElapsed(prev => {
+          if (prev >= loadingDuration) {
+            // Cuando se completa el loading, se detiene en 15 segundos
+            return loadingDuration;
+          }
+          // Se incrementa en 0.1 segundos (con precisión de un decimal)
+          return +(prev + 0.1).toFixed(1);
+        });
+      }, 100);
     }
 
-    if (seconds <= 30 && !isBlinking) {
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [mode, isRunning, loadingDuration, onTimeUp]);
+
+  // Activa el parpadeo en modo conversación cuando quedan 30 segundos o menos
+  useEffect(() => {
+    if (mode === "conversation" && conversationTimeLeft <= 30 && !isBlinking) {
       setIsBlinking(true);
     }
+  }, [conversationTimeLeft, mode, isBlinking]);
 
-    const timer = setTimeout(() => setSeconds(s => s - 1), 1000);
-
-    return () => clearTimeout(timer);
-  }, [seconds, isRunning, onTimeUp, isBlinking]);
-
-  const formatTime = () => {
+  // Función para formatear el tiempo en mm:ss
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Función para extender el tiempo en modo conversación
   const extendTime = () => {
-    setSeconds(s => s + 60);
-    setIsBlinking(false);
-    onExtend?.();
+    if (mode === "conversation") {
+      setConversationTimeLeft(prev => prev + 60);
+      setIsBlinking(false);
+      onExtend?.();
+    }
   };
 
-  const percentage = Math.max(0, (seconds / (initialMinutes * 60)) * 100);
+  // Calculamos el porcentaje de progreso:
+  // En modo conversación: cuanto queda de tiempo
+  // En modo loading: cuánto se ha completado de 15 segundos
+  const percentage = mode === "conversation"
+    ? Math.max(0, (conversationTimeLeft / conversationDuration) * 100)
+    : Math.min(100, (loadingElapsed / loadingDuration) * 100);
 
   return (
     <div className="win95-window max-w-xs mx-auto mb-4">
       <div className="win95-window-title">
         <div className="flex items-center">
           <TimerIcon size={14} className="mr-1" />
-          <span className="text-sm">Time Remaining</span>
+          <span className="text-sm">
+            {mode === "conversation" ? "Time Remaining" : "Cargando Pregunta"}
+          </span>
         </div>
       </div>
       <div className="p-3">
         <div className="win95-inset flex items-center justify-center py-2 mb-2">
-          {isLoading ? (
+          {mode === "loading" ? (
+            // Modo loading: se muestra una barra de progreso en verde
             <div className="w-full px-2">
               <Progress 
-                value={loadingProgress} 
-                className="h-4 bg-chelas-gray-light" 
+                value={percentage} 
+                className="h-4 bg-chelas-gray-light"
               >
-                <div className="h-full bg-[#33C3F0]" />
+                <div className="h-full bg-green-500" />
               </Progress>
             </div>
           ) : (
+            // Modo conversación: se muestra la cuenta regresiva
             <motion.div
               animate={isBlinking ? { opacity: [1, 0.5, 1] } : { opacity: 1 }}
               transition={isBlinking ? { repeat: Infinity, duration: 1 } : {}}
             >
-              <span className={`font-pixel text-lg ${seconds <= 30 ? 'text-red-500' : 'text-black'}`}>
-                {formatTime()}
+              <span className={`font-pixel text-lg ${conversationTimeLeft <= 30 ? 'text-red-500' : 'text-black'}`}>
+                {formatTime(conversationTimeLeft)}
               </span>
             </motion.div>
           )}
@@ -126,12 +154,12 @@ const Timer: React.FC<TimerProps> = ({
             initial={{ width: '100%' }}
             animate={{ width: `${percentage}%` }}
             transition={{ type: 'tween' }}
-            className="h-full bg-chelas-yellow"
+            className={mode === "conversation" ? "h-full bg-chelas-yellow" : "h-full bg-green-500"}
           />
         </div>
 
         <div className="flex justify-between">
-          {!isRunning && !autoStart && !isLoading && (
+          {mode === "conversation" && !isRunning && !autoStart && !isLoading && (
             <Button
               variant="primary"
               className="text-xs"
@@ -140,15 +168,17 @@ const Timer: React.FC<TimerProps> = ({
               Iniciar
             </Button>
           )}
-          <Button
-            variant="primary"
-            className="text-xs ml-auto"
-            onClick={extendTime}
-            disabled={!isRunning || isLoading}
-          >
-            <Plus size={14} className="mr-1" />
-            Add 1 Min
-          </Button>
+          {mode === "conversation" && (
+            <Button
+              variant="primary"
+              className="text-xs ml-auto"
+              onClick={extendTime}
+              disabled={!isRunning || isLoading}
+            >
+              <Plus size={14} className="mr-1" />
+              Add 1 Min
+            </Button>
+          )}
         </div>
       </div>
     </div>
