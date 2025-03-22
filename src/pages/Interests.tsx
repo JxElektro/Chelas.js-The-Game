@@ -7,8 +7,7 @@ import Layout from '@/components/Layout';
 import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
 import Tabs from '@/components/Tabs';
-import AiAnalysis from '@/components/AiAnalysis';
-import AiAnalysisPersonal from '@/components/AiAnalysisPersonal';
+import AiAnalysisUnified from '@/components/AiAnalysisUnified';
 import { TopicCategory, Profile, InterestOption } from '@/types/supabase';
 import { useNavigate } from 'react-router-dom';
 
@@ -280,20 +279,28 @@ const InterestsPage = () => {
           ) : (
             <div className="mt-4 flex flex-col space-y-4">
               {isAnalysisTab ? (
-                // Mostrar el análisis de IA
+                // Mostrar el análisis de IA usando el componente unificado en modo "prompt"
                 userProfile && (
-                  <AiAnalysis 
+                  <AiAnalysisUnified 
+                    mode="prompt"
                     profile={userProfile} 
                     selectedInterests={selectedInterestsObjects}
                     avoidTopics={avoidInterestsObjects}
                   />
                 )
               ) : isExternalAnalysisTab ? (
-                // Mostrar el componente de análisis externo
+                // Mostrar el componente de análisis externo usando el componente unificado en modo "response"
                 userProfile && (
-                  <AiAnalysisPersonal 
+                  <AiAnalysisUnified 
+                    mode="response"
                     userId={userProfile.id}
-                    currentAnalysis={userProfile.analisis_externo || ''}
+                    onSaveResponse={async (text) => {
+                      // Como ejemplo simple, simplemente actualiza el perfil local
+                      setUserProfile({
+                        ...userProfile,
+                        analisis_externo: text
+                      });
+                    }}
                   />
                 )
               ) : (

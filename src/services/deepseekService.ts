@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 
 // En la primera versión, estamos utilizando la API key directamente como se especificó en los requisitos
@@ -88,4 +87,38 @@ export const generateMockTopic = (): string[] => {
   ];
   
   return topicSets[Math.floor(Math.random() * topicSets.length)];
+};
+
+// Nueva función para formatear el análisis del perfil con DeepSeek API
+export const formatProfileAnalysis = async (profileText: string): Promise<string> => {
+  try {
+    const prompt = `
+      Formatea el siguiente texto de perfil de usuario para que tenga una estructura clara y legible,
+      manteniendo su contenido original pero mejorando su presentación y organización.
+      Asegúrate de mantener los títulos de sección y resaltar información importante.
+      
+      Texto a formatear:
+      ${profileText}
+    `;
+
+    const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: 'Eres un asistente que formatea perfiles de usuario para mejor legibilidad, manteniendo su estructura y contenido original pero mejorando su presentación.' },
+        { role: 'user', content: prompt }
+      ]
+    }, {
+      headers: {
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const formattedText = response.data.choices[0].message.content.trim();
+    return formattedText;
+  } catch (error) {
+    console.error('Error formateando el perfil:', error);
+    // En caso de error, devolvemos el texto original sin formatear
+    return profileText;
+  }
 };
