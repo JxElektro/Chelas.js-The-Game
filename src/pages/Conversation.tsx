@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -164,7 +165,8 @@ const Conversation = () => {
   
   const updateConversationMatchPercentage = async (userA: string, userB: string, percentage: number) => {
     try {
-      const { data, error } = await supabase
+      // First, check if a conversation already exists
+      const { data: existingConversation, error: findError } = await supabase
         .from('conversations')
         .select('id')
         .or(`user_a.eq.${userA},user_b.eq.${userA}`)
@@ -172,16 +174,21 @@ const Conversation = () => {
         .order('started_at', { ascending: false })
         .limit(1);
         
-      if (error) {
-        console.error('Error al buscar conversación:', error);
+      if (findError) {
+        console.error('Error al buscar conversación:', findError);
         return;
       }
       
-      if (data && data.length > 0) {
-        await supabase
+      // If conversation exists, update it
+      if (existingConversation && existingConversation.length > 0) {
+        const { error: updateError } = await supabase
           .from('conversations')
-          .update({ match_percentage: percentage })
-          .eq('id', data[0].id);
+          .update({ match_percentage })
+          .eq('id', existingConversation[0].id);
+          
+        if (updateError) {
+          console.error('Error al actualizar match_percentage:', updateError);
+        }
       }
     } catch (error) {
       console.error('Error al actualizar coincidencia:', error);
@@ -204,6 +211,7 @@ const Conversation = () => {
         }, 1500);
 
         if (otherUserProfile && currentUserProfile) {
+          // Create conversation first without match_percentage
           const { data: conversation, error } = await supabase
             .from('conversations')
             .insert({
@@ -218,14 +226,19 @@ const Conversation = () => {
             return;
           }
           
-          if (conversation) {
-            if (matchPercentage > 0) {
-              await supabase
-                .from('conversations')
-                .update({ match_percentage: matchPercentage })
-                .eq('id', conversation.id);
+          // Then update with match_percentage in a separate query
+          if (conversation && matchPercentage > 0) {
+            const { error: updateError } = await supabase
+              .from('conversations')
+              .update({ match_percentage: matchPercentage })
+              .eq('id', conversation.id);
+              
+            if (updateError) {
+              console.error('Error al actualizar match_percentage:', updateError);
             }
-            
+          }
+          
+          if (conversation) {
             await supabase
               .from('conversation_topics')
               .insert({
