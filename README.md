@@ -1,69 +1,61 @@
-# Welcome to your Lovable project
 
-## Project info
+# ChelasJS - App de Networking para Eventos
 
-**URL**: https://lovable.dev/projects/a376329e-ccc0-49a8-be7d-bb390c3aa121
+## Acerca del Proyecto
 
-## How can I edit this code?
+ChelasJS es una aplicación de networking diseñada para ayudar a los asistentes de conferencias y eventos a romper el hielo y conocer a otros participantes a través de temas de conversación sugeridos.
 
-There are several ways of editing your application.
+## Características Principales
 
-**Use Lovable**
+- **Interfaz en Español**: Aplicación completamente adaptada para usuarios hispanohablantes.
+- **Diseño Responsivo**: Optimizado principalmente para dispositivos móviles.
+- **Temas de Conversación Diversos**: Desde tecnología hasta arte, música, deportes y más.
+- **Bot Conversacional**: Perfil predefinido para simular conversaciones cuando no hay otros usuarios disponibles.
+- **Temporizador de Conversación**: Ayuda a mantener conversaciones dinámicas.
+- **Preferencias Personalizadas**: Los usuarios pueden seleccionar temas que les interesan y aquellos que prefieren evitar.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a376329e-ccc0-49a8-be7d-bb390c3aa121) and start prompting.
+## Tecnologías Utilizadas
 
-Changes made via Lovable will be committed automatically to this repo.
+- React con TypeScript
+- Supabase para base de datos y autenticación
+- Framer Motion para animaciones
+- Tailwind CSS para estilos
+- DeepSeek AI para generación de temas de conversación
 
-**Use your preferred IDE**
+## Integración con DeepSeek API
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+La aplicación utiliza la API de DeepSeek para generar temas de conversación personalizados basados en los intereses compartidos de los usuarios. En la versión de producción, esta clave se manejará a través de variables de entorno.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Estructura de la Base de Datos
 
-Follow these steps:
+- **Perfiles**: Información de los usuarios
+- **Intereses**: Categorías y temas de conversación 
+- **Conversaciones**: Registro de interacciones entre usuarios
+- **Temas de Conversación**: Temas generados para cada conversación
+
+## Próximas Mejoras
+
+- Sistema completo de autenticación con login y registro
+- Más categorías de temas de conversación
+- Implementación de chat en tiempo real
+- Sistema de feedback para calificar conversaciones
+
+## Desarrollo
+
+Para ejecutar el proyecto localmente:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clonar el repositorio
+git clone <URL_DEL_REPOSITORIO>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Instalar dependencias
+npm install
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Iniciar el servidor de desarrollo
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Contacto
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Para cualquier consulta o sugerencia sobre el proyecto, por favor contacta al equipo de desarrollo.
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/a376329e-ccc0-49a8-be7d-bb390c3aa121) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)

@@ -1,12 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Check, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Button from './Button';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface InterestOption {
   id: string;
   label: string;
+  category?: string;
 }
 
 interface InterestSelectorProps {
@@ -17,6 +19,24 @@ interface InterestSelectorProps {
   maxSelections?: number;
 }
 
+// Mapeo de categorías a nombres en español
+const categoryNames: Record<string, string> = {
+  tech: 'Tecnología',
+  movies: 'Películas',
+  music: 'Música',
+  series_anime: 'Series y Anime',
+  books: 'Libros',
+  travel: 'Viajes',
+  food: 'Gastronomía',
+  sports: 'Deportes',
+  art: 'Arte y Cultura',
+  hobbies: 'Hobbies',
+  trends: 'Actualidad',
+  humor: 'Humor',
+  other: 'Otros',
+  avoid: 'Evitar'
+};
+
 const InterestSelector: React.FC<InterestSelectorProps> = ({
   title,
   options,
@@ -24,6 +44,22 @@ const InterestSelector: React.FC<InterestSelectorProps> = ({
   onChange,
   maxSelections = 5
 }) => {
+  const isMobile = useIsMobile();
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  
+  // Agrupar opciones por categoría
+  const optionsByCategory: Record<string, InterestOption[]> = {};
+  options.forEach(option => {
+    const category = option.category || 'other';
+    if (!optionsByCategory[category]) {
+      optionsByCategory[category] = [];
+    }
+    optionsByCategory[category].push(option);
+  });
+
+  // Obtener categorías disponibles
+  const availableCategories = Object.keys(optionsByCategory).sort();
+
   const handleToggle = (id: string) => {
     if (selectedOptions.includes(id)) {
       onChange(selectedOptions.filter(option => option !== id));
@@ -41,9 +77,25 @@ const InterestSelector: React.FC<InterestSelectorProps> = ({
         </span>
       </div>
       
+      {/* Selector de categorías */}
+      <div className="flex flex-wrap gap-1 mb-2">
+        {availableCategories.map(category => (
+          <button
+            key={category}
+            onClick={() => setActiveCategory(activeCategory === category ? null : category)}
+            className={`
+              text-xs px-2 py-1 rounded
+              ${activeCategory === category ? 'bg-chelas-yellow text-black' : 'bg-chelas-button-face text-black'}
+            `}
+          >
+            {categoryNames[category] || category}
+          </button>
+        ))}
+      </div>
+      
       <div className="win95-inset p-2 h-40 overflow-y-auto">
-        <div className="grid grid-cols-2 gap-2">
-          {options.map((option) => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {(activeCategory ? optionsByCategory[activeCategory] : options).map((option) => {
             const isSelected = selectedOptions.includes(option.id);
             
             return (

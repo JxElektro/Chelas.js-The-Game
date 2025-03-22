@@ -11,12 +11,14 @@ import { UserCog, Users, Power, Wifi, WifiOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/supabase';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // ID del bot predefinido
 const BOT_ID = '00000000-0000-0000-0000-000000000000';
 
 const Lobby = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [isAvailable, setIsAvailable] = useState(true);
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,19 +37,38 @@ const Lobby = () => {
     const fetchProfiles = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
+        
+        // Primero, obtenemos los usuarios reales disponibles
+        const { data: realUsers, error: usersError } = await supabase
           .from('profiles')
           .select('*')
           .not('id', 'eq', currentUserId)
+          .not('id', 'eq', BOT_ID)
           .eq('is_available', true);
         
-        if (error) throw error;
+        if (usersError) throw usersError;
         
-        // Agregamos el bot a la lista de usuarios
-        const profiles = data || [];
-        setUsers(profiles);
+        // Luego, obtenemos el perfil del bot
+        const { data: botProfile, error: botError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', BOT_ID)
+          .single();
+        
+        if (botError && botError.code !== 'PGRST116') {
+          // PGRST116 significa "no se encontraron resultados", lo que está bien si el bot no existe
+          console.error('Error al cargar el perfil del bot:', botError);
+        }
+        
+        // Combinamos los usuarios reales con el bot (si existe)
+        const allProfiles = [...(realUsers || [])];
+        if (botProfile) {
+          allProfiles.push(botProfile);
+        }
+        
+        setUsers(allProfiles);
       } catch (error) {
-        console.error('Error fetching profiles:', error);
+        console.error('Error al cargar perfiles:', error);
         toast.error('Error al cargar los perfiles');
       } finally {
         setLoading(false);
@@ -55,6 +76,11 @@ const Lobby = () => {
     };
 
     fetchProfiles();
+    
+    // Configurar un intervalo para actualizar la lista cada 30 segundos
+    const interval = setInterval(fetchProfiles, 30000);
+    
+    return () => clearInterval(interval);
   }, [currentUserId]);
 
   const handleStatusToggle = () => {
@@ -73,14 +99,14 @@ const Lobby = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col min-h-[90vh]"
+        className="flex flex-col min-h-[90vh] w-full"
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-3">
           <h1 className="text-chelas-yellow text-2xl">¡Bienvenido!</h1>
           <Button
             variant={isAvailable ? 'primary' : 'default'}
             onClick={handleStatusToggle}
-            className="flex items-center"
+            className="flex items-center w-full sm:w-auto"
           >
             {isAvailable ? (
               <>

@@ -13,20 +13,10 @@ import { ArrowLeft, RefreshCw, Clock, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, Conversation as ConversationType } from '@/types/supabase';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // ID del bot predefinido
 const BOT_ID = '00000000-0000-0000-0000-000000000000';
-
-// Mock user data for demo
-const mockUsers = {
-  '1': { id: '1', name: 'John', avatar: 'tech' as AvatarType, interests: ['javascript', 'react', 'node'] },
-  '2': { id: '2', name: 'Sara', avatar: 'code' as AvatarType, interests: ['typescript', 'webdev', 'ai'] },
-  '3': { id: '3', name: 'Mike', avatar: 'coffee' as AvatarType, interests: ['frontend', 'design', 'ux'] },
-  '4': { id: '4', name: 'Emily', avatar: 'smile' as AvatarType, interests: ['data', 'ai', 'cloud'] },
-  '5': { id: '5', name: 'David', avatar: 'gaming' as AvatarType, interests: ['games', 'backend', 'typescript'] },
-  '6': { id: '6', name: 'Alex', avatar: 'music' as AvatarType, interests: ['mobile', 'design', 'frontend'] },
-  [BOT_ID]: { id: BOT_ID, name: 'ChelasBot', avatar: 'bot' as AvatarType, interests: ['javascript', 'react', 'typescript'] },
-};
 
 const Conversation = () => {
   const navigate = useNavigate();
@@ -34,6 +24,7 @@ const Conversation = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [topic, setTopic] = useState('');
   const [otherUserProfile, setOtherUserProfile] = useState<Profile | null>(null);
+  const isMobile = useIsMobile();
   
   // En una aplicación real, esto sería el usuario actual con sesión iniciada en Supabase
   const currentUser = {
@@ -73,7 +64,7 @@ const Conversation = () => {
           .single();
         
         if (error || !data) {
-          console.error('Error fetching user profile:', error);
+          console.error('Error al cargar el perfil del usuario:', error);
           toast.error('No se pudo cargar el perfil del usuario');
           navigate('/lobby');
           return;
@@ -81,7 +72,7 @@ const Conversation = () => {
         
         setOtherUserProfile(data);
       } catch (error) {
-        console.error('Error processing user profile:', error);
+        console.error('Error al procesar el perfil del usuario:', error);
         navigate('/lobby');
       }
     };
@@ -124,7 +115,7 @@ const Conversation = () => {
             .single();
           
           if (error) {
-            console.error('Error creating conversation:', error);
+            console.error('Error al crear conversación:', error);
             return;
           }
           
@@ -139,7 +130,7 @@ const Conversation = () => {
           }
         }
       } catch (error) {
-        console.error('Error generating topic:', error);
+        console.error('Error al generar tema:', error);
         setTopic("¿Cuál es tu parte favorita del desarrollo JavaScript?");
         setIsLoading(false);
       }
@@ -163,6 +154,7 @@ const Conversation = () => {
   const handleTimeUp = () => {
     // En una aplicación real, actualizaríamos el estado de la conversación en Supabase
     console.log('¡Se acabó el tiempo!');
+    toast.info('Se acabó el tiempo de esta conversación');
   };
 
   const handleEndConversation = () => {
@@ -177,7 +169,7 @@ const Conversation = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col min-h-[90vh]"
+        className="flex flex-col min-h-[90vh] w-full"
       >
         <Button 
           variant="ghost" 
@@ -208,11 +200,12 @@ const Conversation = () => {
 
         <ConversationPrompt prompt={topic} isLoading={isLoading} />
 
-        <div className="flex justify-center gap-3 mt-auto">
+        <div className="flex flex-col sm:flex-row justify-center gap-3 mt-auto">
           <Button 
             variant="default"
             onClick={handleNewTopic}
             disabled={isLoading}
+            className="w-full sm:w-auto"
           >
             <RefreshCw size={16} className="mr-1" />
             Nuevo Tema
@@ -221,6 +214,7 @@ const Conversation = () => {
           <Button 
             variant="primary"
             onClick={handleEndConversation}
+            className="w-full sm:w-auto"
           >
             <X size={16} className="mr-1" />
             Terminar Chat

@@ -10,9 +10,11 @@ import { Tag, AlertTriangle, ChevronRight, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Interest, InterestOption } from '@/types/supabase';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Interests = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [interests, setInterests] = useState<string[]>([]);
   const [avoidTopics, setAvoidTopics] = useState<string[]>([]);
   const [interestOptions, setInterestOptions] = useState<InterestOption[]>([]);
@@ -24,23 +26,23 @@ const Interests = () => {
       try {
         setLoading(true);
         
-        // Obtenemos los intereses de la base de datos
-        const { data: techInterests, error: techError } = await supabase
+        // Obtenemos todos los intereses excepto los de categoría 'avoid'
+        const { data: allInterests, error: interestsError } = await supabase
           .from('interests')
           .select('*')
-          .eq('category', 'tech');
+          .not('category', 'eq', 'avoid');
           
         const { data: avoidInterests, error: avoidError } = await supabase
           .from('interests')
           .select('*')
           .eq('category', 'avoid');
         
-        if (techError) throw techError;
+        if (interestsError) throw interestsError;
         if (avoidError) throw avoidError;
         
         // Formateamos los intereses para el componente InterestSelector
         setInterestOptions(
-          (techInterests || []).map((interest: Interest) => ({
+          (allInterests || []).map((interest: Interest) => ({
             id: interest.id,
             label: interest.name,
             category: interest.category
@@ -58,7 +60,7 @@ const Interests = () => {
         // En una aplicación real, cargaríamos los intereses seleccionados del usuario desde Supabase
         
       } catch (error) {
-        console.error('Error fetching interests:', error);
+        console.error('Error al cargar intereses:', error);
         toast.error('Error al cargar intereses');
       } finally {
         setLoading(false);
@@ -79,7 +81,7 @@ const Interests = () => {
       // Navegamos al lobby
       navigate('/lobby');
     } catch (error) {
-      console.error('Error saving preferences:', error);
+      console.error('Error al guardar preferencias:', error);
       toast.error('Error al guardar preferencias');
     }
   };
@@ -89,7 +91,7 @@ const Interests = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center min-h-[80vh]"
+        className="flex flex-col items-center justify-center min-h-[80vh] w-full"
       >
         <Button 
           variant="ghost" 
@@ -102,7 +104,7 @@ const Interests = () => {
 
         <h1 className="text-chelas-yellow text-2xl mb-6">Tus Intereses</h1>
 
-        <WindowFrame title="PREFERENCIAS DE CONVERSACIÓN" className="w-full max-w-md">
+        <WindowFrame title="PREFERENCIAS DE CONVERSACIÓN" className="w-full">
           {loading ? (
             <p className="text-sm text-black mb-4">Cargando opciones...</p>
           ) : (

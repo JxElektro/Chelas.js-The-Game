@@ -23,3 +23,20 @@ export type InterestOption = {
   label: string;
   category?: string;
 };
+
+// Category enum for topics
+export type TopicCategory = 
+  | 'tech'
+  | 'movies'
+  | 'music'
+  | 'series_anime'
+  | 'books'
+  | 'travel'
+  | 'food'
+  | 'sports'
+  | 'art'
+  | 'hobbies'
+  | 'trends'
+  | 'humor'
+  | 'other'
+  | 'avoid';

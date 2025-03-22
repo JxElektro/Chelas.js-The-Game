@@ -79,19 +79,19 @@ export type Database = {
       }
       interests: {
         Row: {
-          category: string
+          category: Database["public"]["Enums"]["topic_category"]
           created_at: string
           id: string
           name: string
         }
         Insert: {
-          category: string
+          category?: Database["public"]["Enums"]["topic_category"]
           created_at?: string
           id?: string
           name: string
         }
         Update: {
-          category?: string
+          category?: Database["public"]["Enums"]["topic_category"]
           created_at?: string
           id?: string
           name?: string
@@ -169,7 +169,20 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      topic_category:
+        | "tech"
+        | "movies"
+        | "music"
+        | "series_anime"
+        | "books"
+        | "travel"
+        | "food"
+        | "sports"
+        | "art"
+        | "hobbies"
+        | "trends"
+        | "humor"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never

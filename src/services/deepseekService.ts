@@ -1,7 +1,7 @@
 
 import axios from 'axios';
 
-// In the first version, we're hardcoding the API key as specified in the requirements
+// En la primera versión, estamos utilizando la API key directamente como se especificó en los requisitos
 const DEEPSEEK_API_KEY = 'sk-c01fb7d8647b401c877020522f9a6c22';
 
 interface GenerateTopicParams {
@@ -17,18 +17,19 @@ export const generateConversationTopic = async ({
 }: GenerateTopicParams): Promise<string> => {
   try {
     const prompt = `
-      User A interests: ${userAInterests.join(', ')}.
-      User B interests: ${userBInterests.join(', ')}.
-      Topics to avoid: ${avoidTopics.join(', ')}.
-      Generate a fun, engaging conversation starter topic that combines these interests. 
-      Keep it concise (1-2 sentences), friendly, and appropriate for a social event for JavaScript programmers. 
-      Make it something that both users can relate to based on their shared interests.
+      Intereses de Usuario A: ${userAInterests.join(', ')}.
+      Intereses de Usuario B: ${userBInterests.join(', ')}.
+      Temas a evitar: ${avoidTopics.join(', ')}.
+      Genera un tema de conversación divertido y atractivo que combine estos intereses. 
+      Mantén el tema conciso (1-2 oraciones), amigable y apropiado para un evento social de programadores JavaScript. 
+      Que sea algo con lo que ambos usuarios puedan relacionarse basado en sus intereses compartidos.
+      La respuesta debe estar en español.
     `;
 
     const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'You are a friendly conversation starter generator for a social networking app at a JavaScript conference.' },
+        { role: 'system', content: 'Eres un generador amigable de temas de conversación para una app de networking en un evento de JavaScript.' },
         { role: 'user', content: prompt }
       ]
     }, {
@@ -40,22 +41,53 @@ export const generateConversationTopic = async ({
 
     return response.data.choices[0].message.content.trim();
   } catch (error) {
-    console.error('Error generating conversation topic:', error);
-    return "How do you feel about JavaScript frameworks? Do you have a favorite one?";
+    console.error('Error generando tema de conversación:', error);
+    return "¿Qué opinas de los frameworks de JavaScript? ¿Tienes algún favorito?";
   }
 };
 
-// Mock function for testing when API is not available
+// Función simulada para pruebas cuando la API no está disponible
 export const generateMockTopic = (): string => {
   const topics = [
-    "If you could combine any two programming languages to create the perfect language, what would they be and why?",
-    "What's a tech gadget you can't live without, and what would you improve about it?",
-    "If you could solve one programming challenge forever, which one would you choose?",
-    "What's your favorite coding Easter egg or hidden feature you've discovered?",
-    "If JavaScript was a person, what would their personality be like?",
-    "What's the most overrated and underrated web development trend right now?",
-    "If you could add one feature to JavaScript, what would it be?",
-    "What's a non-tech hobby that has surprisingly improved your programming skills?",
+    // Tech
+    "Si pudieras combinar dos lenguajes de programación para crear el lenguaje perfecto, ¿cuáles serían y por qué?",
+    "¿Qué gadget tecnológico no puedes vivir sin él, y qué mejorarías?",
+    "Si JavaScript fuera una persona, ¿cómo sería su personalidad?",
+    
+    // Movies
+    "¿Cuál es tu película favorita y por qué?",
+    "¿Qué opinas sobre las últimas películas de superhéroes?",
+    "¿Prefieres el cine de autor o el comercial?",
+    
+    // Music
+    "¿Qué género musical te identifica más?",
+    "¿Has asistido a algún concierto memorable?",
+    "¿Qué artista te gustaría ver en vivo?",
+    
+    // Series and Anime
+    "¿Qué serie recomendarías ver?",
+    "¿Cuál es tu anime favorito?",
+    "¿Qué opinas de las adaptaciones live-action?",
+    
+    // Books
+    "¿Qué libro te ha cambiado la vida?",
+    "¿Prefieres novelas o ensayos?",
+    "¿Digital o papel?",
+    
+    // Travel
+    "¿Cuál ha sido tu viaje más sorprendente?",
+    "Si pudieras viajar a cualquier lugar, ¿a dónde irías?",
+    "¿Prefieres playa o montaña?",
+    
+    // Food
+    "¿Cuál es tu plato favorito?",
+    "¿Te gusta probar comidas exóticas?",
+    "¿Cocinas? ¿Cuál es tu especialidad?",
+    
+    // Hobbies
+    "¿Qué actividad disfrutas en tu tiempo libre?",
+    "¿Tienes algún hobby inusual?",
+    "¿Qué te gustaría aprender?",
   ];
   
   return topics[Math.floor(Math.random() * topics.length)];
