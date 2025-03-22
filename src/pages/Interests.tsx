@@ -32,10 +32,12 @@ const Interests = () => {
           .select('*')
           .not('category', 'eq', 'avoid');
           
-        const { data: avoidInterests, error: avoidError } = await supabase
+        // Para la categoría avoid, usaremos los mismos intereses pero los marcaremos como "para evitar"
+        // Ya que no tenemos una categoría 'avoid' real en la base de datos
+        const { data: regularInterests, error: avoidError } = await supabase
           .from('interests')
           .select('*')
-          .eq('category', 'avoid');
+          .in('category', ['tech', 'movies', 'music', 'series_anime', 'books', 'travel', 'food', 'sports', 'art', 'hobbies', 'trends', 'humor', 'other']);
         
         if (interestsError) throw interestsError;
         if (avoidError) throw avoidError;
@@ -49,11 +51,12 @@ const Interests = () => {
           }))
         );
         
+        // Usamos los mismos intereses para "evitar" pero con una categoría simulada 'avoid'
         setAvoidOptions(
-          (avoidInterests || []).map((interest: Interest) => ({
+          (regularInterests || []).slice(0, 20).map((interest: Interest) => ({
             id: interest.id,
             label: interest.name,
-            category: interest.category
+            category: 'avoid'
           }))
         );
         
