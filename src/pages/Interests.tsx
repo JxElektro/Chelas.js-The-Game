@@ -8,6 +8,7 @@ import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
 import Tabs from '@/components/Tabs';
 import AiAnalysis from '@/components/AiAnalysis';
+import AiAnalysisPersonal from '@/components/AiAnalysisPersonal';
 import { TopicCategory, Profile, InterestOption } from '@/types/supabase';
 import { useNavigate } from 'react-router-dom';
 
@@ -27,6 +28,7 @@ const TABS = [
   { label: 'Otros',           categories: ['other'] },
   { label: 'Evitar',          categories: ['avoid'] },
   { label: 'Análisis IA',     categories: ['analysis'] },
+  { label: 'Análisis Externo', categories: ['externalAnalysis'] },
 ];
 
 const InterestsPage = () => {
@@ -226,9 +228,10 @@ const InterestsPage = () => {
   /** Obtiene las categorías definidas en la pestaña actual y filtra */
   const currentTabData = TABS[currentTab];
   const isAnalysisTab = currentTabData.categories.includes('analysis');
+  const isExternalAnalysisTab = currentTabData.categories.includes('externalAnalysis');
   
-  // Filtrar intereses por categoría (excepto para la pestaña de análisis)
-  const filteredInterests = !isAnalysisTab 
+  // Filtrar intereses por categoría (excepto para las pestañas de análisis)
+  const filteredInterests = !isAnalysisTab && !isExternalAnalysisTab 
     ? allInterests.filter(opt => currentTabData.categories.includes(opt.category as string))
     : [];
   
@@ -285,6 +288,14 @@ const InterestsPage = () => {
                     avoidTopics={avoidInterestsObjects}
                   />
                 )
+              ) : isExternalAnalysisTab ? (
+                // Mostrar el componente de análisis externo
+                userProfile && (
+                  <AiAnalysisPersonal 
+                    userId={userProfile.id}
+                    currentAnalysis={userProfile.analisis_externo || ''}
+                  />
+                )
               ) : (
                 // Mostrar la lista de intereses filtrada
                 <div className="max-h-[250px] overflow-y-auto p-2 border border-chelas-gray-dark bg-white">
@@ -328,7 +339,7 @@ const InterestsPage = () => {
               )}
 
               {/* Sección para descripción personal (no mostrar en pestaña de análisis) */}
-              {!isAnalysisTab && (
+              {!isAnalysisTab && !isExternalAnalysisTab && (
                 <div>
                   <label className="block text-xs text-black mb-1">
                     Cuéntanos algo personal sobre ti (opcional)

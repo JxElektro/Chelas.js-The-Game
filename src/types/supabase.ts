@@ -6,6 +6,7 @@ import type { Database } from '@/integrations/supabase/types';
 export type Profile = Database['public']['Tables']['profiles']['Row'] & {
   temas_preferidos?: string[];
   descripcion_personal?: string;
+  analisis_externo?: string;
 };
 
 // Interest type derived from Database type

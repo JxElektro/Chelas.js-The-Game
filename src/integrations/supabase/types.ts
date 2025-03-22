@@ -103,6 +103,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          analisis_externo: string | null
           avatar: string
           created_at: string
           descripcion_personal: string | null
@@ -112,6 +113,7 @@ export type Database = {
           temas_preferidos: string[] | null
         }
         Insert: {
+          analisis_externo?: string | null
           avatar: string
           created_at?: string
           descripcion_personal?: string | null
@@ -121,6 +123,7 @@ export type Database = {
           temas_preferidos?: string[] | null
         }
         Update: {
+          analisis_externo?: string | null
           avatar?: string
           created_at?: string
           descripcion_personal?: string | null
