@@ -275,7 +275,7 @@ const InterestsPage = () => {
                   )}
                   
                   <div className="flex justify-between mt-4">
-                    <Button variant="secondary" onClick={() => navigate('/lobby')}>
+                    <Button variant="default" onClick={() => navigate('/lobby')}>
                       Cancelar
                     </Button>
                     <Button variant="primary" onClick={handleSave} disabled={loading || isAnalysisTab}>
