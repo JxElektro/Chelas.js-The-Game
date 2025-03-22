@@ -1,8 +1,7 @@
-// FILE: src/utils/interestsData.ts
-// Este archivo define de manera centralizada todos los intereses y subintereses,
-// organizados en tabs y categorías. Se han agregado muchos más elementos en cada categoría.
 
-<<<<<<< HEAD
+import { TopicCategory } from '@/types/supabase';
+import { supabase } from '@/integrations/supabase/client';
+
 export interface SubInterest {
   id: string;       // Se utilizará para guardarlo en la BD
   label: string;    // Nombre que se mostrará en la interfaz
@@ -215,10 +214,8 @@ export const interestTabs: InterestTab[] = [
     ],
   },
 ];
-=======
-import { TopicCategory } from '@/types/supabase';
-import { supabase } from '@/integrations/supabase/client';
 
+// Funciones adicionales para sembrar intereses en la base de datos
 export const PREDEFINED_INTERESTS: Record<string, string[]> = {
   entretenimiento: [
     'Películas', 'Series de TV', 'Anime', 'Documentales', 'Comedia', 
@@ -325,4 +322,3 @@ export const seedInterests = async () => {
 
   return { success: !error, error };
 };
->>>>>>> 827b06bac661a9c37899aac91b4b46d520f18be7
