@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -18,7 +17,7 @@ import {
 } from '@/services/deepseekService';
 import { ArrowLeft, RefreshCw, Clock, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Profile, Conversation as ConversationType } from '@/types/supabase';
+import { Profile, Conversation as ConversationType, InterestOption } from '@/types/supabase';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Json } from '@/integrations/supabase/types';
