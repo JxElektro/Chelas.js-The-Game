@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Profile, Conversation as ConversationType, InterestOption } from '@/types/supabase';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Json } from '@/integrations/supabase/types';
 
 const BOT_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -96,8 +97,9 @@ const Conversation = () => {
             created_at: new Date().toISOString(),
             temas_preferidos: [],
             descripcion_personal: 'Soy ChelasBot, un bot conversacional para ayudar a practicar tus habilidades sociales.',
-            analisis_externo: null // Add the missing property with null value
-          });
+            analisis_externo: null,
+            super_profile: null,
+          } as Profile);
           return;
         }
 

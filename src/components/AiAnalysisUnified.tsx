@@ -9,6 +9,7 @@ import { Profile, InterestOption } from '@/types/supabase';
 // Función que formatea el análisis usando IA (por ejemplo, DeepSeek)
 import { formatProfileAnalysis } from '@/services/deepseekService';
 import { Textarea } from './ui/textarea';
+import { SuperProfile } from '@/utils/superProfileUtils';
 
 interface AiAnalysisUnifiedProps {
   mode: 'prompt' | 'response';
@@ -67,11 +68,14 @@ const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
         .eq('id', userId)
         .single();
       
-      if (!superProfileError && superProfileData?.super_profile?.cultura?.tech?.ia) {
-        setAnalysisText(superProfileData.super_profile.cultura.tech.ia);
-        setChecked(true);
-        setIsFetchingExisting(false);
-        return;
+      if (!superProfileError && superProfileData?.super_profile) {
+        const typedSuperProfile = superProfileData.super_profile as unknown as SuperProfile;
+        if (typedSuperProfile.cultura?.tech?.ia) {
+          setAnalysisText(typedSuperProfile.cultura.tech.ia);
+          setChecked(true);
+          setIsFetchingExisting(false);
+          return;
+        }
       }
       
       // Si no existe en super_profile, lo buscamos en analisis_externo
@@ -194,14 +198,19 @@ Utiliza esta información para generar un perfil que me represente de forma aut�
       
       if (superProfileData?.super_profile) {
         // Clonar el SuperProfile y actualizar el campo ia
-        const updatedProfile = JSON.parse(JSON.stringify(superProfileData.super_profile));
+        const updatedProfile = JSON.parse(JSON.stringify(superProfileData.super_profile)) as unknown as SuperProfile;
+        
+        // Asegurarse de que las propiedades necesarias existan
+        if (!updatedProfile.cultura) updatedProfile.cultura = {} as SuperProfile['cultura'];
+        if (!updatedProfile.cultura.tech) updatedProfile.cultura.tech = {} as SuperProfile['cultura']['tech'];
+        
         updatedProfile.cultura.tech.ia = formattedText;
         
         // Guardar el SuperProfile actualizado
         const { error: updateError } = await supabase
           .from('profiles')
           .update({
-            super_profile: updatedProfile,
+            super_profile: updatedProfile as unknown as Json,
             // También actualizamos analisis_externo para compatibilidad
             analisis_externo: formattedText
           })

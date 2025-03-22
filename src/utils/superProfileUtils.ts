@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
 /**
  * Interfaz que define el súper objeto (SuperProfile) con todas las pestañas,
@@ -290,7 +291,7 @@ export async function saveSuperProfile(userId: string, superProfile: SuperProfil
   try {
     const { error } = await supabase
       .from('profiles')
-      .update({ super_profile: superProfile })
+      .update({ super_profile: superProfile as unknown as Json })
       .eq('id', userId);
 
     if (error) throw error;
@@ -324,7 +325,7 @@ export async function loadSuperProfile(userId: string): Promise<SuperProfile | n
     }
 
     if (data && data.super_profile) {
-      return data.super_profile as SuperProfile;
+      return data.super_profile as unknown as SuperProfile;
     }
 
     return null;

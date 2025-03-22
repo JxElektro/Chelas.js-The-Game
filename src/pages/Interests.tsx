@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -10,7 +11,8 @@ import Tabs from '@/components/Tabs';
 import { 
   interestTabs, 
   Category, 
-  SubInterest
+  SubInterest,
+  seedInterests
 } from '@/utils/interestUtils';
 import AiAnalysisUnified from '@/components/AiAnalysisUnified';
 import { 
