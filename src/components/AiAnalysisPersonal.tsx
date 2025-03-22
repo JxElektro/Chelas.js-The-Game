@@ -105,7 +105,7 @@ Asegúrate de utilizar datos genéricos o ficticios, y de no incluir ninguna inf
             </Button>
             
             <Button 
-              variant="secondary" 
+              variant="default" 
               size="sm" 
               onClick={openChatGPT}
               className="flex items-center"
