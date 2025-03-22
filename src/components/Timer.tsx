@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Timer as TimerIcon, Plus } from 'lucide-react';
 import Button from './Button';
 import { motion } from 'framer-motion';
 import { Progress } from './ui/progress';
+import { Skeleton } from './ui/skeleton';
 
 interface TimerProps {
   initialMinutes?: number;
@@ -21,8 +23,8 @@ const Timer: React.FC<TimerProps> = ({
 }) => {
   // Duración de la cuenta regresiva en modo conversación (en segundos)
   const conversationDuration = initialMinutes * 60;
-  // Duración del modo loading: 15 segundos
-  const loadingDuration = 15;
+  // Duración del modo loading: 16 segundos
+  const loadingDuration = 16;
 
   // Definimos el modo actual: "conversation" o "loading"
   const [mode, setMode] = useState<"conversation" | "loading">(isLoading ? "loading" : "conversation");
@@ -70,7 +72,7 @@ const Timer: React.FC<TimerProps> = ({
       interval = setInterval(() => {
         setLoadingElapsed(prev => {
           if (prev >= loadingDuration) {
-            // Cuando se completa el loading, se detiene en 15 segundos
+            // Cuando se completa el loading, se detiene en 16 segundos
             return loadingDuration;
           }
           // Se incrementa en 0.1 segundos (con precisión de un decimal)
@@ -109,10 +111,27 @@ const Timer: React.FC<TimerProps> = ({
 
   // Calculamos el porcentaje de progreso:
   // En modo conversación: cuanto queda de tiempo
-  // En modo loading: cuánto se ha completado de 15 segundos
+  // En modo loading: cuánto se ha completado de 16 segundos
   const percentage = mode === "conversation"
     ? Math.max(0, (conversationTimeLeft / conversationDuration) * 100)
     : Math.min(100, (loadingElapsed / loadingDuration) * 100);
+
+  // Generamos los segmentos de carga para el estilo Windows
+  const renderWindowsLoadingSegments = () => {
+    const totalSegments = 20;
+    const filledSegments = Math.floor((percentage / 100) * totalSegments);
+    
+    return (
+      <div className="flex w-full h-4 bg-white border border-gray-400">
+        {Array.from({ length: totalSegments }).map((_, index) => (
+          <div 
+            key={index}
+            className={`h-full w-[5%] ${index < filledSegments ? 'bg-blue-800' : 'bg-transparent'}`}
+          />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="win95-window max-w-xs mx-auto mb-4">
@@ -120,55 +139,54 @@ const Timer: React.FC<TimerProps> = ({
         <div className="flex items-center">
           <TimerIcon size={14} className="mr-1" />
           <span className="text-sm">
-            {mode === "conversation" ? "Time Remaining" : "Cargando Pregunta"}
+            {mode === "conversation" ? "Time Remaining" : "Loading..."}
           </span>
         </div>
       </div>
       <div className="p-3">
-        <div className="win95-inset flex items-center justify-center py-2 mb-2">
-          {mode === "loading" ? (
-            // Modo loading: se muestra una barra de progreso en verde
-            <div className="w-full px-2">
-              <Progress 
-                value={percentage} 
-                className="h-4 bg-chelas-gray-light"
-              >
-                <div className="h-full bg-green-500" />
-              </Progress>
+        {mode === "loading" ? (
+          // Windows-style progress bar with blue segments
+          <div className="mb-3">
+            <div className="win95-inset p-2 mb-2">
+              {renderWindowsLoadingSegments()}
             </div>
-          ) : (
-            // Modo conversación: se muestra la cuenta regresiva
-            <motion.div
-              animate={isBlinking ? { opacity: [1, 0.5, 1] } : { opacity: 1 }}
-              transition={isBlinking ? { repeat: Infinity, duration: 1 } : {}}
-            >
-              <span className={`font-pixel text-lg ${conversationTimeLeft <= 30 ? 'text-red-500' : 'text-black'}`}>
-                {formatTime(conversationTimeLeft)}
-              </span>
-            </motion.div>
-          )}
-        </div>
+          </div>
+        ) : (
+          // Conversation mode showing time and yellow progress bar
+          <>
+            <div className="win95-inset flex items-center justify-center py-2 mb-2">
+              <motion.div
+                animate={isBlinking ? { opacity: [1, 0.5, 1] } : { opacity: 1 }}
+                transition={isBlinking ? { repeat: Infinity, duration: 1 } : {}}
+              >
+                <span className={`font-pixel text-lg ${conversationTimeLeft <= 30 ? 'text-red-500' : 'text-black'}`}>
+                  {formatTime(conversationTimeLeft)}
+                </span>
+              </motion.div>
+            </div>
 
-        <div className="bg-chelas-gray-dark border-2 border-inset h-4 mb-3">
-          <motion.div
-            initial={{ width: '100%' }}
-            animate={{ width: `${percentage}%` }}
-            transition={{ type: 'tween' }}
-            className={mode === "conversation" ? "h-full bg-chelas-yellow" : "h-full bg-green-500"}
-          />
-        </div>
+            <div className="bg-chelas-gray-dark border-2 border-inset h-4 mb-3">
+              <motion.div
+                initial={{ width: '100%' }}
+                animate={{ width: `${percentage}%` }}
+                transition={{ type: 'tween' }}
+                className="h-full bg-chelas-yellow"
+              />
+            </div>
+          </>
+        )}
 
-        <div className="flex justify-between">
-          {mode === "conversation" && !isRunning && !autoStart && !isLoading && (
-            <Button
-              variant="primary"
-              className="text-xs"
-              onClick={() => setIsRunning(true)}
-            >
-              Iniciar
-            </Button>
-          )}
-          {mode === "conversation" && (
+        {mode === "conversation" && (
+          <div className="flex justify-between">
+            {!isRunning && !autoStart && !isLoading && (
+              <Button
+                variant="primary"
+                className="text-xs"
+                onClick={() => setIsRunning(true)}
+              >
+                Iniciar
+              </Button>
+            )}
             <Button
               variant="primary"
               className="text-xs ml-auto"
@@ -178,8 +196,8 @@ const Timer: React.FC<TimerProps> = ({
               <Plus size={14} className="mr-1" />
               Add 1 Min
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
