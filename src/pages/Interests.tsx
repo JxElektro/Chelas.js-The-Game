@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -26,8 +25,7 @@ const TABS = [
   { label: 'Humor',           categories: ['humor'] },
   { label: 'Otros',           categories: ['other'] },
   { label: 'Evitar',          categories: ['avoid'] },
-  { label: 'Análisis IA',     categories: ['analysis'] },
-  { label: 'Análisis Externo', categories: ['externalAnalysis'] },
+  { label: 'Análisis IA',     categories: ['externalAnalysis'] },
 ];
 
 const InterestsPage = () => {
@@ -226,11 +224,10 @@ const InterestsPage = () => {
 
   /** Obtiene las categorías definidas en la pestaña actual y filtra */
   const currentTabData = TABS[currentTab];
-  const isAnalysisTab = currentTabData.categories.includes('analysis');
-  const isExternalAnalysisTab = currentTabData.categories.includes('externalAnalysis');
+  const isAnalysisTab = currentTabData.categories.includes('externalAnalysis');
   
   // Filtrar intereses por categoría (excepto para las pestañas de análisis)
-  const filteredInterests = !isAnalysisTab && !isExternalAnalysisTab 
+  const filteredInterests = !isAnalysisTab
     ? allInterests.filter(opt => currentTabData.categories.includes(opt.category as string))
     : [];
   
@@ -246,6 +243,11 @@ const InterestsPage = () => {
   const avoidInterestsObjects = allInterests.filter(interest => 
     avoidInterests.includes(interest.id)
   );
+
+  // Función para actualizar la descripción personal desde el componente AiAnalysisUnified
+  const handlePersonalNoteUpdate = (newNote: string) => {
+    setPersonalNote(newNote);
+  };
 
   if (!userAuthenticated) {
     return <Layout>
@@ -279,23 +281,17 @@ const InterestsPage = () => {
           ) : (
             <div className="mt-4 flex flex-col space-y-4">
               {isAnalysisTab ? (
-                // Mostrar el análisis de IA usando el componente unificado en modo "prompt"
-                userProfile && (
-                  <AiAnalysisUnified 
-                    mode="prompt"
-                    profile={userProfile} 
-                    selectedInterests={selectedInterestsObjects}
-                    avoidTopics={avoidInterestsObjects}
-                  />
-                )
-              ) : isExternalAnalysisTab ? (
-                // Mostrar el componente de análisis externo usando el componente unificado en modo "response"
+                // Mostrar el componente unificado de análisis en modo "response"
                 userProfile && (
                   <AiAnalysisUnified 
                     mode="response"
                     userId={userProfile.id}
+                    profile={userProfile}
+                    selectedInterests={selectedInterestsObjects}
+                    avoidTopics={avoidInterestsObjects}
+                    personalNote={personalNote}
+                    onPersonalNoteChange={handlePersonalNoteUpdate}
                     onSaveResponse={async (text) => {
-                      // Como ejemplo simple, simplemente actualiza el perfil local
                       setUserProfile({
                         ...userProfile,
                         analisis_externo: text
@@ -342,21 +338,6 @@ const InterestsPage = () => {
                       })}
                     </div>
                   )}
-                </div>
-              )}
-
-              {/* Sección para descripción personal (no mostrar en pestaña de análisis) */}
-              {!isAnalysisTab && !isExternalAnalysisTab && (
-                <div>
-                  <label className="block text-xs text-black mb-1">
-                    Cuéntanos algo personal sobre ti (opcional)
-                  </label>
-                  <textarea
-                    className="win95-inset w-full h-24 p-2 text-black"
-                    value={personalNote}
-                    onChange={(e) => setPersonalNote(e.target.value)}
-                    placeholder="Me encanta cocinar platos italianos y coleccionar cómics de superhéroes..."
-                  />
                 </div>
               )}
 

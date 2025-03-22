@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Profile, InterestOption } from '@/types/supabase';
 // Importa la función para formatear el análisis usando IA
 import { formatProfileAnalysis } from '@/services/deepseekService';
+import { Textarea } from './ui/textarea';
 
 interface AiAnalysisUnifiedProps {
   mode: 'prompt' | 'response';
@@ -21,6 +22,10 @@ interface AiAnalysisUnifiedProps {
   onSaveResponse?: (response: string) => Promise<void>;
   // userId, por ejemplo para guardar en la BD (modo "response")
   userId?: string;
+  // Información personal del usuario
+  personalNote?: string;
+  // Callback para actualizar la nota personal
+  onPersonalNoteChange?: (note: string) => void;
 }
 
 const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
@@ -30,13 +35,16 @@ const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
   avoidTopics = [],
   customPrompt,
   onSaveResponse,
-  userId
+  userId,
+  personalNote = '',
+  onPersonalNoteChange
 }) => {
   const [copied, setCopied] = useState(false);
   const [analysisText, setAnalysisText] = useState('');
   const [checked, setChecked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [promptCopied, setPromptCopied] = useState(false);
+  const [localPersonalNote, setLocalPersonalNote] = useState(personalNote);
 
   // Prompt fijo para el modo 'response'
   const fixedPrompt = `ChatGPT, necesito que generes un perfil completo y detallado de un usuario utilizando información pública y profesional. Por favor, incluye las siguientes secciones:
@@ -71,8 +79,8 @@ Asegúrate de utilizar datos genéricos o ficticios, y de no incluir ninguna inf
       ? avoidTopics.map(i => i.label).join(', ')
       : 'Ninguno';
     
-    const personalDescription = profile?.descripcion_personal?.trim() 
-      ? profile.descripcion_personal 
+    const personalDescription = localPersonalNote?.trim() 
+      ? localPersonalNote 
       : 'No se ha proporcionado descripción personal.';
     
     return `
@@ -122,6 +130,15 @@ Utiliza esta información para generar un perfil que permita a alguien que no co
     window.open('https://chat.openai.com/', '_blank');
   };
 
+  // Manejar cambios en la nota personal
+  const handlePersonalNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setLocalPersonalNote(newValue);
+    if (onPersonalNoteChange) {
+      onPersonalNoteChange(newValue);
+    }
+  };
+
   // Función para guardar la respuesta del análisis (modo "response")
   // Se utiliza la IA para formatear el texto antes de guardarlo en Supabase
   const handleSaveResponse = async () => {
@@ -137,13 +154,18 @@ Utiliza esta información para generar un perfil que permita a alguien que no co
     try {
       // Llamada a la IA para formatear el análisis recibido
       const formattedText = await formatProfileAnalysis(analysisText);
-      // Actualizar la columna "analisis_externo" en Supabase con el texto formateado
+      
+      // Actualizar la columna "analisis_externo" y la descripción personal en Supabase
       const { error } = await supabase
         .from('profiles')
-        .update({ analisis_externo: formattedText })
+        .update({ 
+          analisis_externo: formattedText,
+          descripcion_personal: localPersonalNote
+        })
         .eq('id', userId);
+        
       if (error) throw error;
-      toast.success('Análisis guardado correctamente');
+      toast.success('Análisis y descripción personal guardados correctamente');
       if (onSaveResponse) await onSaveResponse(formattedText);
     } catch (err) {
       console.error('Error al guardar el análisis:', err);
@@ -154,8 +176,21 @@ Utiliza esta información para generar un perfil que permita a alguien que no co
   };
 
   return (
-    <WindowFrame title={mode === 'prompt' ? "ANÁLISIS DE IA: TU PERFIL" : "ANÁLISIS EXTERNO (IA)"} className="mt-6">
+    <WindowFrame title={mode === 'prompt' ? "ANÁLISIS DE IA: TU PERFIL" : "ANÁLISIS IA"} className="mt-6">
       <div className="p-2">
+        {/* Campo para la descripción personal */}
+        <div className="mb-4">
+          <label className="block text-xs text-black mb-1">
+            Cuéntanos algo personal sobre ti (opcional)
+          </label>
+          <Textarea
+            value={localPersonalNote}
+            onChange={handlePersonalNoteChange}
+            placeholder="Me encanta cocinar platos italianos y coleccionar cómics de superhéroes..."
+            className="win95-inset w-full h-24 p-2 text-black"
+          />
+        </div>
+
         <p className="text-black text-sm mb-4">
           Este es el texto que la IA utiliza para entender tu perfil. Puedes copiarlo y pegarlo en ChatGPT u otra herramienta de IA para obtener más información o sugerencias personalizadas.
         </p>
