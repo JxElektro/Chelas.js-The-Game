@@ -102,23 +102,29 @@ export type Database = {
         Row: {
           avatar: string
           created_at: string
+          descripcion_personal: string | null
           id: string
           is_available: boolean | null
           name: string
+          temas_preferidos: string[] | null
         }
         Insert: {
           avatar: string
           created_at?: string
+          descripcion_personal?: string | null
           id: string
           is_available?: boolean | null
           name: string
+          temas_preferidos?: string[] | null
         }
         Update: {
           avatar?: string
           created_at?: string
+          descripcion_personal?: string | null
           id?: string
           is_available?: boolean | null
           name?: string
+          temas_preferidos?: string[] | null
         }
         Relationships: []
       }

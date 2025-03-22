@@ -8,7 +8,7 @@ import Layout from '@/components/Layout';
 import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
 import Tabs from '@/components/Tabs';
-import { TopicCategory } from '@/types/supabase';
+import { TopicCategory, Profile } from '@/types/supabase';
 import { useNavigate } from 'react-router-dom';
 
 /** Estructura interna para mostrar intereses en la UI */
@@ -96,7 +96,7 @@ const InterestsPage = () => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('temas_preferidos, descripcion_personal')
+        .select('*')  // Get all columns including the new ones
         .eq('id', user.id)
         .single();
 
@@ -110,11 +110,12 @@ const InterestsPage = () => {
       }
 
       if (data) {
-        if (data.temas_preferidos) {
-          setSelectedInterests(data.temas_preferidos);
+        const profile = data as Profile;
+        if (profile.temas_preferidos) {
+          setSelectedInterests(profile.temas_preferidos);
         }
-        if (data.descripcion_personal) {
-          setPersonalNote(data.descripcion_personal);
+        if (profile.descripcion_personal) {
+          setPersonalNote(profile.descripcion_personal);
         }
       }
     } catch (err) {
