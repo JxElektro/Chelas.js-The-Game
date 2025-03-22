@@ -1,3 +1,4 @@
+// FILE: src/pages/Interests.tsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -5,38 +6,30 @@ import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
-import Tabs from '@/components/Tabs';
-import AiAnalysisUnified from '@/components/AiAnalysisUnified';
-import { TopicCategory, Profile, InterestOption } from '@/types/supabase';
 import { useNavigate } from 'react-router-dom';
 
-/** Definición de pestañas y a qué categorías mapean */
-const TABS = [
-  { label: 'General', categories: ['movies', 'series_anime', 'music', 'books'] },
-  { label: 'Ocio', categories: ['food', 'travel', 'sports', 'hobbies'] },
-  { label: 'Cultura', categories: ['art', 'tech', 'trends', 'humor'] },
-  { label: 'Otros', categories: ['other'] },
-  { label: 'Evitar', categories: ['avoid'] },
-  { label: 'Opciones Avanzadas IA', categories: ['externalAnalysis'] },
-];
-
+// Importamos las tabs y la data fija
+import { interestTabs, InterestTab, Category, SubInterest } from '@/utils/interestUtils';
 const InterestsPage = () => {
   const navigate = useNavigate();
-  const [currentTab, setCurrentTab] = useState(0);
-  const [allInterests, setAllInterests] = useState<InterestOption[]>([]);
+  const [currentTabIndex, setCurrentTabIndex] = useState(0);
+
+  // Arrays para los IDs seleccionados
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [avoidInterests, setAvoidInterests] = useState<string[]>([]);
-  const [personalNote, setPersonalNote] = useState(''); 
+
+  // Info adicional del usuario
+  const [personalNote, setPersonalNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [userAuthenticated, setUserAuthenticated] = useState(false);
-  const [userProfile, setUserProfile] = useState<Profile | null>(null);
-  
+
+  // Para cargar tu perfil y ver qué intereses ya tenía:
+  const [profileId, setProfileId] = useState<string | null>(null);
+
   useEffect(() => {
     checkAuthStatus();
-    fetchInterests();
   }, []);
 
-  /** Verifica si el usuario está autenticado */
   const checkAuthStatus = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData.session) {
@@ -45,153 +38,161 @@ const InterestsPage = () => {
       return;
     }
     setUserAuthenticated(true);
+    setProfileId(sessionData.session.user.id);
+    // Cargar los intereses del usuario, si ya existen
     fetchUserProfile(sessionData.session.user.id);
   };
 
-  /** Carga todos los intereses desde la tabla "interests" en Supabase */
-  const fetchInterests = async () => {
+  const fetchUserProfile = async (userId: string) => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('interests')
-        .select('*');
-      if (error) throw error;
-      // Convertir data en el formato InterestOption
-      const mapped = (data || []).map((i: any) => ({
-        id: i.id,
-        label: i.name,
-        category: i.category
-      })) as InterestOption[];
-      setAllInterests(mapped);
-    } catch (err) {
-      console.error(err);
-      toast.error('Error al cargar intereses');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /** Carga el perfil del usuario para mostrar sus intereses y su nota personal */
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
         .from('profiles')
-        .select('*')  
+        .select('*')
         .eq('id', userId)
         .single();
-      if (error) {
-        if (error.code === 'PGRST116') {
-          console.log('No se encontró perfil para el usuario, puede ser nuevo');
-          return;
-        }
-        throw error;
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error al cargar perfil de usuario:', error);
+        toast.error('Error al cargar tu perfil');
+        return;
       }
+
       if (data) {
-        const profile = data as Profile;
-        setUserProfile(profile);
-        if (profile.temas_preferidos) {
-          setSelectedInterests(profile.temas_preferidos);
+        const { temas_preferidos, descripcion_personal } = data;
+        // Separa intereses de “Evitar” del resto
+        if (Array.isArray(temas_preferidos)) {
+          // Ej: "avoid" agrupa los ID que son de “Evitar”
+          const avoided = temas_preferidos.filter((id: string) =>
+            // Tu lógica: si es algo que corresponde a la categoría "avoid"
+            // O si tu app los marcó así. Ej:
+            id.includes('avoid-') // o la condición que uses
+          );
+
+          setAvoidInterests(avoided);
+
+          // El resto:
+          const normal = temas_preferidos.filter((id: string) => !avoided.includes(id));
+          setSelectedInterests(normal);
         }
-        // Separar los intereses de evitar
-        if (profile.temas_preferidos) {
-          const allPreferredIds = profile.temas_preferidos;
-          const avoidInterestIds = allInterests
-            .filter(interest => interest.category === 'avoid' && allPreferredIds.includes(interest.id))
-            .map(interest => interest.id);
-          const normalInterestIds = allPreferredIds.filter(id => !avoidInterestIds.includes(id));
-          setSelectedInterests(normalInterestIds);
-          setAvoidInterests(avoidInterestIds);
-        }
-        if (profile.descripcion_personal) {
-          setPersonalNote(profile.descripcion_personal);
-        }
+        if (descripcion_personal) setPersonalNote(descripcion_personal);
       }
     } catch (err) {
       console.error('Error al cargar perfil de usuario:', err);
       toast.error('Error al cargar tu perfil');
-    }
-  };
-
-  /** Maneja el check/uncheck de cada interés */
-  const handleToggleInterest = (interestId: string, isAvoidCategory: boolean) => {
-    if (isAvoidCategory) {
-      setAvoidInterests(prev =>
-        prev.includes(interestId) ? prev.filter(id => id !== interestId) : [...prev, interestId]
-      );
-    } else {
-      setSelectedInterests(prev =>
-        prev.includes(interestId) ? prev.filter(id => id !== interestId) : [...prev, interestId]
-      );
-    }
-  };
-
-  /** Guarda los cambios en Supabase */
-  const handleSave = async () => {
-    try {
-      if (!userAuthenticated) {
-        toast.error('Debes iniciar sesión para guardar tus preferencias');
-        navigate('/login');
-        return;
-      }
-      setLoading(true);
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData.session?.user;
-      if (!user) {
-        toast.error('No estás autenticado');
-        navigate('/login');
-        return;
-      }
-      // Combinar los intereses normales y de evitar
-      const allInterestsToSave = [...selectedInterests, ...avoidInterests];
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          temas_preferidos: allInterestsToSave,
-          descripcion_personal: personalNote
-        })
-        .eq('id', user.id);
-      if (error) {
-        console.error('Error al actualizar perfil:', error);
-        if (error.code === 'PGRST116') {
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: user.id,
-              name: user.email?.split('@')[0] || 'Usuario',
-              avatar: 'user',
-              temas_preferidos: allInterestsToSave,
-              descripcion_personal: personalNote
-            });
-          if (insertError) throw insertError;
-          toast.success('Perfil creado y preferencias guardadas');
-        } else {
-          throw error;
-        }
-      } else {
-        toast.success('Intereses y nota personal guardados');
-      }
-      navigate('/lobby');
-    } catch (err) {
-      console.error('Error al guardar datos:', err);
-      toast.error('Error al guardar datos');
     } finally {
       setLoading(false);
     }
   };
 
-  // Filtrado según la pestaña actual
-  const currentTabData = TABS[currentTab];
-  const isAnalysisTab = currentTabData.categories.includes('externalAnalysis');
-  const filteredInterests = !isAnalysisTab
-    ? allInterests.filter(opt => currentTabData.categories.includes(opt.category as string))
-    : [];
-  const isAvoidTab = currentTabData.categories.includes('avoid');
-  const selectedInterestsObjects = allInterests.filter(interest =>
-    selectedInterests.includes(interest.id)
-  );
-  const avoidInterestsObjects = allInterests.filter(interest =>
-    avoidInterests.includes(interest.id)
-  );
+  // Guardar en Supabase la unión de todos los intereses marcados
+  const handleSave = async () => {
+    if (!profileId) return;
+    try {
+      setLoading(true);
+
+      // Todos los intereses en un solo array
+      const allInterests = [...selectedInterests, ...avoidInterests];
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          temas_preferidos: allInterests,
+          descripcion_personal: personalNote,
+        })
+        .eq('id', profileId);
+
+      if (error) throw error;
+
+      toast.success('Preferencias guardadas correctamente');
+      navigate('/lobby');
+    } catch (err) {
+      console.error('Error al guardar intereses:', err);
+      toast.error('No se pudieron guardar los intereses');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Alternar selección al hacer clic
+  const handleToggleInterest = (interestId: string, isAvoid: boolean) => {
+    if (isAvoid) {
+      setAvoidInterests((prev) =>
+        prev.includes(interestId)
+          ? prev.filter((id) => id !== interestId)
+          : [...prev, interestId]
+      );
+    } else {
+      setSelectedInterests((prev) =>
+        prev.includes(interestId)
+          ? prev.filter((id) => id !== interestId)
+          : [...prev, interestId]
+      );
+    }
+  };
+
+  // Renderizado de la pestaña actual
+  const renderCurrentTab = () => {
+    const tabData = interestTabs[currentTabIndex];
+    if (!tabData) return null;
+
+    // Si es la pestaña "Opciones Avanzadas IA" -> tu lógica
+    const isAiTab = tabData.categories.some(
+      (cat) => cat.categoryId === 'externalAnalysis'
+    );
+
+    if (isAiTab) {
+      return (
+        <div className="p-2">
+          <p className="text-sm text-black mb-4">
+            Aquí colocarías tu componente de análisis de IA, por ejemplo <strong>AiAnalysisUnified</strong> o el que uses.
+          </p>
+          {/* Lógica para tu componente IA */}
+        </div>
+      );
+    }
+
+    // De lo contrario, desplegamos las categorías y subInterests
+    return (
+      <div className="space-y-6">
+        {tabData.categories.map((cat: Category) => {
+          // Revisamos si es la categoría "avoid"
+          const isAvoidCategory = cat.categoryId === 'avoid';
+
+          return (
+            <div key={cat.categoryId} className="bg-white border border-gray-300 p-2">
+              <h3 className="text-sm font-bold text-black mb-2">{cat.label}</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {cat.subInterests?.map((sub: SubInterest) => {
+                  // Si es “avoid”, lo buscamos en avoidInterests
+                  const isSelected = isAvoidCategory
+                    ? avoidInterests.includes(sub.id)
+                    : selectedInterests.includes(sub.id);
+
+                  return (
+                    <div
+                      key={sub.id}
+                      onClick={() => handleToggleInterest(sub.id, isAvoidCategory)}
+                      className={`cursor-pointer flex items-center gap-2 border border-chelas-gray-dark p-2 ${
+                        isSelected ? 'bg-chelas-yellow/20' : 'bg-chelas-button-face'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleToggleInterest(sub.id, isAvoidCategory)}
+                      />
+                      <span className="text-sm text-black">{sub.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   if (!userAuthenticated) {
     return (
@@ -211,78 +212,54 @@ const InterestsPage = () => {
         className="flex flex-col items-center justify-center min-h-[80vh] w-full p-4"
       >
         <h1 className="text-chelas-yellow text-2xl mb-6">Configura Tus Intereses</h1>
+
         <WindowFrame title="PROPIEDADES DE INTERESES" className="w-full max-w-full sm:max-w-3xl">
           <div className="flex flex-col h-full">
-            {/* Componente de pestañas horizontales estilo Windows */}
-            <Tabs
-              tabs={TABS.map(t => t.label)}
-              activeTab={currentTab}
-              onChange={setCurrentTab}
-            />
-            
-            {/* Contenido de la pestaña activa */}
+            {/* Render de las pestañas */}
+            <div className="flex border-b border-chelas-gray-dark bg-chelas-gray-light">
+              {interestTabs.map((t, i) => (
+                <button
+                  key={t.label}
+                  onClick={() => setCurrentTabIndex(i)}
+                  className={`px-4 py-2 text-sm font-bold ${
+                    i === currentTabIndex ? 'bg-chelas-button-face' : ''
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Contenido de la pestaña */}
             <div className="p-4 flex-1 overflow-auto bg-chelas-button-face">
               {loading ? (
                 <p className="text-sm text-black mb-4">Cargando...</p>
               ) : (
-                <div className="flex flex-col space-y-4">
-                  {isAnalysisTab ? (
-                    // Mostrar el componente de análisis en modo "response"
-                    userProfile && (
-                      <AiAnalysisUnified 
-                        mode="response"
-                        userId={userProfile.id}
-                        profile={userProfile}
-                        selectedInterests={selectedInterestsObjects}
-                        avoidTopics={avoidInterestsObjects}
-                        onSaveResponse={async (text) => {
-                          setUserProfile({ ...userProfile, analisis_externo: text });
-                        }}
-                      />
-                    )
-                  ) : (
-                    // Mostrar la lista de intereses filtrada
-                    <div className="max-h-[350px] overflow-y-auto p-2 border border-chelas-gray-dark bg-white">
-                      {filteredInterests.length === 0 ? (
-                        <p className="text-sm text-black">No hay temas para esta categoría.</p>
-                      ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {filteredInterests.map(opt => {
-                            const isSelected = isAvoidTab
-                              ? avoidInterests.includes(opt.id)
-                              : selectedInterests.includes(opt.id);
-                            return (
-                              <motion.div
-                                key={opt.id}
-                                whileHover={{ scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
-                                className="p-2 cursor-pointer flex items-center gap-2 border border-chelas-gray-dark shadow-win95-button rounded-sm bg-chelas-button-face text-black"
-                                onClick={() => handleToggleInterest(opt.id, isAvoidTab)}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={() => handleToggleInterest(opt.id, isAvoidTab)}
-                                  className="mr-2"
-                                />
-                                <span className="text-sm text-black break-words">{opt.label}</span>
-                              </motion.div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between mt-4">
-                    <Button variant="default" onClick={() => navigate('/lobby')}>
+                <>
+                  {renderCurrentTab()}
+
+                  {/* Si quieres campo de descripción personal */}
+                  <div className="mt-6">
+                    <label className="block text-sm text-black font-medium mb-2">
+                      Descripción Personal
+                    </label>
+                    <textarea
+                      value={personalNote}
+                      onChange={(e) => setPersonalNote(e.target.value)}
+                      className="w-full h-24 win95-inset p-2 text-sm text-black"
+                      placeholder="Ej: Soy fan de la programación y me gusta el senderismo..."
+                    />
+                  </div>
+
+                  <div className="flex justify-end mt-4">
+                    <Button variant="default" onClick={() => navigate('/lobby')} className="mr-2">
                       Cancelar
                     </Button>
-                    <Button variant="primary" onClick={handleSave} disabled={loading || isAnalysisTab}>
+                    <Button variant="primary" onClick={handleSave} disabled={loading}>
                       {loading ? 'Guardando...' : 'Aceptar'}
                     </Button>
                   </div>
-                </div>
+                </>
               )}
             </div>
           </div>
