@@ -110,6 +110,7 @@ export type Database = {
           id: string
           is_available: boolean | null
           name: string
+          super_profile: Json | null
           temas_preferidos: string[] | null
         }
         Insert: {
@@ -120,6 +121,7 @@ export type Database = {
           id: string
           is_available?: boolean | null
           name: string
+          super_profile?: Json | null
           temas_preferidos?: string[] | null
         }
         Update: {
@@ -130,6 +132,7 @@ export type Database = {
           id?: string
           is_available?: boolean | null
           name?: string
+          super_profile?: Json | null
           temas_preferidos?: string[] | null
         }
         Relationships: []

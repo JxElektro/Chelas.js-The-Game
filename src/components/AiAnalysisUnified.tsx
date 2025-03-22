@@ -19,7 +19,7 @@ interface AiAnalysisUnifiedProps {
   // Permite sobrescribir el prompt generado automáticamente
   customPrompt?: string;
   // Callback para guardar respuesta (modo "response")
-  onSaveResponse?: (response: string) => Promise<void>;
+  onSaveResponse?: (response: string) => Promise<void> | void;
   // userId, por ejemplo para guardar en la BD (modo "response")
   userId?: string;
   // Descripción personal
@@ -60,6 +60,21 @@ const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
     
     try {
       setIsFetchingExisting(true);
+      // Intentamos primero cargar desde super_profile.cultura.tech.ia
+      const { data: superProfileData, error: superProfileError } = await supabase
+        .from('profiles')
+        .select('super_profile')
+        .eq('id', userId)
+        .single();
+      
+      if (!superProfileError && superProfileData?.super_profile?.cultura?.tech?.ia) {
+        setAnalysisText(superProfileData.super_profile.cultura.tech.ia);
+        setChecked(true);
+        setIsFetchingExisting(false);
+        return;
+      }
+      
+      // Si no existe en super_profile, lo buscamos en analisis_externo
       const { data, error } = await supabase
         .from('profiles')
         .select('analisis_externo')
@@ -169,15 +184,46 @@ Utiliza esta información para generar un perfil que me represente de forma aut�
     setLoading(true);
     try {
       const formattedText = await formatProfileAnalysis(analysisText);
-      const { error } = await supabase
+      
+      // Actualizar el SuperProfile si existe
+      const { data: superProfileData } = await supabase
         .from('profiles')
-        .update({
-          analisis_externo: formattedText
-        })
-        .eq('id', userId);
-      if (error) throw error;
+        .select('super_profile')
+        .eq('id', userId)
+        .single();
+      
+      if (superProfileData?.super_profile) {
+        // Clonar el SuperProfile y actualizar el campo ia
+        const updatedProfile = JSON.parse(JSON.stringify(superProfileData.super_profile));
+        updatedProfile.cultura.tech.ia = formattedText;
+        
+        // Guardar el SuperProfile actualizado
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            super_profile: updatedProfile,
+            // También actualizamos analisis_externo para compatibilidad
+            analisis_externo: formattedText
+          })
+          .eq('id', userId);
+          
+        if (updateError) throw updateError;
+      } else {
+        // Si no hay SuperProfile, solo actualizamos analisis_externo
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            analisis_externo: formattedText
+          })
+          .eq('id', userId);
+          
+        if (error) throw error;
+      }
+      
       toast.success('Análisis guardado correctamente');
-      if (onSaveResponse) await onSaveResponse(formattedText);
+      if (onSaveResponse) {
+        await onSaveResponse(formattedText);
+      }
     } catch (err) {
       console.error('Error al guardar el análisis:', err);
       toast.error('Error al guardar el análisis');

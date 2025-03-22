@@ -1,5 +1,3 @@
-
-// FILE: src/pages/Interests.tsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -12,12 +10,15 @@ import Tabs from '@/components/Tabs';
 import { 
   interestTabs, 
   Category, 
-  SubInterest,
-  seedInterests,
-  saveUserInterests,
-  loadUserInterests
+  SubInterest
 } from '@/utils/interestUtils';
 import AiAnalysisUnified from '@/components/AiAnalysisUnified';
+import { 
+  SuperProfile, 
+  createEmptySuperProfile, 
+  loadSuperProfile, 
+  updateSuperProfileFromSelections 
+} from '@/utils/superProfileUtils';
 
 const InterestsPage = () => {
   const navigate = useNavigate();
@@ -33,6 +34,9 @@ const InterestsPage = () => {
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false); // Para mostrar botón admin
   const [userAuthenticated, setUserAuthenticated] = useState(false);
+
+  // Nuevo state para manejar el SuperProfile
+  const [superProfile, setSuperProfile] = useState<SuperProfile | null>(null);
 
   // Para cargar tu perfil y ver qué intereses ya tenía:
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -62,7 +66,33 @@ const InterestsPage = () => {
   const fetchUserProfile = async (userId: string) => {
     try {
       setLoading(true);
-      // Cargar el perfil básico
+      
+      // Cargar el SuperProfile
+      const profile = await loadSuperProfile(userId);
+      
+      if (profile) {
+        setSuperProfile(profile);
+        
+        // Si hay un análisis de IA, lo cargamos
+        if (profile.cultura.tech.ia) {
+          setAiAnalysis(profile.cultura.tech.ia);
+        }
+        
+        // Convertimos el SuperProfile a arrays de IDs seleccionados
+        const selected: string[] = [];
+        const avoided: string[] = [];
+        
+        // Recorremos el SuperProfile para extraer los intereses seleccionados
+        extractInterestsFromSuperProfile(profile, selected, avoided);
+        
+        setSelectedInterests(selected);
+        setAvoidInterests(avoided);
+      } else {
+        // Si no hay perfil, creamos uno vacío
+        setSuperProfile(createEmptySuperProfile());
+      }
+      
+      // También cargamos el perfil básico para la descripción personal
       const { data, error } = await supabase
         .from('profiles')
         .select('descripcion_personal, analisis_externo')
@@ -77,23 +107,46 @@ const InterestsPage = () => {
 
       if (data) {
         if (data.descripcion_personal) setPersonalNote(data.descripcion_personal);
-        if (data.analisis_externo) setAiAnalysis(data.analisis_externo);
+        if (data.analisis_externo && !aiAnalysis) setAiAnalysis(data.analisis_externo);
       }
-
-      // Cargar intereses usando la nueva función
-      const interests = await loadUserInterests(userId);
-      if (interests.selectedInterests.length > 0) {
-        setSelectedInterests(interests.selectedInterests);
-      }
-      if (interests.avoidTopics.length > 0) {
-        setAvoidInterests(interests.avoidTopics);
-      }
+      
     } catch (err) {
       console.error('Error al cargar perfil de usuario:', err);
       toast.error('Error al cargar tu perfil');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Función para extraer los intereses seleccionados del SuperProfile
+  const extractInterestsFromSuperProfile = (
+    profile: SuperProfile,
+    selectedArr: string[],
+    avoidArr: string[]
+  ) => {
+    // Recorremos todo el perfil
+    Object.keys(profile).forEach(tabKey => {
+      const tab = profile[tabKey as keyof SuperProfile];
+      
+      Object.keys(tab).forEach(categoryKey => {
+        const category = tab[categoryKey as string];
+        
+        Object.keys(category).forEach(interestKey => {
+          // Saltamos el campo 'ia' que es string
+          if (interestKey === 'ia') return;
+          
+          // @ts-ignore - Sabemos que es un objeto con propiedades booleanas
+          if (category[interestKey] === true) {
+            // Si es de la categoría "avoid", va al array de evitar
+            if (categoryKey === 'avoid') {
+              avoidArr.push(interestKey);
+            } else {
+              selectedArr.push(interestKey);
+            }
+          }
+        });
+      });
+    });
   };
 
   /** Función para generar intereses predefinidos en la base de datos */
@@ -116,23 +169,35 @@ const InterestsPage = () => {
     }
   };
 
-  // Guardar en Supabase utilizando la nueva función
+  // Guardar en Supabase utilizando la nueva función de SuperProfile
   const handleSave = async () => {
     if (!profileId) return;
     try {
       setLoading(true);
 
-      const result = await saveUserInterests(
+      // Actualizamos el SuperProfile con las selecciones actuales
+      const result = await updateSuperProfileFromSelections(
         profileId,
         selectedInterests,
         avoidInterests,
-        aiAnalysis,
-        personalNote
+        aiAnalysis
       );
 
       if (!result.success) {
         throw result.error;
       }
+      
+      // También actualizamos la descripción personal en el perfil básico
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          descripcion_personal: personalNote,
+          // También guardamos el análisis para compatibilidad
+          analisis_externo: aiAnalysis
+        })
+        .eq('id', profileId);
+      
+      if (profileError) throw profileError;
 
       toast.success('Preferencias guardadas correctamente');
       navigate('/lobby');
@@ -164,6 +229,13 @@ const InterestsPage = () => {
   // Actualizar el análisis de ChatGPT
   const handleAiAnalysisChange = async (analysis: string) => {
     setAiAnalysis(analysis);
+    
+    // Si tenemos un SuperProfile, actualizamos el campo ia
+    if (superProfile && profileId) {
+      const updatedProfile = { ...superProfile };
+      updatedProfile.cultura.tech.ia = analysis;
+      setSuperProfile(updatedProfile);
+    }
   };
 
   // Renderizado de la pestaña actual
@@ -282,7 +354,7 @@ const InterestsPage = () => {
                   <>
                     {renderCurrentTab()}
 
-                    {/* Campo de descripción personal (excepto en la pestaña IA) */}
+                    {/* Campo de descripción personal solo se muestra cuando no estamos en la pestaña IA */}
                     {currentTabIndex !== interestTabs.length - 1 && (
                       <div className="mt-6">
                         <label className="block text-sm text-black font-medium mb-2">
