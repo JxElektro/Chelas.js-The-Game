@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -134,7 +135,7 @@ const Interests = () => {
         const dbInterestOptions = (allInterests || []).map((interest: Interest) => ({
           id: interest.id,
           label: interest.name,
-          category: interest.category
+          category: interest.category as TopicCategory
         }));
         
         const combinedOptions = [...dbInterestOptions];
@@ -146,6 +147,7 @@ const Interests = () => {
         
         setInterestOptions(combinedOptions);
         
+        // Here's the critical fix: explicitly set the category as 'avoid'
         setAvoidOptions(
           (regularInterests || []).slice(0, 20).map((interest: Interest) => ({
             id: interest.id,
