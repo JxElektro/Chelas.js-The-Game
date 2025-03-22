@@ -34,10 +34,10 @@ const Timer: React.FC<TimerProps> = ({
     }
   }, [autoStart, initialMinutes]);
 
-  // Loading animation effect
+  // Loading animation effect - now 12 seconds
   useEffect(() => {
     if (isLoading) {
-      const duration = 8000; // 8 seconds
+      const duration = 12000; // 12 seconds
       const increment = 100 / (duration / 100); // Calculate increment per 100ms
       const interval = setInterval(() => {
         setLoadingProgress(prev => {
@@ -106,7 +106,7 @@ const Timer: React.FC<TimerProps> = ({
                 value={loadingProgress} 
                 className="h-4 bg-chelas-gray-light" 
               >
-                <div className="h-full bg-[#33C3F0]" />
+                <div className="h-full bg-green-500" />
               </Progress>
             </div>
           ) : (
