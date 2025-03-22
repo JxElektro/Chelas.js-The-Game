@@ -50,4 +50,5 @@ export type TopicCategory =
 export type ChatMessage = {
   role: 'ai' | 'user';
   content: string;
+  suggestions?: string[]; // Optional suggested interests that can be clicked
 };

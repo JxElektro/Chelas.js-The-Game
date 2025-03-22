@@ -16,7 +16,7 @@ export const generateConversationTopic = async ({
   userBInterests,
   avoidTopics,
   matchPercentage
-}: GenerateTopicParams): Promise<string> => {
+}: GenerateTopicParams): Promise<string[]> => {
   try {
     const prompt = `
       Intereses de Usuario A: ${userAInterests.join(', ')}.
@@ -24,10 +24,11 @@ export const generateConversationTopic = async ({
       Temas a evitar: ${avoidTopics.join(', ')}.
       Porcentaje de coincidencia: ${matchPercentage}%.
       
-      Genera una pregunta interesante para iniciar una conversación que considere los intereses compartidos de los usuarios.
-      La pregunta debe ser específica, abierta y fomentar una conversación profunda.
+      Genera 3-5 preguntas o temas interesantes para iniciar una conversación que considere los intereses compartidos de los usuarios.
+      Las preguntas deben ser específicas, abiertas y fomentar una conversación profunda.
       Prioriza temas donde hay coincidencias (${matchPercentage}% de coincidencia).
-      La respuesta debe ser una sola pregunta en español, concisa y atractiva.
+      Formatea tu respuesta como una lista de preguntas separadas por saltos de línea, sin numeración ni viñetas.
+      Todas las preguntas deben estar en español, ser concisas y atractivas.
     `;
 
     const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
@@ -43,33 +44,48 @@ export const generateConversationTopic = async ({
       }
     });
 
-    return response.data.choices[0].message.content.trim();
+    const content = response.data.choices[0].message.content.trim();
+    // Split the content by newlines to get an array of topics
+    return content.split('\n').filter(line => line.trim().length > 0);
   } catch (error) {
-    console.error('Error generando tema de conversación:', error);
-    return "¿Qué proyectos tecnológicos o creativos te gustaría desarrollar en el futuro cercano?";
+    console.error('Error generando temas de conversación:', error);
+    return [
+      "¿Qué proyectos tecnológicos o creativos te gustaría desarrollar en el futuro cercano?",
+      "¿Cómo crees que la inteligencia artificial cambiará nuestra forma de programar?",
+      "¿Cuál ha sido tu experiencia más interesante en un evento de tecnología?"
+    ];
   }
 };
 
 // Función simulada para pruebas cuando la API no está disponible
-export const generateMockTopic = (): string => {
-  const topics = [
-    // Preguntas basadas en intereses comunes
-    "¿Cómo crees que la inteligencia artificial cambiará nuestra forma de programar en los próximos 5 años?",
-    "Si pudieras recomendar una película o serie que haya cambiado tu perspectiva, ¿cuál sería y por qué?",
-    "¿Qué estrategias has encontrado más efectivas para mantenerte actualizado con las nuevas tecnologías?",
-    "¿Qué género musical te inspira más cuando estás programando o siendo creativo?",
-    "¿Cuál ha sido tu experiencia de viaje más memorable y qué la hizo especial?",
-    "¿Tienes algún hobby o pasatiempo que te ayude a equilibrar tu vida profesional con la personal?",
-    "¿Cuál es tu opinión sobre el balance entre el código abierto y el software propietario?",
-    "Si pudieras elegir cualquier tecnología para dominar en los próximos meses, ¿cuál sería y por qué?",
-    "¿Qué libro o recurso recomendarías a alguien que quiera aprender sobre tu área de experiencia?",
-    "¿Qué tendencias tecnológicas te parecen más prometedoras actualmente?",
-    "¿Cómo abordas el síndrome del impostor en tu vida profesional?",
-    "¿Qué tipo de proyectos personales estás desarrollando o te gustaría desarrollar?",
-    "¿Cuál es tu enfoque para mantener un buen equilibrio entre trabajo y vida personal?",
-    "¿Qué comunidades o recursos online has encontrado más valiosos para tu desarrollo profesional?",
-    "¿Qué consejo le darías a alguien que está comenzando en el mundo de la programación?"
+export const generateMockTopic = (): string[] => {
+  const topicSets = [
+    [
+      "¿Cómo crees que la inteligencia artificial cambiará nuestra forma de programar en los próximos 5 años?",
+      "¿Qué herramientas o tecnologías has descubierto recientemente que te han facilitado el trabajo?",
+      "¿Cuál es tu opinión sobre el equilibrio entre velocidad de desarrollo y calidad del código?"
+    ],
+    [
+      "Si pudieras recomendar una película o serie que haya cambiado tu perspectiva, ¿cuál sería y por qué?",
+      "¿Qué género cinematográfico te parece que mejor refleja nuestra sociedad actual?",
+      "¿Prefieres leer el libro o ver la adaptación cinematográfica? ¿Por qué?"
+    ],
+    [
+      "¿Qué música sueles escuchar mientras trabajas o estudias?",
+      "¿Has asistido a algún concierto memorable últimamente?",
+      "¿Cómo crees que la tecnología ha cambiado nuestra forma de descubrir y consumir música?"
+    ],
+    [
+      "¿Cuál ha sido tu experiencia de viaje más memorable y qué la hizo especial?",
+      "Si pudieras vivir en cualquier ciudad del mundo durante un año, ¿cuál elegirías y por qué?",
+      "¿Prefieres planificar cada detalle de un viaje o dejarte llevar por la espontaneidad?"
+    ],
+    [
+      "¿Tienes algún hobby o pasatiempo que te ayude a equilibrar tu vida profesional con la personal?",
+      "¿Qué actividad te gustaría aprender o probar que nunca hayas hecho antes?",
+      "¿Cómo encuentras tiempo para tus intereses personales en medio de un horario ocupado?"
+    ]
   ];
   
-  return topics[Math.floor(Math.random() * topics.length)];
+  return topicSets[Math.floor(Math.random() * topicSets.length)];
 };

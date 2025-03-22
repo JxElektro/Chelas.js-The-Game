@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
@@ -9,7 +10,7 @@ import Timer from '@/components/Timer';
 import ConversationPrompt from '@/components/ConversationPrompt';
 import MatchPercentage from '@/components/MatchPercentage';
 import { generateConversationTopic, generateMockTopic } from '@/services/deepseekService';
-import { ArrowLeft, RefreshCw, Clock, X } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Clock, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, Conversation as ConversationType, InterestOption } from '@/types/supabase';
 import { toast } from 'sonner';
@@ -21,12 +22,15 @@ const Conversation = () => {
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
   const [isLoading, setIsLoading] = useState(true);
-  const [topic, setTopic] = useState('');
+  const [topics, setTopics] = useState<string[]>([]);
+  const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
   const [otherUserProfile, setOtherUserProfile] = useState<Profile | null>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<Profile | null>(null);
   const [matchPercentage, setMatchPercentage] = useState(0);
   const [matchCount, setMatchCount] = useState(0);
   const [allInterests, setAllInterests] = useState<InterestOption[]>([]);
+  const [showAllTopics, setShowAllTopics] = useState(false);
+  const conversationIdRef = useRef<string | null>(null);
   const isMobile = useIsMobile();
   
   useEffect(() => {
@@ -200,13 +204,16 @@ const Conversation = () => {
       try {
         console.log('Iniciando conversación con el usuario:', otherUserProfile.id);
         
-        const mockTopic = generateMockTopic();
+        // Generate multiple topics instead of just one
+        const mockTopics = generateMockTopic();
         
         setTimeout(() => {
-          setTopic(mockTopic);
+          setTopics(mockTopics);
+          setCurrentTopicIndex(0);
           setIsLoading(false);
         }, 1500);
 
+        // Create the conversation record
         if (otherUserProfile && currentUserProfile) {
           const { data: conversation, error } = await supabase
             .from('conversations')
@@ -222,29 +229,38 @@ const Conversation = () => {
             return;
           }
           
-          if (conversation && matchPercentage > 0) {
-            const { error: updateError } = await supabase
-              .from('conversations')
-              .update({ match_percentage: matchPercentage })
-              .eq('id', conversation.id);
-              
-            if (updateError) {
-              console.error('Error al actualizar match_percentage:', updateError);
-            }
-          }
-          
+          // Store the conversation ID for later use
           if (conversation) {
-            await supabase
-              .from('conversation_topics')
-              .insert({
-                conversation_id: conversation.id,
-                topic: mockTopic
-              });
+            conversationIdRef.current = conversation.id;
+            
+            // Update match percentage in a separate query
+            if (matchPercentage > 0) {
+              const { error: updateError } = await supabase
+                .from('conversations')
+                .update({ match_percentage: matchPercentage })
+                .eq('id', conversation.id);
+                
+              if (updateError) {
+                console.error('Error al actualizar match_percentage:', updateError);
+              }
+            }
+            
+            // Save all topics in the database
+            const topicPromises = mockTopics.map(topic => {
+              return supabase
+                .from('conversation_topics')
+                .insert({
+                  conversation_id: conversation.id,
+                  topic: topic
+                });
+            });
+            
+            await Promise.all(topicPromises);
           }
         }
       } catch (error) {
         console.error('Error al generar tema:', error);
-        setTopic("¿Cuál es tu parte favorita del desarrollo JavaScript?");
+        setTopics(["¿Cuál es tu parte favorita del desarrollo JavaScript?"]);
         setIsLoading(false);
       }
     };
@@ -255,10 +271,35 @@ const Conversation = () => {
   const handleNewTopic = () => {
     setIsLoading(true);
     setTimeout(() => {
-      const newTopic = generateMockTopic();
-      setTopic(newTopic);
+      const newTopics = generateMockTopic();
+      setTopics(newTopics);
+      setCurrentTopicIndex(0);
       setIsLoading(false);
+      
+      // Save new topics to database if we have a conversation ID
+      if (conversationIdRef.current) {
+        newTopics.forEach(topic => {
+          supabase
+            .from('conversation_topics')
+            .insert({
+              conversation_id: conversationIdRef.current as string,
+              topic: topic
+            })
+            .then(({ error }) => {
+              if (error) console.error('Error al guardar nuevo tema:', error);
+            });
+        });
+      }
     }, 1500);
+  };
+  
+  const handleNextTopic = () => {
+    if (currentTopicIndex < topics.length - 1) {
+      setCurrentTopicIndex(currentTopicIndex + 1);
+    } else {
+      // If we're at the end, cycle back to the first topic
+      setCurrentTopicIndex(0);
+    }
   };
 
   const handleTimeUp = () => {
@@ -267,7 +308,23 @@ const Conversation = () => {
   };
 
   const handleEndConversation = () => {
+    // Update conversation end time if we have a conversation ID
+    if (conversationIdRef.current) {
+      supabase
+        .from('conversations')
+        .update({ ended_at: new Date().toISOString() })
+        .eq('id', conversationIdRef.current)
+        .then(({ error }) => {
+          if (error) console.error('Error al finalizar conversación:', error);
+        });
+    }
+    
     navigate('/lobby');
+  };
+
+  const getTopicDisplay = () => {
+    if (topics.length === 0) return "";
+    return topics[currentTopicIndex];
   };
 
   if (!otherUserProfile) return null;
@@ -294,10 +351,18 @@ const Conversation = () => {
             <div className="ml-4">
               <h2 className="text-black text-lg font-bold">{otherUserProfile.name}</h2>
               <p className="text-sm text-chelas-gray-dark">
-                ¡Usa el tema de abajo para iniciar una conversación!
+                ¡Usa los temas de abajo para iniciar una conversación!
               </p>
             </div>
           </div>
+          
+          {otherUserProfile.descripcion_personal && (
+            <div className="mt-4 p-3 bg-chelas-gray-light/20 rounded-sm border border-chelas-gray-light">
+              <p className="text-sm text-black italic">
+                "{otherUserProfile.descripcion_personal}"
+              </p>
+            </div>
+          )}
         </WindowFrame>
 
         {matchPercentage > 0 && (
@@ -313,9 +378,64 @@ const Conversation = () => {
           onExtend={() => console.log('Tiempo extendido')}
         />
 
-        <ConversationPrompt prompt={topic} isLoading={isLoading} />
+        <ConversationPrompt prompt={getTopicDisplay()} isLoading={isLoading} />
+        
+        {topics.length > 1 && (
+          <div className="mb-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowAllTopics(!showAllTopics)}
+              className="w-full text-sm"
+            >
+              {showAllTopics ? (
+                <>
+                  <ChevronUp size={16} className="mr-1" />
+                  Ocultar más temas
+                </>
+              ) : (
+                <>
+                  <ChevronDown size={16} className="mr-1" />
+                  Ver todos los temas ({topics.length})
+                </>
+              )}
+            </Button>
+            
+            {showAllTopics && (
+              <div className="mt-2 p-3 bg-white border border-chelas-gray-dark rounded-sm">
+                <p className="text-sm font-medium mb-2 text-black">Todos los temas disponibles:</p>
+                <div className="space-y-2">
+                  {topics.map((topic, index) => (
+                    <div 
+                      key={index}
+                      className={`p-2 cursor-pointer text-sm rounded-sm
+                        ${index === currentTopicIndex ? 
+                          'bg-chelas-yellow text-black' : 
+                          'bg-chelas-button-face hover:bg-chelas-gray-light/30 text-black'}
+                      `}
+                      onClick={() => setCurrentTopicIndex(index)}
+                    >
+                      {topic}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row justify-center gap-3 mt-auto">
+          {topics.length > 1 && (
+            <Button 
+              variant="default"
+              onClick={handleNextTopic}
+              disabled={isLoading}
+              className="w-full sm:w-auto"
+            >
+              <ChevronDown size={16} className="mr-1" />
+              Siguiente Tema
+            </Button>
+          )}
+          
           <Button 
             variant="default"
             onClick={handleNewTopic}
@@ -323,7 +443,7 @@ const Conversation = () => {
             className="w-full sm:w-auto"
           >
             <RefreshCw size={16} className="mr-1" />
-            Nuevo Tema
+            Nuevos Temas
           </Button>
           
           <Button 

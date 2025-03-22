@@ -103,6 +103,18 @@ const InterestForm: React.FC<InterestFormProps> = ({
     }
   };
 
+  // Handle suggested interest from AI chat
+  const handleSuggestedInterest = (interest: string) => {
+    // First check if we already have this interest or a maximum number
+    if (interests.length >= 5) {
+      toast.error('Ya has seleccionado el máximo de intereses (5)');
+      return;
+    }
+    
+    // Create a new custom interest and add it
+    onCustomInterestAdd(interest);
+  };
+
   return (
     <form onSubmit={handleSubmit}>
       <p className="text-sm text-black mb-4">
@@ -128,7 +140,10 @@ const InterestForm: React.FC<InterestFormProps> = ({
         />
       </div>
       
-      <InterestAiChat initialMessage={aiMessage} />
+      <InterestAiChat 
+        initialMessage={aiMessage} 
+        onSuggestedInterestClick={handleSuggestedInterest}
+      />
       
       <div className="mb-4 p-2 bg-chelas-yellow/20 border-2 border-chelas-yellow flex items-start">
         <AlertTriangle size={16} className="text-chelas-yellow mr-2 flex-shrink-0 mt-0.5" />
