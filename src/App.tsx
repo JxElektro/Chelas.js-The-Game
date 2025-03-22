@@ -9,6 +9,7 @@ import { AnimatePresence } from "framer-motion";
 // Pages
 import Landing from "./pages/Landing";
 import Register from "./pages/Register";
+import Login from "./pages/Login";
 import Interests from "./pages/Interests";
 import Lobby from "./pages/Lobby";
 import Conversation from "./pages/Conversation";
@@ -26,6 +27,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/interests" element={<Interests />} />
             <Route path="/lobby" element={<Lobby />} />
             <Route path="/conversation/:userId" element={<Conversation />} />

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
 import Button from '@/components/Button';
 import WindowFrame from '@/components/WindowFrame';
-import { Terminal } from 'lucide-react';
+import { Terminal, LogIn } from 'lucide-react';
 
 const Landing = () => {
   return (
@@ -38,10 +38,10 @@ const Landing = () => {
           className="mb-8 text-center"
         >
           <p className="text-chelas-gray-light mb-2">
-            Connect with fellow JavaScript enthusiasts
+            Conecta con otros entusiastas de JavaScript
           </p>
           <p className="text-sm text-chelas-gray-medium">
-            AI-powered conversation starters for tech events
+            Inicios de conversación impulsados por IA para eventos de tecnología
           </p>
         </motion.div>
 
@@ -51,12 +51,20 @@ const Landing = () => {
           transition={{ delay: 0.6 }}
           className="grid grid-cols-1 gap-4 w-full max-w-xs"
         >
-          <Link to="/register" className="w-full">
-            <Button variant="primary" className="w-full">
-              <Terminal size={16} className="mr-2" />
-              Get Started
-            </Button>
-          </Link>
+          <div className="grid grid-cols-2 gap-4">
+            <Link to="/register" className="w-full">
+              <Button variant="primary" className="w-full">
+                <Terminal size={16} className="mr-2" />
+                Registrarse
+              </Button>
+            </Link>
+            <Link to="/login" className="w-full">
+              <Button variant="secondary" className="w-full">
+                <LogIn size={16} className="mr-2" />
+                Entrar
+              </Button>
+            </Link>
+          </div>
         </motion.div>
 
         <motion.div
@@ -65,23 +73,23 @@ const Landing = () => {
           transition={{ delay: 0.8 }}
           className="mt-12 w-full max-w-xs"
         >
-          <WindowFrame title="HOW IT WORKS">
+          <WindowFrame title="CÓMO FUNCIONA">
             <ol className="text-sm text-black space-y-4">
               <li className="flex">
                 <span className="flex-shrink-0 w-6 h-6 bg-chelas-yellow flex items-center justify-center mr-2 border border-chelas-gray-dark">1</span>
-                <p>Create your profile and select your interests</p>
+                <p>Crea tu perfil y selecciona tus intereses</p>
               </li>
               <li className="flex">
                 <span className="flex-shrink-0 w-6 h-6 bg-chelas-yellow flex items-center justify-center mr-2 border border-chelas-gray-dark">2</span>
-                <p>Find available people in the event</p>
+                <p>Encuentra personas disponibles en el evento</p>
               </li>
               <li className="flex">
                 <span className="flex-shrink-0 w-6 h-6 bg-chelas-yellow flex items-center justify-center mr-2 border border-chelas-gray-dark">3</span>
-                <p>Get AI-powered conversation starters based on your shared interests</p>
+                <p>Obtén temas de conversación generados por IA basados en intereses comunes</p>
               </li>
               <li className="flex">
                 <span className="flex-shrink-0 w-6 h-6 bg-chelas-yellow flex items-center justify-center mr-2 border border-chelas-gray-dark">4</span>
-                <p>Connect, chat, and make new friends!</p>
+                <p>Conecta, conversa y haz nuevos amigos</p>
               </li>
             </ol>
           </WindowFrame>
