@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -276,7 +275,7 @@ const InterestsPage = () => {
         <h1 className="text-chelas-yellow text-2xl mb-6">Configura Tus Intereses</h1>
         {isAdmin && (
           <Button 
-            variant="secondary" 
+            variant="primary" 
             onClick={handleSeedInterests} 
             className="mb-4"
             disabled={loading}
