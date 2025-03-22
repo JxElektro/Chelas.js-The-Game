@@ -3,8 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Timer as TimerIcon, Plus } from 'lucide-react';
 import Button from './Button';
 import { motion } from 'framer-motion';
-import { Progress } from './ui/progress';
-import { Skeleton } from './ui/skeleton';
 
 interface TimerProps {
   initialMinutes?: number;
@@ -35,9 +33,12 @@ const Timer: React.FC<TimerProps> = ({
   const [loadingElapsed, setLoadingElapsed] = useState(0);
 
   // Bandera para controlar si el temporizador de conversación está activo
-  const [isRunning, setIsRunning] = useState(autoStart);
+  const [isRunning, setIsRunning] = useState(false);
   // Estado para controlar el parpadeo cuando quedan pocos segundos
   const [isBlinking, setIsBlinking] = useState(false);
+
+  // Flag to track if we've previously been in loading mode
+  const [wasLoading, setWasLoading] = useState(isLoading);
 
   // Al detectar cambios en la prop isLoading, cambiamos el modo
   useEffect(() => {
@@ -45,11 +46,17 @@ const Timer: React.FC<TimerProps> = ({
       // Si se activa el loading, cambiamos al modo loading y reiniciamos el contador de carga
       setMode("loading");
       setLoadingElapsed(0);
+      setWasLoading(true);
     } else {
       // Al finalizar el loading, volvemos al modo conversación sin modificar el tiempo restante
       setMode("conversation");
+      
+      // Start the conversation timer if loading has just finished and autoStart is true
+      if (wasLoading && autoStart) {
+        setIsRunning(true);
+      }
     }
-  }, [isLoading]);
+  }, [isLoading, autoStart]);
 
   // Efecto para actualizar el temporizador según el modo
   useEffect(() => {
