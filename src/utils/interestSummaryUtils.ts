@@ -1,57 +1,3 @@
-
-import { SuperProfile } from './superProfileUtils';
-
-/**
- * Extracts a specified number of random interests from a user's SuperProfile
- * @param superProfile The user's SuperProfile object
- * @param count Number of interests to extract (default: 3)
- * @returns Array of interest names or empty array if none found
- */
-export const getRandomInterestsFromSuperProfile = (
-  superProfile: SuperProfile | null | undefined,
-  count: number = 3
-): string[] => {
-  if (!superProfile) return [];
-  
-  // Collect all enabled interests from the SuperProfile
-  const enabledInterests: string[] = [];
-  
-  // Loop through all tabs and categories to find enabled interests
-  Object.keys(superProfile).forEach(tabKey => {
-    const tab = superProfile[tabKey as keyof SuperProfile];
-    
-    // Skip 'evitar' tab (avoid interests)
-    if (tabKey === 'evitar') return;
-    
-    Object.keys(tab).forEach(categoryKey => {
-      const category = tab[categoryKey as string];
-      
-      Object.keys(category).forEach(interestKey => {
-        // Skip the special 'ia' field which is a string
-        if (interestKey === 'ia') return;
-        
-        // If this interest is enabled (true), add its formatted name to our list
-        if (category[interestKey as keyof typeof category] === true) {
-          // Format the interest name to be more readable
-          const formattedName = interestKey
-            .split('-')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
-          
-          enabledInterests.push(formattedName);
-        }
-      });
-    });
-  });
-  
-  // If no interests found, return empty array
-  if (enabledInterests.length === 0) return [];
-  
-  // Shuffle array and take the first 'count' elements
-  const shuffled = [...enabledInterests].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, Math.min(count, shuffled.length));
-};
-
 /**
  * Creates a summary string based on random interests from a user's profile
  * @param superProfile The user's SuperProfile or Json data
@@ -60,15 +6,14 @@ export const getRandomInterestsFromSuperProfile = (
 export const createInterestSummary = (superProfile: any): string => {
   // Validate if superProfile has the expected structure before attempting to use it
   if (!superProfile || typeof superProfile !== 'object') {
-    return "Compañero de conversación para practicar tus habilidades sociales.";
+    return "Compañero ideal para conversar y descubrir nuevos temas.";
   }
   
   try {
-    // Try to use the superProfile as a SuperProfile object
     const randomInterests = getRandomInterestsFromSuperProfile(superProfile as SuperProfile, 3);
     
     if (randomInterests.length === 0) {
-      return "Compañero de conversación para practicar tus habilidades sociales.";
+      return "Compañero ideal para conversar y descubrir nuevos temas.";
     }
     
     if (randomInterests.length === 1) {
@@ -79,6 +24,6 @@ export const createInterestSummary = (superProfile: any): string => {
     return `Le interesa: ${randomInterests.join(', ')} y ${lastInterest}.`;
   } catch (error) {
     console.error('Error al procesar el super_profile:', error);
-    return "Compañero de conversación para practicar tus habilidades sociales.";
+    return "Compañero ideal para conversar y descubrir nuevos temas.";
   }
 };
