@@ -475,6 +475,7 @@ const Conversation = () => {
           onTimeUp={handleTimeUp}
           onExtend={() => console.log('Tiempo extendido')}
           autoStart={topicsLoaded} // Only start the timer when topics are loaded
+          isLoading={isLoading} // Pass the loading state to show the hourglass
         />
 
         {useTopicsWithOptions ? (
