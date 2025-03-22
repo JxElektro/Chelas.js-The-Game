@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
 import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
-import { Mail, Lock, ChevronRight, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Mail, Lock, ChevronRight, ArrowLeft, RefreshCw, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -19,15 +19,20 @@ const Login = () => {
   const [forgotPassword, setForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when user types
+    if (error) setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -41,7 +46,8 @@ const Login = () => {
       navigate('/lobby');
     } catch (error: any) {
       console.error('Error al iniciar sesión:', error);
-      toast.error(error.message || 'Error al iniciar sesión');
+      setError(error.message || 'Error al iniciar sesión');
+      toast.error('Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
@@ -50,6 +56,7 @@ const Login = () => {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setResetLoading(true);
+    setResetError(null);
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
@@ -62,7 +69,8 @@ const Login = () => {
       setForgotPassword(false);
     } catch (error: any) {
       console.error('Error al restablecer contraseña:', error);
-      toast.error(error.message || 'Error al enviar correo de restablecimiento');
+      setResetError(error.message || 'Error al enviar correo de restablecimiento');
+      toast.error('Error al enviar correo de restablecimiento');
     } finally {
       setResetLoading(false);
     }
@@ -91,6 +99,13 @@ const Login = () => {
         {!forgotPassword ? (
           <WindowFrame title="INICIAR SESIÓN" className="max-w-xs w-full">
             <form onSubmit={handleSubmit}>
+              {error && (
+                <div className="mb-4 p-2 bg-red-500/20 border border-red-500 rounded flex items-start">
+                  <AlertTriangle size={16} className="text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-white">{error}</p>
+                </div>
+              )}
+              
               <div className="mb-4">
                 <label htmlFor="email" className="block text-sm text-black mb-1">
                   Correo
@@ -164,6 +179,13 @@ const Login = () => {
         ) : (
           <WindowFrame title="RECUPERAR CONTRASEÑA" className="max-w-xs w-full">
             <form onSubmit={handleResetPassword}>
+              {resetError && (
+                <div className="mb-4 p-2 bg-red-500/20 border border-red-500 rounded flex items-start">
+                  <AlertTriangle size={16} className="text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-white">{resetError}</p>
+                </div>
+              )}
+              
               <div className="mb-6">
                 <p className="text-sm text-black mb-4">
                   Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
@@ -180,7 +202,10 @@ const Login = () => {
                     type="email"
                     required
                     value={resetEmail}
-                    onChange={(e) => setResetEmail(e.target.value)}
+                    onChange={(e) => {
+                      setResetEmail(e.target.value);
+                      if (resetError) setResetError(null);
+                    }}
                     className="win95-inset flex-1 px-2 py-1 text-black focus:outline-none"
                     placeholder="tu@correo.com"
                   />

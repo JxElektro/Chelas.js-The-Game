@@ -7,7 +7,7 @@ import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
 import AvatarSelector from '@/components/AvatarSelector';
 import { AvatarType } from '@/components/Avatar';
-import { User, Mail, Lock, ChevronRight, ArrowLeft } from 'lucide-react';
+import { User, Mail, Lock, ChevronRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -20,10 +20,14 @@ const Register = () => {
     password: '',
     avatar: 'user' as AvatarType
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when user types
+    if (error) setError(null);
   };
 
   const handleAvatarSelect = (type: AvatarType) => {
@@ -34,18 +38,57 @@ const Register = () => {
     e.preventDefault();
     
     if (step === 1) {
+      // Validate email and password
+      if (formData.email.trim() === '' || formData.password.trim().length < 6) {
+        setError('Por favor completa todos los campos. La contraseña debe tener al menos 6 caracteres.');
+        return;
+      }
       setStep(2);
     } else {
+      setLoading(true);
+      setError(null);
+      
       try {
-        // En una aplicación real, registraríamos al usuario con Supabase aquí
-        console.log('Registrando usuario:', formData);
-        toast.success('Cuenta creada correctamente');
+        // Register the user with Supabase
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              name: formData.name,
+              avatar: formData.avatar
+            }
+          }
+        });
+
+        if (signUpError) throw signUpError;
         
-        // Por ahora, solo navegamos a la página de intereses
+        // Create profile after successful registration
+        if (data.user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              name: formData.name,
+              avatar: formData.avatar,
+              is_available: true
+            });
+            
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+            toast.error('Error al crear el perfil');
+          }
+        }
+        
+        toast.success('Cuenta creada correctamente');
+        // Navigate to the interests page
         navigate('/interests');
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error registering user:', error);
+        setError(error.message || 'Error al crear la cuenta');
         toast.error('Error al crear la cuenta');
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -80,6 +123,13 @@ const Register = () => {
 
         <WindowFrame title={step === 1 ? "REGISTRO" : "SELECCIÓN DE AVATAR"} className="max-w-xs w-full">
           <form onSubmit={handleSubmit}>
+            {error && (
+              <div className="mb-4 p-2 bg-red-500/20 border border-red-500 rounded flex items-start">
+                <AlertTriangle size={16} className="text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-white">{error}</p>
+              </div>
+            )}
+            
             {step === 1 ? (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -168,8 +218,10 @@ const Register = () => {
             )}
             
             <div className="flex justify-end mt-6">
-              <Button type="submit" variant="primary">
-                {step === 1 ? (
+              <Button type="submit" variant="primary" disabled={loading}>
+                {loading ? (
+                  'Procesando...'
+                ) : step === 1 ? (
                   <>
                     Siguiente <ChevronRight size={16} className="ml-1" />
                   </>

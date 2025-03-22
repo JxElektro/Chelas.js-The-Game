@@ -71,6 +71,7 @@ const Interests = () => {
   const [interestOptions, setInterestOptions] = useState<InterestOption[]>([]);
   const [avoidOptions, setAvoidOptions] = useState<InterestOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showAIChat, setShowAIChat] = useState(false);
   const [aiMessage, setAiMessage] = useState('Hola, puedo ayudarte a descubrir más intereses que quizás no hayas considerado. Cuéntame un poco sobre tus pasatiempos favoritos o actividades que disfrutas.');
   const [userMessage, setUserMessage] = useState('');
@@ -113,68 +114,144 @@ const Interests = () => {
   };
 
   useEffect(() => {
-    const fetchInterests = async () => {
-      try {
-        setLoading(true);
-        
-        const { data: allInterests, error: interestsError } = await supabase
-          .from('interests')
-          .select('*')
-          .not('category', 'eq', 'avoid');
-          
-        const { data: regularInterests, error: avoidError } = await supabase
-          .from('interests')
-          .select('*')
-          .in('category', ['tech', 'movies', 'music', 'series_anime', 'books', 'travel', 'food', 'sports', 'art', 'hobbies', 'trends', 'humor', 'other']);
-        
-        if (interestsError) throw interestsError;
-        if (avoidError) throw avoidError;
-        
-        const predefinedOptions = transformPredefinedInterests();
-        
-        const dbInterestOptions = (allInterests || []).map((interest: Interest) => ({
-          id: interest.id,
-          label: interest.name,
-          category: interest.category as TopicCategory
-        }));
-        
-        const combinedOptions = [...dbInterestOptions];
-        predefinedOptions.forEach(option => {
-          if (!combinedOptions.some(dbOption => dbOption.label.toLowerCase() === option.label.toLowerCase())) {
-            combinedOptions.push(option);
-          }
-        });
-        
-        setInterestOptions(combinedOptions);
-        
-        // Here's the critical fix: explicitly set the category as 'avoid'
-        setAvoidOptions(
-          (regularInterests || []).slice(0, 20).map((interest: Interest) => ({
-            id: interest.id,
-            label: interest.name,
-            category: 'avoid' as TopicCategory
-          }))
-        );
-        
-      } catch (error) {
-        console.error('Error al cargar intereses:', error);
-        toast.error('Error al cargar intereses');
-      } finally {
-        setLoading(false);
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        toast.error('Debes iniciar sesión para acceder a esta página');
+        navigate('/login');
       }
     };
-    
+
+    checkAuth();
     fetchInterests();
   }, []);
+
+  const fetchInterests = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { data: allInterests, error: interestsError } = await supabase
+        .from('interests')
+        .select('*')
+        .not('category', 'eq', 'avoid');
+        
+      const { data: regularInterests, error: avoidError } = await supabase
+        .from('interests')
+        .select('*')
+        .in('category', ['tech', 'movies', 'music', 'series_anime', 'books', 'travel', 'food', 'sports', 'art', 'hobbies', 'trends', 'humor', 'other']);
+      
+      if (interestsError) throw interestsError;
+      if (avoidError) throw avoidError;
+      
+      const predefinedOptions = transformPredefinedInterests();
+      
+      const dbInterestOptions = (allInterests || []).map((interest: Interest) => ({
+        id: interest.id,
+        label: interest.name,
+        category: interest.category as TopicCategory
+      }));
+      
+      const combinedOptions = [...dbInterestOptions];
+      predefinedOptions.forEach(option => {
+        if (!combinedOptions.some(dbOption => dbOption.label.toLowerCase() === option.label.toLowerCase())) {
+          combinedOptions.push(option);
+        }
+      });
+      
+      setInterestOptions(combinedOptions);
+      
+      // Explicitly set the category as 'avoid'
+      setAvoidOptions(
+        (regularInterests || []).slice(0, 20).map((interest: Interest) => ({
+          id: interest.id,
+          label: interest.name,
+          category: 'avoid' as TopicCategory
+        }))
+      );
+      
+    } catch (error: any) {
+      console.error('Error al cargar intereses:', error);
+      setError('Error al cargar intereses. Por favor, intenta nuevamente.');
+      toast.error('Error al cargar intereses');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      console.log('Guardando preferencias:', { interests, avoidTopics });
+      // Get the current user
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error('Debes iniciar sesión para guardar tus preferencias');
+        navigate('/login');
+        return;
+      }
+      
+      const userId = session.user.id;
+      
+      // Save selected interests
+      const interestPromises = interests.map(interestId => {
+        // Skip custom interests (they start with "custom-")
+        if (interestId.startsWith('custom-')) {
+          const option = interestOptions.find(opt => opt.id === interestId);
+          if (option) {
+            // First, create the interest in the database
+            return supabase
+              .from('interests')
+              .insert({
+                name: option.label,
+                category: option.category
+              })
+              .select()
+              .then(({ data, error }) => {
+                if (error) throw error;
+                if (data && data.length > 0) {
+                  // Then link it to the user
+                  return supabase
+                    .from('user_interests')
+                    .insert({
+                      user_id: userId,
+                      interest_id: data[0].id,
+                      is_avoided: false
+                    });
+                }
+              });
+          }
+        } else {
+          // For existing interests, just create the user-interest relationship
+          return supabase
+            .from('user_interests')
+            .insert({
+              user_id: userId,
+              interest_id: interestId,
+              is_avoided: false
+            });
+        }
+      });
+      
+      // Save avoided topics
+      const avoidPromises = avoidTopics.map(topicId => {
+        return supabase
+          .from('user_interests')
+          .insert({
+            user_id: userId,
+            interest_id: topicId,
+            is_avoided: true
+          });
+      });
+      
+      // Wait for all promises to resolve
+      await Promise.all([...interestPromises, ...avoidPromises]);
+      
+      console.log('Preferencias guardadas correctamente');
       toast.success('Preferencias guardadas correctamente');
       navigate('/lobby');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al guardar preferencias:', error);
       toast.error('Error al guardar preferencias');
     }
@@ -236,6 +313,11 @@ const Interests = () => {
         <WindowFrame title="PREFERENCIAS DE CONVERSACIÓN" className="w-full">
           {loading ? (
             <p className="text-sm text-black mb-4">Cargando opciones...</p>
+          ) : error ? (
+            <div className="mb-4 p-2 bg-red-500/20 border border-red-500 rounded flex items-start">
+              <AlertTriangle size={16} className="text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-white">{error}</p>
+            </div>
           ) : (
             <form onSubmit={handleSubmit}>
               <p className="text-sm text-black mb-4">

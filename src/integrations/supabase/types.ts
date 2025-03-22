@@ -183,6 +183,7 @@ export type Database = {
         | "trends"
         | "humor"
         | "other"
+        | "avoid"
     }
     CompositeTypes: {
       [_ in never]: never
