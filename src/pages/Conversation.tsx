@@ -422,6 +422,11 @@ const Conversation = () => {
 
   if (!otherUserProfile) return null;
 
+  // Check if topics are loaded to control when the timer starts
+  const topicsLoaded = useTopicsWithOptions 
+    ? !isLoading && topicsWithOptions.length > 0 
+    : !isLoading && topics.length > 0;
+
   return (
     <Layout>
       <motion.div
@@ -469,6 +474,7 @@ const Conversation = () => {
           initialMinutes={3} 
           onTimeUp={handleTimeUp}
           onExtend={() => console.log('Tiempo extendido')}
+          autoStart={topicsLoaded} // Only start the timer when topics are loaded
         />
 
         {useTopicsWithOptions ? (

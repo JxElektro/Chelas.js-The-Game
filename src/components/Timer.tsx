@@ -8,16 +8,25 @@ interface TimerProps {
   initialMinutes?: number;
   onTimeUp?: () => void;
   onExtend?: () => void;
+  autoStart?: boolean; // New prop to control when the timer starts
 }
 
 const Timer: React.FC<TimerProps> = ({
   initialMinutes = 3,
   onTimeUp,
-  onExtend
+  onExtend,
+  autoStart = false // Default to false, so timer doesn't start automatically
 }) => {
   const [seconds, setSeconds] = useState(initialMinutes * 60);
-  const [isRunning, setIsRunning] = useState(true);
+  const [isRunning, setIsRunning] = useState(autoStart);
   const [isBlinking, setIsBlinking] = useState(false);
+
+  // Start the timer when autoStart changes to true
+  useEffect(() => {
+    if (autoStart) {
+      setIsRunning(true);
+    }
+  }, [autoStart]);
 
   useEffect(() => {
     if (!isRunning) return;
@@ -82,10 +91,19 @@ const Timer: React.FC<TimerProps> = ({
           />
         </div>
         
-        <div className="flex justify-center">
+        <div className="flex justify-between">
+          {!isRunning && !autoStart && (
+            <Button 
+              variant="primary" 
+              className="text-xs"
+              onClick={() => setIsRunning(true)}
+            >
+              Iniciar
+            </Button>
+          )}
           <Button 
             variant="primary" 
-            className="text-xs"
+            className="text-xs ml-auto"
             onClick={extendTime}
             disabled={!isRunning}
           >
