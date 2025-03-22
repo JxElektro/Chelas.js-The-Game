@@ -12,7 +12,7 @@ interface AvatarProps {
   onClick?: () => void;
 }
 
-const avatarIcons: Record<AvatarType, React.ReactNode> = {
+const avatarIcons: Record<AvatarType, React.ReactElement> = {
   user: <User />,
   tech: <Monitor />,
   coffee: <Coffee />,
@@ -43,9 +43,12 @@ const Avatar: React.FC<AvatarProps> = ({
     lg: { size: 32 }
   };
 
+  // Get the icon for the given type, or default to User if not found
+  const icon = avatarIcons[type] || avatarIcons.user;
+  
   // Clone the icon with appropriate size
-  const icon = React.cloneElement(
-    avatarIcons[type] as React.ReactElement,
+  const sizedIcon = React.cloneElement(
+    icon,
     iconSizes[size]
   );
 
@@ -62,7 +65,7 @@ const Avatar: React.FC<AvatarProps> = ({
       `}
       onClick={onClick}
     >
-      {icon}
+      {sizedIcon}
     </motion.div>
   );
 };
