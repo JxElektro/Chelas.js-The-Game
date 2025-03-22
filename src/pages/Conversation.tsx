@@ -420,6 +420,16 @@ const Conversation = () => {
     }
   };
 
+  const getUserSummary = () => {
+    if (!otherUserProfile) return "Cargando usuario...";
+    
+    if (otherUserProfile.id === BOT_ID) {
+      return "Un asistente de chat para practicar tus habilidades sociales.";
+    }
+    
+    return "Tu compañero de conversación para practicar tus habilidades sociales.";
+  };
+
   if (!otherUserProfile) return null;
 
   // Check if topics are loaded to control when the timer starts
@@ -449,18 +459,10 @@ const Conversation = () => {
             <div className="ml-4">
               <h2 className="text-black text-lg font-bold">{otherUserProfile.name}</h2>
               <p className="text-sm text-chelas-gray-dark">
-                ¡Usa los temas de abajo para iniciar una conversación!
+                {getUserSummary()}
               </p>
             </div>
           </div>
-          
-          {otherUserProfile.descripcion_personal && (
-            <div className="mt-4 p-3 bg-chelas-gray-light/20 rounded-sm border border-chelas-gray-light">
-              <p className="text-sm text-black italic">
-                "{otherUserProfile.descripcion_personal}"
-              </p>
-            </div>
-          )}
         </WindowFrame>
 
         {matchPercentage > 0 && (
@@ -474,8 +476,8 @@ const Conversation = () => {
           initialMinutes={3} 
           onTimeUp={handleTimeUp}
           onExtend={() => console.log('Tiempo extendido')}
-          autoStart={topicsLoaded} // Only start the timer when topics are loaded
-          isLoading={isLoading} // Pass the loading state to show the hourglass
+          autoStart={topicsLoaded} 
+          isLoading={isLoading} 
         />
 
         {useTopicsWithOptions ? (
