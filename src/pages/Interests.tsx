@@ -7,6 +7,7 @@ import Layout from '@/components/Layout';
 import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
 import { useNavigate } from 'react-router-dom';
+import { seedInterests } from '@/utils/interestUtils';
 
 // Importamos las tabs y la data fija
 import { interestTabs, InterestTab, Category, SubInterest } from '@/utils/interestUtils';
@@ -21,6 +22,7 @@ const InterestsPage = () => {
   // Info adicional del usuario
   const [personalNote, setPersonalNote] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false); // Para mostrar botón admin
   const [userAuthenticated, setUserAuthenticated] = useState(false);
 
   // Para cargar tu perfil y ver qué intereses ya tenía:
@@ -37,13 +39,45 @@ const InterestsPage = () => {
       navigate('/login');
       return;
     }
+    
+    // Verificar si es admin (para propósitos de desarrollo)
+    const email = sessionData.session.user.email;
+    setIsAdmin(email === 'admin@example.com' || email === 'test@example.com');
+    
     setUserAuthenticated(true);
     setProfileId(sessionData.session.user.id);
     // Cargar los intereses del usuario, si ya existen
     fetchUserProfile(sessionData.session.user.id);
   };
 
+<<<<<<< HEAD
   const fetchUserProfile = async (userId: string) => {
+=======
+  /** Función para generar intereses predefinidos en la base de datos */
+  const handleSeedInterests = async () => {
+    try {
+      setLoading(true);
+      const { success, error } = await seedInterests();
+      
+      if (error) {
+        console.error('Error al insertar intereses:', error);
+        toast.error('Error al generar intereses predefinidos');
+      } else {
+        toast.success('Intereses predefinidos generados correctamente');
+        // Recargar intereses
+        fetchInterests();
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('Error al generar intereses');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /** Carga todos los intereses desde la tabla "interests" en Supabase */
+  const fetchInterests = async () => {
+>>>>>>> 827b06bac661a9c37899aac91b4b46d520f18be7
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -194,6 +228,39 @@ const InterestsPage = () => {
     );
   };
 
+  // Agrupamos intereses por subcategoría para mejor visualización
+  const groupInterestsByType = (interests: InterestOption[]) => {
+    return interests.reduce<Record<string, InterestOption[]>>((acc, interest) => {
+      const category = interest.category as string;
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(interest);
+      return acc;
+    }, {});
+  };
+
+  // Ordenamos los intereses por categoría para presentar subcategorías
+  const groupedInterests = groupInterestsByType(filteredInterests);
+
+  // Mapeo de categorías a nombres en español
+  const categoryNames: Record<string, string> = {
+    movies: 'Películas y Series',
+    series_anime: 'Anime y TV',
+    music: 'Música',
+    books: 'Libros y Lectura',
+    food: 'Gastronomía',
+    travel: 'Viajes',
+    sports: 'Deportes',
+    hobbies: 'Pasatiempos',
+    art: 'Arte y Cultura',
+    tech: 'Tecnología',
+    trends: 'Tendencias',
+    humor: 'Humor',
+    other: 'Misceláneos',
+    avoid: 'Temas a Evitar'
+  };
+
   if (!userAuthenticated) {
     return (
       <Layout>
@@ -212,6 +279,7 @@ const InterestsPage = () => {
         className="flex flex-col items-center justify-center min-h-[80vh] w-full p-4"
       >
         <h1 className="text-chelas-yellow text-2xl mb-6">Configura Tus Intereses</h1>
+<<<<<<< HEAD
 
         <WindowFrame title="PROPIEDADES DE INTERESES" className="w-full max-w-full sm:max-w-3xl">
           <div className="flex flex-col h-full">
@@ -262,6 +330,111 @@ const InterestsPage = () => {
                 </>
               )}
             </div>
+=======
+        {isAdmin && (
+          <Button 
+            variant="primary" 
+            onClick={handleSeedInterests} 
+            className="mb-4"
+            disabled={loading}
+          >
+            {loading ? 'Generando...' : 'Regenerar intereses predefinidos'}
+          </Button>
+        )}
+        
+        <WindowFrame title="PROPIEDADES DE INTERESES" className="w-full max-w-full sm:max-w-3xl">
+          <div className="flex flex-col h-full">
+            {/* Componente de pestañas horizontales estilo Windows */}
+            <Tabs
+              tabs={TABS.map(t => t.label)}
+              activeTab={currentTab}
+              onChange={setCurrentTab}
+            >
+              {/* Contenido de la pestaña activa */}
+              <div className="p-4 flex-1 overflow-auto bg-chelas-button-face">
+                {loading ? (
+                  <p className="text-sm text-black mb-4">Cargando...</p>
+                ) : (
+                  <div className="flex flex-col space-y-4">
+                    {isAnalysisTab ? (
+                      // Mostrar el componente de análisis en modo "response"
+                      userProfile && (
+                        <AiAnalysisUnified 
+                          mode="response"
+                          userId={userProfile.id}
+                          profile={userProfile}
+                          selectedInterests={selectedInterestsObjects}
+                          avoidTopics={avoidInterestsObjects}
+                          onSaveResponse={async (text) => {
+                            setUserProfile({ ...userProfile, analisis_externo: text });
+                          }}
+                        />
+                      )
+                    ) : (
+                      <>
+                        {/* Descripción de la pestaña */}
+                        <p className="text-sm text-black mb-4">
+                          {isAvoidTab 
+                            ? 'Selecciona los temas que prefieres evitar en tus conversaciones:' 
+                            : 'Selecciona temas que te interesan para conversar:'}
+                        </p>
+                        
+                        {/* Mostrar la lista de intereses filtrada y agrupada */}
+                        <div className="max-h-[350px] overflow-y-auto p-2 border border-chelas-gray-dark bg-white">
+                          {Object.keys(groupedInterests).length === 0 ? (
+                            <p className="text-sm text-black">No hay temas para esta categoría.</p>
+                          ) : (
+                            <div className="space-y-4">
+                              {Object.entries(groupedInterests).map(([category, interests]) => (
+                                <div key={category} className="mb-4">
+                                  <h3 className="text-sm font-bold text-black mb-2 border-b border-chelas-gray-dark pb-1">
+                                    {categoryNames[category] || category}
+                                  </h3>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {interests.map(opt => {
+                                      const isSelected = isAvoidTab
+                                        ? avoidInterests.includes(opt.id)
+                                        : selectedInterests.includes(opt.id);
+                                      return (
+                                        <motion.div
+                                          key={opt.id}
+                                          whileHover={{ scale: 1.01 }}
+                                          whileTap={{ scale: 0.99 }}
+                                          className="p-2 cursor-pointer flex items-center gap-2 border border-chelas-gray-dark shadow-win95-button rounded-sm bg-chelas-button-face text-black"
+                                          onClick={() => handleToggleInterest(opt.id, isAvoidTab)}
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() => handleToggleInterest(opt.id, isAvoidTab)}
+                                            className="mr-2"
+                                          />
+                                          <span className="text-sm text-black break-words">{opt.label}</span>
+                                        </motion.div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                    
+                    <div className="flex justify-between mt-4">
+                      <Button variant="default" onClick={() => navigate('/lobby')}>
+                        Cancelar
+                      </Button>
+                      <Button variant="primary" onClick={handleSave} disabled={loading || isAnalysisTab}>
+                        {loading ? 'Guardando...' : 'Aceptar'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Tabs>
+>>>>>>> 827b06bac661a9c37899aac91b4b46d520f18be7
           </div>
         </WindowFrame>
       </motion.div>

@@ -6,9 +6,10 @@ interface TabsProps {
   tabs: string[];
   activeTab: number;
   onChange: (index: number) => void;
+  children?: React.ReactNode; // Añadimos soporte para children
 }
 
-const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange }) => {
+const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, children }) => {
   return (
     <div className="flex flex-col w-full">
       {/* Panel de pestañas horizontal al estilo Windows */}
@@ -43,7 +44,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange }) => {
       
       {/* Contenedor para el contenido de la pestaña activa */}
       <div className="bg-chelas-button-face border-x border-b border-chelas-gray-dark p-4">
-        {/* El contenido de la pestaña se mostrará aquí */}
+        {children}
       </div>
     </div>
   );
