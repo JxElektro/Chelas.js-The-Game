@@ -42,6 +42,7 @@ export type Database = {
         Row: {
           ended_at: string | null
           id: string
+          match_percentage: number | null
           started_at: string
           user_a: string
           user_b: string
@@ -49,6 +50,7 @@ export type Database = {
         Insert: {
           ended_at?: string | null
           id?: string
+          match_percentage?: number | null
           started_at?: string
           user_a: string
           user_b: string
@@ -56,6 +58,7 @@ export type Database = {
         Update: {
           ended_at?: string | null
           id?: string
+          match_percentage?: number | null
           started_at?: string
           user_a?: string
           user_b?: string
