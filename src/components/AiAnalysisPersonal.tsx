@@ -6,6 +6,7 @@ import Button from '@/components/Button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Textarea } from './ui/textarea';
+import ImageUploader from './ImageUploader';
 
 /**
  * Props:
@@ -24,6 +25,7 @@ const AiAnalysisPersonal: React.FC<AiAnalysisPersonalProps> = ({ userId, current
   const [showPrompt, setShowPrompt] = useState(false);
   const [promptCopied, setPromptCopied] = useState(false);
   const [isFetchingExisting, setIsFetchingExisting] = useState(true);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
   // Cargar análisis existente al iniciar
   useEffect(() => {
@@ -100,7 +102,11 @@ Asegúrate de utilizar datos genéricos o ficticios, y de no incluir ninguna inf
       // Guardar en la columna analisis_externo
       const { error } = await supabase
         .from('profiles')
-        .update({ analisis_externo: analysisText })
+        .update({ 
+          analisis_externo: analysisText,
+          // Si hay una imagen subida, guardar la URL
+          ...(uploadedImageUrl ? { screenshot: uploadedImageUrl } : {})
+        })
         .eq('id', userId);
 
       if (error) throw error;
@@ -128,8 +134,12 @@ Asegúrate de utilizar datos genéricos o ficticios, y de no incluir ninguna inf
     window.open('https://chat.openai.com/', '_blank');
   };
 
+  const handleImageUploaded = (url: string) => {
+    setUploadedImageUrl(url);
+  };
+
   return (
-    <WindowFrame title="ANÁLISIS IA" className="mt-4">
+    <WindowFrame title="OPCIONES AVANZADAS IA" className="mt-4">
       <div className="flex flex-col space-y-4 p-4">
         <div className="bg-chelas-black/20 p-3 border border-chelas-yellow rounded">
           <p className="text-sm text-white mb-2">
@@ -190,6 +200,17 @@ Asegúrate de utilizar datos genéricos o ficticios, y de no incluir ninguna inf
               placeholder="Pega aquí el perfil generado por ChatGPT..."
             />
           )}
+        </div>
+
+        {/* Componente de subida de imágenes */}
+        <div className="mt-4">
+          <p className="text-sm text-black mb-2">
+            <strong>Subir imagen de perfil o avatar:</strong>
+          </p>
+          <ImageUploader 
+            onImageUploaded={handleImageUploaded}
+            bucketName="screenshots"
+          />
         </div>
 
         <div className="flex items-start space-x-2">

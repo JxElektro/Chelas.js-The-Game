@@ -26,7 +26,7 @@ const TABS = [
   { label: 'Humor',           categories: ['humor'] },
   { label: 'Otros',           categories: ['other'] },
   { label: 'Evitar',          categories: ['avoid'] },
-  { label: 'Análisis IA',     categories: ['externalAnalysis'] },
+  { label: 'Opciones Avanzadas IA', categories: ['externalAnalysis'] },
 ];
 
 const InterestsPage = () => {
@@ -226,72 +226,76 @@ const InterestsPage = () => {
       >
         <h1 className="text-chelas-yellow text-2xl mb-6">Configura Tus Intereses</h1>
         <WindowFrame title="TUS PREFERENCIAS" className="w-full max-w-full sm:max-w-3xl p-4">
-          {/* Contenedor de Tabs con scroll horizontal en mobile */}
-          <div className="w-full overflow-x-auto mb-4">
+          <div className="flex flex-col sm:flex-row h-[500px]">
+            {/* Componente de pestañas verticales */}
             <Tabs
               tabs={TABS.map(t => t.label)}
               activeTab={currentTab}
               onChange={setCurrentTab}
             />
-          </div>
-          {loading ? (
-            <p className="text-sm text-black mb-4">Cargando...</p>
-          ) : (
-            <div className="mt-4 flex flex-col space-y-4">
-              {isAnalysisTab ? (
-                // Mostrar el componente de análisis en modo "response"
-                userProfile && (
-                  <AiAnalysisUnified 
-                    mode="response"
-                    userId={userProfile.id}
-                    profile={userProfile}
-                    selectedInterests={selectedInterestsObjects}
-                    avoidTopics={avoidInterestsObjects}
-                    onSaveResponse={async (text) => {
-                      setUserProfile({ ...userProfile, analisis_externo: text });
-                    }}
-                  />
-                )
+            
+            {/* Contenido de la pestaña activa */}
+            <div className="flex-1 p-4 overflow-auto">
+              {loading ? (
+                <p className="text-sm text-black mb-4">Cargando...</p>
               ) : (
-                // Mostrar la lista de intereses filtrada
-                <div className="max-h-[250px] overflow-y-auto p-2 border border-chelas-gray-dark bg-white">
-                  {filteredInterests.length === 0 ? (
-                    <p className="text-sm text-black">No hay temas para esta categoría.</p>
+                <div className="mt-4 flex flex-col space-y-4">
+                  {isAnalysisTab ? (
+                    // Mostrar el componente de análisis en modo "response"
+                    userProfile && (
+                      <AiAnalysisUnified 
+                        mode="response"
+                        userId={userProfile.id}
+                        profile={userProfile}
+                        selectedInterests={selectedInterestsObjects}
+                        avoidTopics={avoidInterestsObjects}
+                        onSaveResponse={async (text) => {
+                          setUserProfile({ ...userProfile, analisis_externo: text });
+                        }}
+                      />
+                    )
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {filteredInterests.map(opt => {
-                        const isSelected = isAvoidTab
-                          ? avoidInterests.includes(opt.id)
-                          : selectedInterests.includes(opt.id);
-                        return (
-                          <motion.div
-                            key={opt.id}
-                            whileHover={{ scale: 1.01 }}
-                            whileTap={{ scale: 0.99 }}
-                            className="p-2 cursor-pointer flex items-center gap-2 border border-chelas-gray-dark shadow-win95-button rounded-sm bg-chelas-button-face text-black"
-                            onClick={() => handleToggleInterest(opt.id, isAvoidTab)}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => handleToggleInterest(opt.id, isAvoidTab)}
-                              className="mr-2"
-                            />
-                            <span className="text-sm text-black break-words">{opt.label}</span>
-                          </motion.div>
-                        );
-                      })}
+                    // Mostrar la lista de intereses filtrada
+                    <div className="max-h-[350px] overflow-y-auto p-2 border border-chelas-gray-dark bg-white">
+                      {filteredInterests.length === 0 ? (
+                        <p className="text-sm text-black">No hay temas para esta categoría.</p>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {filteredInterests.map(opt => {
+                            const isSelected = isAvoidTab
+                              ? avoidInterests.includes(opt.id)
+                              : selectedInterests.includes(opt.id);
+                            return (
+                              <motion.div
+                                key={opt.id}
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.99 }}
+                                className="p-2 cursor-pointer flex items-center gap-2 border border-chelas-gray-dark shadow-win95-button rounded-sm bg-chelas-button-face text-black"
+                                onClick={() => handleToggleInterest(opt.id, isAvoidTab)}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => handleToggleInterest(opt.id, isAvoidTab)}
+                                  className="mr-2"
+                                />
+                                <span className="text-sm text-black break-words">{opt.label}</span>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
+                  <div className="flex justify-end">
+                    <Button variant="primary" onClick={handleSave} disabled={loading || isAnalysisTab}>
+                      {loading ? 'Guardando...' : 'Guardar'}
+                    </Button>
+                  </div>
                 </div>
               )}
-              <div className="flex justify-end">
-                <Button variant="primary" onClick={handleSave} disabled={loading || isAnalysisTab}>
-                  {loading ? 'Guardando...' : 'Guardar'}
-                </Button>
-              </div>
             </div>
-          )}
+          </div>
         </WindowFrame>
       </motion.div>
     </Layout>
