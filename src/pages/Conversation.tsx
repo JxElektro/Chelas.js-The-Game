@@ -95,7 +95,8 @@ const Conversation = () => {
             is_available: true,
             created_at: new Date().toISOString(),
             temas_preferidos: [],
-            descripcion_personal: 'Soy ChelasBot, un bot conversacional para ayudar a practicar tus habilidades sociales.'
+            descripcion_personal: 'Soy ChelasBot, un bot conversacional para ayudar a practicar tus habilidades sociales.',
+            analisis_externo: null // Add the missing property with null value
           });
           return;
         }
