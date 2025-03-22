@@ -9,7 +9,158 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      conversation_topics: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          topic: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          topic: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_topics_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          ended_at: string | null
+          id: string
+          started_at: string
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_user_a_fkey"
+            columns: ["user_a"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_user_b_fkey"
+            columns: ["user_b"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interests: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar: string
+          created_at: string
+          id: string
+          is_available: boolean | null
+          name: string
+        }
+        Insert: {
+          avatar: string
+          created_at?: string
+          id: string
+          is_available?: boolean | null
+          name: string
+        }
+        Update: {
+          avatar?: string
+          created_at?: string
+          id?: string
+          is_available?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
+      user_interests: {
+        Row: {
+          created_at: string
+          id: string
+          interest_id: string
+          is_avoided: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interest_id: string
+          is_avoided?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interest_id?: string
+          is_avoided?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_interests_interest_id_fkey"
+            columns: ["interest_id"]
+            isOneToOne: false
+            referencedRelation: "interests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_interests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

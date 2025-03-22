@@ -8,6 +8,8 @@ import Button from '@/components/Button';
 import AvatarSelector from '@/components/AvatarSelector';
 import { AvatarType } from '@/components/Avatar';
 import { User, Mail, Lock, ChevronRight, ArrowLeft } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -28,17 +30,23 @@ const Register = () => {
     setFormData(prev => ({ ...prev, avatar: type }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (step === 1) {
       setStep(2);
     } else {
-      // In a real app, we would register the user with Supabase here
-      console.log('Registering user:', formData);
-      
-      // For now, just navigate to the interests page
-      navigate('/interests');
+      try {
+        // En una aplicación real, registraríamos al usuario con Supabase aquí
+        console.log('Registrando usuario:', formData);
+        toast.success('Cuenta creada correctamente');
+        
+        // Por ahora, solo navegamos a la página de intereses
+        navigate('/interests');
+      } catch (error) {
+        console.error('Error registering user:', error);
+        toast.error('Error al crear la cuenta');
+      }
     }
   };
 
@@ -63,14 +71,14 @@ const Register = () => {
           onClick={goBack}
         >
           <ArrowLeft size={16} className="mr-1" />
-          Back
+          Atrás
         </Button>
 
         <h1 className="text-chelas-yellow text-2xl mb-6">
-          {step === 1 ? 'Create Account' : 'Choose Your Avatar'}
+          {step === 1 ? 'Crear Cuenta' : 'Elige tu Avatar'}
         </h1>
 
-        <WindowFrame title={step === 1 ? "REGISTRATION" : "AVATAR SELECTION"} className="max-w-xs w-full">
+        <WindowFrame title={step === 1 ? "REGISTRO" : "SELECCIÓN DE AVATAR"} className="max-w-xs w-full">
           <form onSubmit={handleSubmit}>
             {step === 1 ? (
               <motion.div
@@ -80,7 +88,7 @@ const Register = () => {
               >
                 <div className="mb-4">
                   <label htmlFor="name" className="block text-sm text-black mb-1">
-                    Display Name
+                    Nombre Visible
                   </label>
                   <div className="flex">
                     <div className="bg-chelas-button-face p-2 border-2 border-r-0 shadow-win95-button">
@@ -94,14 +102,14 @@ const Register = () => {
                       value={formData.name}
                       onChange={handleChange}
                       className="win95-inset flex-1 px-2 py-1 text-black focus:outline-none"
-                      placeholder="How others will see you"
+                      placeholder="Cómo te verán los demás"
                     />
                   </div>
                 </div>
                 
                 <div className="mb-4">
                   <label htmlFor="email" className="block text-sm text-black mb-1">
-                    Email
+                    Correo
                   </label>
                   <div className="flex">
                     <div className="bg-chelas-button-face p-2 border-2 border-r-0 shadow-win95-button">
@@ -115,14 +123,14 @@ const Register = () => {
                       value={formData.email}
                       onChange={handleChange}
                       className="win95-inset flex-1 px-2 py-1 text-black focus:outline-none"
-                      placeholder="your@email.com"
+                      placeholder="tu@correo.com"
                     />
                   </div>
                 </div>
                 
                 <div className="mb-6">
                   <label htmlFor="password" className="block text-sm text-black mb-1">
-                    Password
+                    Contraseña
                   </label>
                   <div className="flex">
                     <div className="bg-chelas-button-face p-2 border-2 border-r-0 shadow-win95-button">
@@ -149,7 +157,7 @@ const Register = () => {
                 className="text-center"
               >
                 <p className="text-sm text-black mb-4">
-                  Choose an avatar that represents you:
+                  Elige un avatar que te represente:
                 </p>
                 
                 <AvatarSelector 
@@ -163,11 +171,11 @@ const Register = () => {
               <Button type="submit" variant="primary">
                 {step === 1 ? (
                   <>
-                    Next <ChevronRight size={16} className="ml-1" />
+                    Siguiente <ChevronRight size={16} className="ml-1" />
                   </>
                 ) : (
                   <>
-                    Continue <ChevronRight size={16} className="ml-1" />
+                    Continuar <ChevronRight size={16} className="ml-1" />
                   </>
                 )}
               </Button>
