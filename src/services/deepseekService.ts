@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 import { SuperProfile } from '@/utils/superProfileUtils';
 import { Json } from '@/integrations/supabase/types';
@@ -91,34 +92,53 @@ export const generateTopicWithOptions = async ({
     const descriptionA = userAProfile.descripcion_personal || '';
     const descriptionB = userBProfile.descripcion_personal || '';
 
+    // Crear un objeto simplificado con los intereses activados para facilitar el prompt
+    const interesesA = extractActiveInterests(profileA);
+    const interesesB = extractActiveInterests(profileB);
+
     const prompt = `
-      Perfil Usuario A: ${JSON.stringify(profileA)}
+      Eres un generador de temas de conversación personalizado. Tienes acceso a los perfiles detallados de dos personas que están a punto de conversar.
+      
+      Perfil Usuario A: ${JSON.stringify(interesesA)}
       Descripción Personal Usuario A: ${descriptionA}
       
-      Perfil Usuario B: ${JSON.stringify(profileB)}
+      Perfil Usuario B: ${JSON.stringify(interesesB)}
       Descripción Personal Usuario B: ${descriptionB}
       
       Porcentaje de coincidencia: ${matchPercentage}%
       
-      Basándote en los perfiles detallados de ambos usuarios, genera 3 preguntas de conversación interesantes.
-      Para cada pregunta, proporciona 3 opciones de respuesta que sean relevantes para los intereses de ambos.
+      Genera 3 preguntas de conversación interesantes basadas específicamente en los intereses compartidos o complementarios de ambos usuarios.
+      Para cada pregunta, proporciona 3 opciones de respuesta que sean relevantes y personalizadas.
       
-      El formato de tu respuesta debe ser en JSON con la siguiente estructura:
+      Procura que las preguntas sean específicas, abiertas y fomenten una conversación profunda.
+      Debes crear un JSON con este formato exacto (sin comentarios ni backticks):
+      
       [
         {
-          "question": "¿Pregunta interesante basada en ambos perfiles?",
+          "question": "¿Pregunta basada en intereses compartidos?",
           "options": [
-            { "emoji": "emoji relevante", "text": "Primera opción de respuesta" },
-            { "emoji": "emoji relevante", "text": "Segunda opción de respuesta" },
-            { "emoji": "emoji relevante", "text": "Tercera opción de respuesta" }
+            { "emoji": "emoji relevante", "text": "Primera opción relacionada con los perfiles" },
+            { "emoji": "emoji relevante", "text": "Segunda opción relacionada con los perfiles" },
+            { "emoji": "emoji relevante", "text": "Tercera opción relacionada con los perfiles" }
           ]
         },
-        // más preguntas con opciones...
+        {
+          "question": "¿Segunda pregunta basada en otro interés compartido?",
+          "options": [
+            { "emoji": "emoji relevante", "text": "Opción 1" },
+            { "emoji": "emoji relevante", "text": "Opción 2" },
+            { "emoji": "emoji relevante", "text": "Opción 3" }
+          ]
+        },
+        {
+          "question": "¿Tercera pregunta basada en un interés complementario?",
+          "options": [
+            { "emoji": "emoji relevante", "text": "Opción 1" },
+            { "emoji": "emoji relevante", "text": "Opción 2" },
+            { "emoji": "emoji relevante", "text": "Opción 3" }
+          ]
+        }
       ]
-      
-      Las preguntas deben ser abiertas, específicas y fomentar una conversación profunda.
-      Todas las preguntas y opciones deben estar en español, ser concisas y atractivas.
-      Usa emojis relevantes para cada opción.
     `;
 
     const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
@@ -126,7 +146,7 @@ export const generateTopicWithOptions = async ({
       messages: [
         { 
           role: 'system', 
-          content: 'Eres un generador de preguntas de conversación que crea temas personalizados con opciones de respuesta basadas en los perfiles de los usuarios.' 
+          content: 'Eres un generador especializado en crear preguntas personalizadas con opciones de respuesta en formato JSON válido, sin añadir backticks, marcadores de código ni texto adicional.' 
         },
         { role: 'user', content: prompt }
       ]
@@ -138,11 +158,21 @@ export const generateTopicWithOptions = async ({
     });
 
     const content = response.data.choices[0].message.content.trim();
+    
     try {
-      // Intentamos parsear el JSON devuelto por la API
-      return JSON.parse(content);
+      // Limpiamos cualquier backtick o marcador de código que pueda venir en la respuesta
+      const cleanedContent = content
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .trim();
+        
+      console.log("Contenido limpio recibido:", cleanedContent);
+      
+      // Intentamos parsear el JSON limpio
+      return JSON.parse(cleanedContent);
     } catch (e) {
       console.error('Error al parsear la respuesta JSON:', e);
+      console.log("Contenido problemático:", content);
       // Si hay un error en el parseo, devolvemos un tema predeterminado
       return mockTopicsWithOptions();
     }
@@ -151,6 +181,44 @@ export const generateTopicWithOptions = async ({
     return mockTopicsWithOptions();
   }
 };
+
+// Función auxiliar para extraer intereses activos del SuperProfile
+function extractActiveInterests(profile: SuperProfile | null): Record<string, string[]> {
+  if (!profile) return {};
+  
+  const result: Record<string, string[]> = {};
+  
+  try {
+    // Recorrer la estructura y encontrar intereses activados
+    Object.keys(profile).forEach(tabKey => {
+      const tab = profile[tabKey as keyof SuperProfile];
+      
+      Object.keys(tab).forEach(categoryKey => {
+        const category = tab[categoryKey as string];
+        const activeInterests: string[] = [];
+        
+        Object.keys(category).forEach(interestKey => {
+          // Saltamos el campo 'ia' que es string
+          if (interestKey === 'ia') return;
+          
+          // @ts-ignore - Sabemos que es un objeto con propiedades booleanas
+          if (typeof category[interestKey] === 'boolean' && category[interestKey] === true) {
+            activeInterests.push(interestKey.replace(/-/g, ' '));
+          }
+        });
+        
+        if (activeInterests.length > 0) {
+          result[categoryKey] = activeInterests;
+        }
+      });
+    });
+    
+    return result;
+  } catch (e) {
+    console.error('Error al extraer intereses activos:', e);
+    return {};
+  }
+}
 
 // Función simulada para pruebas cuando la API no está disponible
 export const generateMockTopic = (): string[] => {
