@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -7,10 +8,11 @@ import Button from '@/components/Button';
 import Avatar, { AvatarType } from '@/components/Avatar';
 import Timer from '@/components/Timer';
 import ConversationPrompt from '@/components/ConversationPrompt';
+import MatchPercentage from '@/components/MatchPercentage';
 import { generateConversationTopic, generateMockTopic } from '@/services/deepseekService';
 import { ArrowLeft, RefreshCw, Clock, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Profile, Conversation as ConversationType } from '@/types/supabase';
+import { Profile, Conversation as ConversationType, InterestOption } from '@/types/supabase';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -23,23 +25,57 @@ const Conversation = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [topic, setTopic] = useState('');
   const [otherUserProfile, setOtherUserProfile] = useState<Profile | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<Profile | null>(null);
+  const [matchPercentage, setMatchPercentage] = useState(0);
+  const [matchCount, setMatchCount] = useState(0);
+  const [allInterests, setAllInterests] = useState<InterestOption[]>([]);
   const isMobile = useIsMobile();
   
-  // En lugar de usar un ID hardcoded, obtenemos el ID del usuario actual
   useEffect(() => {
     const fetchCurrentUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        setCurrentUserId(session.user.id);
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (error) throw error;
+          setCurrentUserProfile(data as Profile);
+        } catch (error) {
+          console.error('Error al cargar tu perfil:', error);
+          navigate('/login');
+        }
       } else {
-        // Redirigir al login si no hay sesión
         navigate('/login');
       }
     };
     
     fetchCurrentUser();
+    fetchAllInterests();
   }, [navigate]);
+  
+  const fetchAllInterests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('interests')
+        .select('*');
+        
+      if (error) throw error;
+      
+      const mapped = (data || []).map((i: any) => ({
+        id: i.id,
+        label: i.name,
+        category: i.category
+      })) as InterestOption[];
+      
+      setAllInterests(mapped);
+    } catch (error) {
+      console.error('Error al cargar intereses:', error);
+    }
+  };
   
   // Obtener el perfil del otro usuario
   useEffect(() => {
@@ -58,7 +94,6 @@ const Conversation = () => {
             avatar: 'bot',
             is_available: true,
             created_at: new Date().toISOString(),
-            // Adding the new required properties
             temas_preferidos: [],
             descripcion_personal: 'Soy ChelasBot, un bot conversacional para ayudar a practicar tus habilidades sociales.'
           });
@@ -89,20 +124,89 @@ const Conversation = () => {
     fetchUserProfile();
   }, [userId, navigate]);
 
+  // Calcular el porcentaje de coincidencia
   useEffect(() => {
-    if (!otherUserProfile || !currentUserId) return;
+    if (currentUserProfile && otherUserProfile && allInterests.length > 0) {
+      calculateMatchPercentage();
+    }
+  }, [currentUserProfile, otherUserProfile, allInterests]);
+
+  const calculateMatchPercentage = () => {
+    if (!currentUserProfile?.temas_preferidos || !otherUserProfile?.temas_preferidos) {
+      setMatchPercentage(0);
+      setMatchCount(0);
+      return;
+    }
+    
+    // Eliminar temas a evitar (categoría "avoid") de la lista
+    const avoidIds = allInterests
+      .filter(interest => interest.category === 'avoid')
+      .map(interest => interest.id);
+      
+    const currentUserInterests = currentUserProfile.temas_preferidos.filter(
+      id => !avoidIds.includes(id)
+    );
+    
+    const otherUserInterests = otherUserProfile.temas_preferidos.filter(
+      id => !avoidIds.includes(id)
+    );
+    
+    // Encontrar las coincidencias
+    const matches = currentUserInterests.filter(id => 
+      otherUserInterests.includes(id)
+    );
+    
+    // Calcular el total de temas únicos entre ambos usuarios
+    const uniqueInterests = [...new Set([...currentUserInterests, ...otherUserInterests])];
+    
+    // Calcular el porcentaje
+    const percentage = uniqueInterests.length > 0
+      ? Math.round((matches.length / uniqueInterests.length) * 100)
+      : 0;
+      
+    setMatchPercentage(percentage);
+    setMatchCount(matches.length);
+    
+    // Si es una conversación real, actualizar el valor en la base de datos
+    if (userId !== BOT_ID && currentUserProfile.id) {
+      updateConversationMatchPercentage(currentUserProfile.id, userId as string, percentage);
+    }
+  };
+  
+  const updateConversationMatchPercentage = async (userA: string, userB: string, percentage: number) => {
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`user_a.eq.${userA},user_b.eq.${userA}`)
+        .or(`user_a.eq.${userB},user_b.eq.${userB}`)
+        .order('started_at', { ascending: false })
+        .limit(1);
+        
+      if (error) {
+        console.error('Error al buscar conversación:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        // Actualizar el porcentaje de coincidencia
+        await supabase
+          .from('conversations')
+          .update({ match_percentage: percentage })
+          .eq('id', data[0].id);
+      }
+    } catch (error) {
+      console.error('Error al actualizar coincidencia:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (!otherUserProfile || !currentUserProfile) return;
 
     const generateTopic = async () => {
       setIsLoading(true);
       try {
         console.log('Iniciando conversación con el usuario:', otherUserProfile.id);
-        
-        // En una aplicación real, usaríamos la API DeepSeek
-        // const newTopic = await generateConversationTopic({
-        //   userAInterests: currentUser.interests,
-        //   userBInterests: otherUser.interests,
-        //   avoidTopics: currentUser.avoidTopics
-        // });
         
         // Para fines de demostración, usamos la función simulada
         const mockTopic = generateMockTopic();
@@ -114,13 +218,14 @@ const Conversation = () => {
         }, 1500);
 
         // En una aplicación real, guardaríamos la conversación en Supabase
-        if (otherUserProfile && currentUserId) {
+        if (otherUserProfile && currentUserProfile) {
           // Crear una nueva conversación
           const { data: conversation, error } = await supabase
             .from('conversations')
             .insert({
-              user_a: currentUserId,
-              user_b: otherUserProfile.id
+              user_a: currentUserProfile.id,
+              user_b: otherUserProfile.id,
+              match_percentage: matchPercentage
             })
             .select()
             .single();
@@ -148,7 +253,7 @@ const Conversation = () => {
     };
 
     generateTopic();
-  }, [otherUserProfile, currentUserId]);
+  }, [otherUserProfile, currentUserProfile, matchPercentage]);
 
   const handleNewTopic = () => {
     setIsLoading(true);
@@ -202,6 +307,14 @@ const Conversation = () => {
             </div>
           </div>
         </WindowFrame>
+
+        {/* Mostrar el porcentaje de coincidencia */}
+        {matchPercentage > 0 && (
+          <MatchPercentage 
+            percentage={matchPercentage} 
+            matchCount={matchCount} 
+          />
+        )}
 
         <Timer 
           initialMinutes={3} 
