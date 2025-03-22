@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Copy, Check, Send } from 'lucide-react';
 import WindowFrame from '@/components/WindowFrame';
@@ -6,26 +5,20 @@ import Button from '@/components/Button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, InterestOption } from '@/types/supabase';
-// Función que formatea el análisis usando IA (por ejemplo, DeepSeek)
 import { formatProfileAnalysis } from '@/services/deepseekService';
 import { Textarea } from './ui/textarea';
 import { SuperProfile } from '@/utils/superProfileUtils';
+import { Json } from '@/integrations/supabase/types';
 
 interface AiAnalysisUnifiedProps {
   mode: 'prompt' | 'response';
-  // Datos para modo "prompt"
   profile?: Profile;
   selectedInterests?: InterestOption[];
   avoidTopics?: InterestOption[];
-  // Permite sobrescribir el prompt generado automáticamente
   customPrompt?: string;
-  // Callback para guardar respuesta (modo "response")
   onSaveResponse?: (response: string) => Promise<void> | void;
-  // userId, por ejemplo para guardar en la BD (modo "response")
   userId?: string;
-  // Descripción personal
   personalNote?: string;
-  // Callback para actualizar la descripción personal
   onPersonalNoteChange?: (note: string) => void;
 }
 
@@ -48,20 +41,17 @@ const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
   const [promptCopied, setPromptCopied] = useState(false);
   const [isFetchingExisting, setIsFetchingExisting] = useState(true);
 
-  // Cargar el análisis existente cuando se monta el componente
   useEffect(() => {
     if (mode === 'response' && userId) {
       fetchExistingAnalysis();
     }
   }, [mode, userId]);
 
-  // Función para cargar el análisis existente
   const fetchExistingAnalysis = async () => {
     if (!userId) return;
     
     try {
       setIsFetchingExisting(true);
-      // Intentamos primero cargar desde super_profile.cultura.tech.ia
       const { data: superProfileData, error: superProfileError } = await supabase
         .from('profiles')
         .select('super_profile')
@@ -78,7 +68,6 @@ const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
         }
       }
       
-      // Si no existe en super_profile, lo buscamos en analisis_externo
       const { data, error } = await supabase
         .from('profiles')
         .select('analisis_externo')
@@ -86,7 +75,7 @@ const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
         .single();
       
       if (error) {
-        if (error.code !== 'PGRST116') { // No encontrado
+        if (error.code !== 'PGRST116') {
           console.error('Error al cargar análisis existente:', error);
         }
         return;
@@ -94,7 +83,6 @@ const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
       
       if (data && data.analisis_externo) {
         setAnalysisText(data.analisis_externo);
-        // Si hay un análisis existente, podemos marcar la casilla de confirmación
         setChecked(true);
       }
     } catch (err) {
@@ -104,7 +92,6 @@ const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
     }
   };
 
-  // Prompt fijo para modo "response" (se indica que se trata de mi perfil)
   const fixedPrompt = `ChatGPT, necesito que generes un perfil completo y detallado **de mí** utilizando la siguiente información personal y profesional. Por favor, incluye las siguientes secciones:
 
 1. **Datos Generales:**  
@@ -126,7 +113,6 @@ const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
 
 No incluyas información sensible (como contraseñas o datos privados).`;
 
-  // Función para generar el prompt a partir de mi información (modo "prompt")
   const generatePromptFromProfile = (): string => {
     if (customPrompt) return customPrompt;
     const interestsText = selectedInterests.length > 0
@@ -157,12 +143,10 @@ Utiliza esta información para generar un perfil que me represente de forma aut�
     `.trim();
   };
 
-  // Seleccionamos el prompt según el modo
   const analysisPrompt = mode === 'prompt'
     ? generatePromptFromProfile()
     : fixedPrompt;
 
-  // Función para copiar el prompt (común para ambos modos)
   const handleCopyPrompt = () => {
     navigator.clipboard.writeText(analysisPrompt);
     setCopied(true);
@@ -170,12 +154,10 @@ Utiliza esta información para generar un perfil que me represente de forma aut�
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Función para abrir ChatGPT en una nueva pestaña
   const openChatGPT = () => {
     window.open('https://chat.openai.com/', '_blank');
   };
 
-  // Función para guardar la respuesta formateada con IA
   const handleSaveResponse = async () => {
     if (!checked) {
       toast.error('Debes confirmar que el texto no contiene información sensible');
@@ -189,7 +171,6 @@ Utiliza esta información para generar un perfil que me represente de forma aut�
     try {
       const formattedText = await formatProfileAnalysis(analysisText);
       
-      // Actualizar el SuperProfile si existe
       const { data: superProfileData } = await supabase
         .from('profiles')
         .select('super_profile')
@@ -197,28 +178,23 @@ Utiliza esta información para generar un perfil que me represente de forma aut�
         .single();
       
       if (superProfileData?.super_profile) {
-        // Clonar el SuperProfile y actualizar el campo ia
         const updatedProfile = JSON.parse(JSON.stringify(superProfileData.super_profile)) as unknown as SuperProfile;
         
-        // Asegurarse de que las propiedades necesarias existan
         if (!updatedProfile.cultura) updatedProfile.cultura = {} as SuperProfile['cultura'];
         if (!updatedProfile.cultura.tech) updatedProfile.cultura.tech = {} as SuperProfile['cultura']['tech'];
         
         updatedProfile.cultura.tech.ia = formattedText;
         
-        // Guardar el SuperProfile actualizado
         const { error: updateError } = await supabase
           .from('profiles')
           .update({
             super_profile: updatedProfile as unknown as Json,
-            // También actualizamos analisis_externo para compatibilidad
             analisis_externo: formattedText
           })
           .eq('id', userId);
           
         if (updateError) throw updateError;
       } else {
-        // Si no hay SuperProfile, solo actualizamos analisis_externo
         const { error } = await supabase
           .from('profiles')
           .update({
@@ -241,7 +217,6 @@ Utiliza esta información para generar un perfil que me represente de forma aut�
     }
   };
 
-  // Función para manejar el cambio en la descripción personal
   const handlePersonalNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (onPersonalNoteChange) {
       onPersonalNoteChange(e.target.value);
@@ -251,7 +226,6 @@ Utiliza esta información para generar un perfil que me represente de forma aut�
   return (
     <WindowFrame title={mode === 'prompt' ? "ANÁLISIS DE IA: MI PERFIL" : "ANÁLISIS IA"} className="mt-6">
       <div className="p-2">
-        {/* Botones separados para Mostrar/Ocultar prompt y Copiar prompt */}
         <div className="flex items-center justify-between mb-4">
           <Button 
             variant="default" 
