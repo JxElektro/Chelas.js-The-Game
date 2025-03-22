@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Timer as TimerIcon, Plus, Hourglass } from 'lucide-react';
 import Button from './Button';
@@ -66,16 +65,12 @@ const Timer: React.FC<TimerProps> = ({
       <div className="p-3">
         <div className="win95-inset flex items-center justify-center py-2 mb-2">
           {isLoading ? (
-            <div className="relative w-6 h-6 flex items-center justify-center">
-              {/* Static hourglass icon */}
-              <Hourglass size={24} className="text-chelas-gray-dark absolute" />
-              {/* Rotating container */}
-              <motion.div
-                className="absolute inset-0 flex items-center justify-center"
-                animate={{ rotate: [0, 360] }}
-                transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
-              />
-            </div>
+            <motion.div
+              animate={{ rotate: [0, 360] }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
+            >
+              <Hourglass size={24} className="text-chelas-gray-dark" />
+            </motion.div>
           ) : (
             <motion.div
               animate={isBlinking ? { opacity: [1, 0.5, 1] } : { opacity: 1 }}

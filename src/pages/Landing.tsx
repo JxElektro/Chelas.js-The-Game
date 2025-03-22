@@ -1,17 +1,12 @@
-
-import React, { useContext } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
 import Button from '@/components/Button';
 import WindowFrame from '@/components/WindowFrame';
 import { Terminal, LogIn } from 'lucide-react';
-import { AuthContext } from '@/App';
-import LogoutButton from '@/components/LogoutButton';
 
 const Landing = () => {
-  const { user } = useContext(AuthContext);
-
   return (
     <Layout>
       <motion.div
@@ -57,32 +52,20 @@ const Landing = () => {
           transition={{ delay: 0.6 }}
           className="grid grid-cols-1 gap-4 w-full max-w-xs"
         >
-          {user ? (
-            <div className="grid grid-cols-2 gap-4">
-              <Link to="/lobby" className="w-full">
-                <Button variant="primary" className="w-full">
-                  <Terminal size={16} className="mr-2" />
-                  Ir al Lobby
-                </Button>
-              </Link>
-              <LogoutButton className="w-full" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4">
-              <Link to="/register" className="w-full">
-                <Button variant="primary" className="w-full">
-                  <Terminal size={16} className="mr-2" />
-                  Registrarse
-                </Button>
-              </Link>
-              <Link to="/login" className="w-full">
-                <Button variant="default" className="w-full">
-                  <LogIn size={16} className="mr-2" />
-                  Entrar
-                </Button>
-              </Link>
-            </div>
-          )}
+          <div className="grid grid-cols-2 gap-4">
+            <Link to="/register" className="w-full">
+              <Button variant="primary" className="w-full">
+                <Terminal size={16} className="mr-2" />
+                Registrarse
+              </Button>
+            </Link>
+            <Link to="/login" className="w-full">
+              <Button variant="default" className="w-full">
+                <LogIn size={16} className="mr-2" />
+                Entrar
+              </Button>
+            </Link>
+          </div>
         </motion.div>
 
         <motion.div
