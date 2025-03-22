@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -355,21 +354,6 @@ const InterestsPage = () => {
                 ) : (
                   <>
                     {renderCurrentTab()}
-
-                    {/* Campo de descripción personal solo se muestra cuando no estamos en la pestaña IA */}
-                    {currentTabIndex !== interestTabs.length - 1 && (
-                      <div className="mt-6">
-                        <label className="block text-sm text-black font-medium mb-2">
-                          Descripción Personal
-                        </label>
-                        <textarea
-                          value={personalNote}
-                          onChange={(e) => setPersonalNote(e.target.value)}
-                          className="w-full h-24 win95-inset p-2 text-sm text-black"
-                          placeholder="Ej: Soy fan de la programación y me gusta el senderismo..."
-                        />
-                      </div>
-                    )}
 
                     <div className="flex justify-end mt-4">
                       <Button variant="default" onClick={() => navigate('/lobby')} className="mr-2">

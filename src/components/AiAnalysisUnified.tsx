@@ -92,26 +92,21 @@ const AiAnalysisUnified: React.FC<AiAnalysisUnifiedProps> = ({
     }
   };
 
-  const fixedPrompt = `ChatGPT, necesito que generes un perfil completo y detallado **de mí** utilizando la siguiente información personal y profesional. Por favor, incluye las siguientes secciones:
+  const fixedPrompt = `Genera un perfil completo, auténtico y amigable sobre mí con el objetivo de facilitar conversaciones interesantes y significativas. Evita cualquier tipo de información sensible, como contraseñas, direcciones específicas, números de teléfono o documentos personales.
 
-1. **Datos Generales:**  
-   - Nombre  
-   - Edad o rango de edad  
-   - Ubicación (ciudad o país)
+Organiza el perfil en las siguientes secciones:
 
-2. **Formación Académica y Experiencia Laboral:**  
-   - Estudios realizados y títulos obtenidos  
-   - Puestos de trabajo y principales responsabilidades
+- **Datos Generales:** (Nombre, Edad, Lugar donde vivo actualmente, y algo relevante de mi origen cultural o familiar)
 
-3. **Habilidades y Competencias:**  
-   - Habilidades técnicas  
-   - Habilidades blandas
+- **Formación Académica:** (Cursos realizados, bootcamps, talleres, tecnologías o herramientas aprendidas de forma autodidacta)
 
-4. **Logros e Intereses:**  
-   - Proyectos destacados o reconocimientos  
-   - Intereses personales y profesionales
+- **Experiencia Laboral:** (Puestos que he desempeñado, proyectos interesantes en los que he trabajado, tecnologías que domino y cómo las he aplicado en mis trabajos)
 
-No incluyas información sensible (como contraseñas o datos privados).`;
+- **Habilidades Técnicas y Blandas:** (Lenguajes de programación, frameworks, herramientas, y habilidades blandas como comunicación, trabajo en equipo, liderazgo)
+
+- **Logros e Intereses Personales:** (Proyectos personales, hobbies, voluntariados, comunidades tecnológicas en las que participo, interés en innovación tecnológica)
+
+- **Resumen Personal:** (Breve descripción sobre cómo me percibo personalmente, cómo me gustaría que me perciban los demás, mis aspiraciones personales y profesionales)`;
 
   const generatePromptFromProfile = (): string => {
     if (customPrompt) return customPrompt;
@@ -124,22 +119,31 @@ No incluyas información sensible (como contraseñas o datos privados).`;
     const personalDescription = personalNote?.trim()
       ? personalNote
       : 'No he proporcionado una descripción personal.';
+    
     return `
-Genera un perfil completo y detallado **de mí** utilizando la siguiente información. Incluye las secciones de:
-- Datos Generales  
-- Formación Académica  
-- Experiencia Laboral  
-- Habilidades  
-- Logros e Intereses  
-- Resumen Personal
+Genera un perfil completo, auténtico y amigable sobre mí con el objetivo de facilitar conversaciones interesantes y significativas. Evita cualquier tipo de información sensible, como contraseñas, direcciones específicas, números de teléfono o documentos personales.
 
-Mis datos disponibles:
+Organiza el perfil en las siguientes secciones:
+
+- **Datos Generales:** (Nombre, Edad, Lugar donde vivo actualmente, y algo relevante de mi origen cultural o familiar)
+
+- **Formación Académica:** (Cursos realizados, bootcamps, talleres, tecnologías o herramientas aprendidas de forma autodidacta)
+
+- **Experiencia Laboral:** (Puestos que he desempeñado, proyectos interesantes en los que he trabajado, tecnologías que domino y cómo las he aplicado en mis trabajos)
+
+- **Habilidades Técnicas y Blandas:** (Lenguajes de programación, frameworks, herramientas, y habilidades blandas como comunicación, trabajo en equipo, liderazgo)
+
+- **Logros e Intereses Personales:** (Proyectos personales, hobbies, voluntariados, comunidades tecnológicas en las que participo, interés en innovación tecnológica)
+
+- **Resumen Personal:** (Breve descripción sobre cómo me percibo personalmente, cómo me gustaría que me perciban los demás, mis aspiraciones personales y profesionales)
+
+Datos disponibles:
 - Nombre: ${profile?.name || 'No disponible'}
 - Descripción personal: ${personalDescription}
 - Temas de interés: ${interestsText}
 - Temas que prefiero evitar: ${avoidText}
 
-Utiliza esta información para generar un perfil que me represente de forma auténtica y facilite iniciar una conversación conmigo.
+Utiliza esta estructura para generar un perfil amigable que facilite conectar con personas con intereses similares, creando un ambiente propicio para iniciar conversaciones enriquecedoras.
     `.trim();
   };
 
