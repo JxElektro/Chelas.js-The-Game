@@ -5,113 +5,19 @@ import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
 import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
-import InterestSelector from '@/components/InterestSelector';
-import { Tag, AlertTriangle, ChevronRight, ArrowLeft, MessageSquare } from 'lucide-react';
+import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Interest, InterestOption, TopicCategory, ChatMessage } from '@/types/supabase';
+import { Interest, InterestOption, TopicCategory } from '@/types/supabase';
 import { toast } from 'sonner';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Textarea } from '@/components/ui/textarea';
-
-const PREDEFINED_INTERESTS: Record<string, string[]> = {
-  entretenimiento: [
-    'Películas', 'Series de TV', 'Anime', 'Documentales', 'Comedia', 
-    'Dramáticos', 'Ciencia ficción', 'Fantasía'
-  ],
-  musica: [
-    'Rock', 'Pop', 'Hip Hop / Rap', 'Electrónica', 'Jazz', 
-    'Clásica', 'Reggaetón', 'Indie'
-  ],
-  libros: [
-    'Novelas', 'Cuentos', 'Poesía', 'Ensayos', 'Ciencia ficción literaria',
-    'Biografías', 'Autoconocimiento'
-  ],
-  gastronomia: [
-    'Cocina internacional', 'Cocina local', 'Repostería', 
-    'Comida saludable', 'Comida exótica', 'Restaurantes y food trucks'
-  ],
-  viajes: [
-    'Destinos de playa', 'Destinos de montaña', 'Ciudades históricas',
-    'Ecoturismo', 'Viajes de aventura', 'Turismo cultural'
-  ],
-  deportes: [
-    'Fútbol', 'Baloncesto', 'Tenis', 'Correr', 'Gimnasio',
-    'Deportes extremos', 'Yoga / Pilates'
-  ],
-  arte: [
-    'Pintura', 'Escultura', 'Fotografía', 'Exposiciones y museos',
-    'Teatro', 'Danza', 'Literatura y poesía'
-  ],
-  tecnologia: [
-    'Innovación', 'Programación', 'Videojuegos', 'Gadgets',
-    'Inteligencia Artificial', 'Robótica', 'Astronomía'
-  ],
-  hobbies: [
-    'Moda', 'Fotografía', 'Jardinería', 'DIY (Hazlo tú mismo)',
-    'Gaming', 'Meditación', 'Voluntariado'
-  ],
-  actualidad: [
-    'Noticias internacionales', 'Redes sociales', 'Tendencias en marketing digital',
-    'Emprendimiento', 'Startups', 'Economía'
-  ],
-  humor: [
-    'Chistes', 'Datos curiosos', 'Memes', 'Curiosidades históricas', 'Anécdotas personales'
-  ],
-  otros: [
-    'Filosofía', 'Psicología', 'Política', 'Medio ambiente', 'Desarrollo personal',
-    'Relaciones y vida social'
-  ]
-};
+import { transformPredefinedInterests } from '@/utils/interestUtils';
+import InterestForm from '@/components/InterestForm';
 
 const Interests = () => {
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const [interests, setInterests] = useState<string[]>([]);
-  const [avoidTopics, setAvoidTopics] = useState<string[]>([]);
   const [interestOptions, setInterestOptions] = useState<InterestOption[]>([]);
   const [avoidOptions, setAvoidOptions] = useState<InterestOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showAIChat, setShowAIChat] = useState(false);
-  const [aiMessage, setAiMessage] = useState('Hola, puedo ayudarte a descubrir más intereses que quizás no hayas considerado. Cuéntame un poco sobre tus pasatiempos favoritos o actividades que disfrutas.');
-  const [userMessage, setUserMessage] = useState('');
-  const [conversation, setConversation] = useState<ChatMessage[]>([]);
-
-  const transformPredefinedInterests = () => {
-    const result: InterestOption[] = [];
-    let id = 1;
-    
-    Object.entries(PREDEFINED_INTERESTS).forEach(([category, interests]) => {
-      interests.forEach(interest => {
-        result.push({
-          id: `custom-${id++}`,
-          label: interest,
-          category: mapCategoryToDbCategory(category)
-        });
-      });
-    });
-    
-    return result;
-  };
-  
-  const mapCategoryToDbCategory = (category: string): TopicCategory => {
-    const categoryMap: Record<string, TopicCategory> = {
-      entretenimiento: 'movies',
-      musica: 'music',
-      libros: 'books',
-      gastronomia: 'food',
-      viajes: 'travel',
-      deportes: 'sports',
-      arte: 'art',
-      tecnologia: 'tech',
-      hobbies: 'hobbies',
-      actualidad: 'trends',
-      humor: 'humor',
-      otros: 'other'
-    };
-    
-    return categoryMap[category] || 'other';
-  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -179,84 +85,6 @@ const Interests = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      // Get the current user
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast.error('Debes iniciar sesión para guardar tus preferencias');
-        navigate('/login');
-        return;
-      }
-      
-      const userId = session.user.id;
-      
-      // Save selected interests
-      const interestPromises = interests.map(interestId => {
-        // Skip custom interests (they start with "custom-")
-        if (interestId.startsWith('custom-')) {
-          const option = interestOptions.find(opt => opt.id === interestId);
-          if (option) {
-            // First, create the interest in the database
-            return supabase
-              .from('interests')
-              .insert({
-                name: option.label,
-                category: option.category
-              })
-              .select()
-              .then(({ data, error }) => {
-                if (error) throw error;
-                if (data && data.length > 0) {
-                  // Then link it to the user
-                  return supabase
-                    .from('user_interests')
-                    .insert({
-                      user_id: userId,
-                      interest_id: data[0].id,
-                      is_avoided: false
-                    });
-                }
-              });
-          }
-        } else {
-          // For existing interests, just create the user-interest relationship
-          return supabase
-            .from('user_interests')
-            .insert({
-              user_id: userId,
-              interest_id: interestId,
-              is_avoided: false
-            });
-        }
-      });
-      
-      // Save avoided topics
-      const avoidPromises = avoidTopics.map(topicId => {
-        return supabase
-          .from('user_interests')
-          .insert({
-            user_id: userId,
-            interest_id: topicId,
-            is_avoided: true
-          });
-      });
-      
-      // Wait for all promises to resolve
-      await Promise.all([...interestPromises, ...avoidPromises]);
-      
-      console.log('Preferencias guardadas correctamente');
-      toast.success('Preferencias guardadas correctamente');
-      navigate('/lobby');
-    } catch (error: any) {
-      console.error('Error al guardar preferencias:', error);
-      toast.error('Error al guardar preferencias');
-    }
-  };
-
   const handleCustomInterestAdd = (interest: string) => {
     const newInterest: InterestOption = {
       id: `custom-${Date.now()}`,
@@ -265,31 +93,7 @@ const Interests = () => {
     };
     
     setInterestOptions(prev => [...prev, newInterest]);
-    
-    if (interests.length < 5) {
-      setInterests(prev => [...prev, newInterest.id]);
-    }
-    
     toast.success(`Se ha añadido "${interest}" a tus intereses`);
-  };
-
-  const handleSendMessage = () => {
-    if (!userMessage.trim()) return;
-    
-    const newConversation: ChatMessage[] = [
-      ...conversation,
-      { role: 'user', content: userMessage }
-    ];
-    setConversation(newConversation);
-    setUserMessage('');
-    
-    setTimeout(() => {
-      const aiResponse: ChatMessage = {
-        role: 'ai',
-        content: `Basándome en lo que me cuentas, te sugiero explorar intereses como: "Fotografía de paisajes", "Ciencia de datos" o "Cocina asiática". ¿Alguno de estos te interesa?`
-      };
-      setConversation([...newConversation, aiResponse]);
-    }, 1000);
   };
 
   return (
@@ -319,94 +123,11 @@ const Interests = () => {
               <p className="text-xs text-white">{error}</p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit}>
-              <p className="text-sm text-black mb-4">
-                Selecciona temas sobre los que te interesa hablar y aquellos que prefieres evitar.
-              </p>
-              
-              <div className="mb-6">
-                <InterestSelector
-                  title="Me interesa hablar sobre:"
-                  options={interestOptions}
-                  selectedOptions={interests}
-                  onChange={setInterests}
-                  maxSelections={5}
-                  onCustomInterestSubmit={handleCustomInterestAdd}
-                />
-                
-                <InterestSelector
-                  title="Prefiero evitar:"
-                  options={avoidOptions}
-                  selectedOptions={avoidTopics}
-                  onChange={setAvoidTopics}
-                  maxSelections={3}
-                />
-              </div>
-              
-              <Button 
-                type="button"
-                variant="outline"
-                onClick={() => setShowAIChat(!showAIChat)}
-                className="mb-4 w-full"
-              >
-                <MessageSquare size={16} className="mr-2" />
-                {showAIChat ? 'Ocultar asistente de IA' : 'Explorar más intereses con ayuda de IA'}
-              </Button>
-              
-              {showAIChat && (
-                <WindowFrame title="ASISTENTE DE INTERESES" className="mb-4 p-2">
-                  <div className="bg-chelas-gray-dark/20 p-2 rounded-sm mb-2 h-60 overflow-y-auto">
-                    {conversation.length === 0 ? (
-                      <div className="p-2 rounded bg-chelas-yellow/20 mb-2">
-                        <p className="text-sm">{aiMessage}</p>
-                      </div>
-                    ) : (
-                      conversation.map((msg, index) => (
-                        <div 
-                          key={index} 
-                          className={`p-2 rounded mb-2 ${
-                            msg.role === 'ai' 
-                              ? 'bg-chelas-yellow/20 text-black' 
-                              : 'bg-chelas-button-face text-black ml-auto max-w-[80%]'
-                          }`}
-                        >
-                          <p className="text-sm">{msg.content}</p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Textarea
-                      value={userMessage}
-                      onChange={(e) => setUserMessage(e.target.value)}
-                      placeholder="Escribe sobre tus intereses..."
-                      className="text-sm min-h-[60px] border-chelas-gray-dark"
-                    />
-                    <Button 
-                      onClick={handleSendMessage}
-                      disabled={!userMessage.trim()}
-                      className="h-full"
-                    >
-                      Enviar
-                    </Button>
-                  </div>
-                </WindowFrame>
-              )}
-              
-              <div className="mb-4 p-2 bg-chelas-yellow/20 border-2 border-chelas-yellow flex items-start">
-                <AlertTriangle size={16} className="text-chelas-yellow mr-2 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-white">
-                  Estas preferencias se utilizarán para generar temas de conversación relevantes cuando te conectes con otros asistentes.
-                </p>
-              </div>
-              
-              <div className="flex justify-end">
-                <Button type="submit" variant="primary">
-                  Guardar y Continuar <ChevronRight size={16} className="ml-1" />
-                </Button>
-              </div>
-            </form>
+            <InterestForm 
+              interestOptions={interestOptions}
+              avoidOptions={avoidOptions}
+              onCustomInterestAdd={handleCustomInterestAdd}
+            />
           )}
         </WindowFrame>
       </motion.div>
