@@ -59,7 +59,7 @@ const Landing = () => {
               </Button>
             </Link>
             <Link to="/login" className="w-full">
-              <Button variant="secondary" className="w-full">
+              <Button variant="default" className="w-full">
                 <LogIn size={16} className="mr-2" />
                 Entrar
               </Button>
