@@ -51,7 +51,10 @@ const Conversation = () => {
             name: 'ChelasBot',
             avatar: 'bot',
             is_available: true,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            // Adding the new required properties
+            temas_preferidos: [],
+            descripcion_personal: 'Soy ChelasBot, un bot conversacional para ayudar a practicar tus habilidades sociales.'
           });
           return;
         }
@@ -70,7 +73,7 @@ const Conversation = () => {
           return;
         }
         
-        setOtherUserProfile(data);
+        setOtherUserProfile(data as Profile);
       } catch (error) {
         console.error('Error al procesar el perfil del usuario:', error);
         navigate('/lobby');
