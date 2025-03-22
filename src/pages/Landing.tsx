@@ -1,11 +1,11 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
 import Button from '@/components/Button';
 import WindowFrame from '@/components/WindowFrame';
-import { Terminal, Users, MessageSquare, Sparkles } from 'lucide-react';
+import { Terminal } from 'lucide-react';
 
 const Landing = () => {
   return (
@@ -86,7 +86,7 @@ const Landing = () => {
             </ol>
           </WindowFrame>
         </motion.div>
-      </Layout>
+      </motion.div>
     </Layout>
   );
 };
