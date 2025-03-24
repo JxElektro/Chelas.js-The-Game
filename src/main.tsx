@@ -14,6 +14,7 @@ document.body.style.overflow = 'hidden';
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error('Root element not found');
 
+// Wrap App inside ReactDOM.createRoot().render(), ensuring proper React context
 createRoot(rootElement).render(
   <React.StrictMode>
     <App />

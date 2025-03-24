@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,10 +16,10 @@ import Interests from "./pages/Interests";
 import Conversation from "./pages/Conversation";
 import NotFound from "./pages/NotFound";
 
-const App = () => {
-  // Create QueryClient inside the component
-  const [queryClient] = useState(() => new QueryClient());
+// Create QueryClient outside the component to avoid recreation on each render
+const queryClient = new QueryClient();
 
+const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
