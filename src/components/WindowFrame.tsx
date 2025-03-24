@@ -32,11 +32,10 @@ const WindowFrame: React.FC<WindowFrameProps> = ({
         {onClose && (
           <button 
             onClick={onClose}
-            className={`win95-button h-5 w-5 flex items-center justify-center p-0 text-black 
-              ${isMobile ? 'h-6 w-6' : ''}`}
+            className={`win95-button h-5 w-5 flex items-center justify-center p-0 text-black ${isMobile ? 'h-6 w-6' : ''}`}
             aria-label="Close window"
           >
-            <X size={isMobile ? 16 : 14} />
+            <X size={isMobile ? 16 : 14} strokeWidth={2.5} />
           </button>
         )}
       </div>

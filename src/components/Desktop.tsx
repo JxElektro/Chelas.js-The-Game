@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Wifi, WifiOff, ChevronUp, X } from 'lucide-react';
@@ -9,6 +8,7 @@ import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 import Avatar, { AvatarType } from '@/components/Avatar';
+import Snake from '@/components/Snake';
 
 // Desktop application icons
 interface DesktopIcon {
@@ -92,7 +92,7 @@ const Desktop: React.FC = () => {
       id: 'snake',
       title: 'Snake',
       icon: '🐍',
-      component: <div className="p-4">Snake game will be implemented here</div>
+      component: <Snake />
     },
     {
       id: 'downloads',
@@ -103,10 +103,10 @@ const Desktop: React.FC = () => {
   ];
 
   useEffect(() => {
-    // Update clock every minute
+    // Update clock every second (changed from minute to second)
     const intervalId = setInterval(() => {
       setTime(new Date());
-    }, 60000);
+    }, 1000);
 
     // Check authentication status
     checkAuthStatus();
@@ -142,7 +142,19 @@ const Desktop: React.FC = () => {
           name: userProfile.name || 'Usuario',
           avatar: userProfile.avatar as AvatarType
         });
+        
+        // Set availability status from profile
         setIsAvailable(userProfile.is_available || true);
+        
+        // Make sure the user is marked as available when logging in
+        if (!userProfile.is_available) {
+          await supabase
+            .from('profiles')
+            .update({ is_available: true })
+            .eq('id', userProfile.id);
+          
+          setIsAvailable(true);
+        }
       }
     } catch (error) {
       console.error('Error checking session:', error);
@@ -198,7 +210,31 @@ const Desktop: React.FC = () => {
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
+  const handleLogout = async () => {
+    if (currentUser) {
+      try {
+        // Set user as unavailable before logging out
+        await supabase
+          .from('profiles')
+          .update({ is_available: false })
+          .eq('id', currentUser.id);
+          
+        // Then sign out
+        await supabase.auth.signOut();
+        
+        toast.success('Sesión cerrada correctamente');
+        navigate('/login');
+      } catch (error) {
+        console.error('Error during logout:', error);
+        toast.error('Error al cerrar sesión');
+      }
+    } else {
+      await supabase.auth.signOut();
+      navigate('/login');
+    }
   };
 
   // If user is not authenticated, redirect to login
@@ -364,12 +400,7 @@ const Desktop: React.FC = () => {
                 <div className="border-t border-chelas-gray-dark my-1"></div>
                 <div 
                   className="flex items-center p-1.5 hover:bg-chelas-window-title hover:text-white cursor-pointer"
-                  onClick={() => {
-                    setIsStartMenuOpen(false);
-                    supabase.auth.signOut().then(() => {
-                      window.location.href = '/login';
-                    });
-                  }}
+                  onClick={handleLogout}
                 >
                   <div className="text-xl mr-2">🚪</div>
                   <span className="text-sm">Cerrar sesión</span>
