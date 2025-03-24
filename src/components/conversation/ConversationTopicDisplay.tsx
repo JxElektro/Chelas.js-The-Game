@@ -57,7 +57,7 @@ const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
     <div className="relative w-full">
       <WindowFrame 
         title="TEMA DE CONVERSACIÓN" 
-        className="w-full mb-6"
+        className="w-full mb-4"
       >
         <div className="relative p-2">
           <div className="mb-4">
@@ -76,35 +76,37 @@ const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
           </div>
           
           {/* Navegación entre temas */}
-          <div className="flex justify-between items-center mt-2">
-            <Button
-              onClick={handlePrevTopic}
-              disabled={currentTopicIndex === 0}
-              className="px-2 flex items-center"
-              variant={currentTopicIndex === 0 ? "ghost" : "default"}
-            >
-              <ChevronLeft size={18} className="mr-1" />
-              Anterior
-            </Button>
-            
-            <div className="text-xs text-center">
-              {!isLoading && totalTopics > 0 && (
-                <span className="bg-chelas-gray-light px-2 py-0.5 rounded-sm">
-                  {currentTopicIndex + 1} de {totalTopics}
-                </span>
-              )}
+          {totalTopics > 1 && (
+            <div className="flex justify-between items-center mt-2">
+              <Button
+                onClick={handlePrevTopic}
+                disabled={currentTopicIndex === 0}
+                className="px-2 flex items-center"
+                variant={currentTopicIndex === 0 ? "ghost" : "default"}
+              >
+                <ChevronLeft size={18} className="mr-1" />
+                Anterior
+              </Button>
+              
+              <div className="text-xs text-center">
+                {!isLoading && totalTopics > 0 && (
+                  <span className="bg-chelas-gray-light px-2 py-0.5 rounded-sm">
+                    {currentTopicIndex + 1} de {totalTopics}
+                  </span>
+                )}
+              </div>
+              
+              <Button
+                onClick={handleNextTopic}
+                disabled={currentTopicIndex === totalTopics - 1}
+                className="px-2 flex items-center"
+                variant={currentTopicIndex === totalTopics - 1 ? "ghost" : "default"}
+              >
+                Siguiente
+                <ChevronRight size={18} className="ml-1" />
+              </Button>
             </div>
-            
-            <Button
-              onClick={handleNextTopic}
-              disabled={currentTopicIndex === totalTopics - 1}
-              className="px-2 flex items-center"
-              variant={currentTopicIndex === totalTopics - 1 ? "ghost" : "default"}
-            >
-              Siguiente
-              <ChevronRight size={18} className="ml-1" />
-            </Button>
-          </div>
+          )}
         </div>
       </WindowFrame>
     </div>

@@ -29,12 +29,12 @@ const ConversationActions: React.FC<ConversationActionsProps> = ({
   const isMobile = useIsMobile();
   
   return (
-    <div className="flex justify-between items-center mt-4 px-2">
+    <div className="flex justify-between items-center mt-2 mb-2 px-2">
       <Button 
         variant="outline"
         onClick={handleNewTopic}
         disabled={isLoading}
-        className="w-auto"
+        className="w-auto bg-chelas-button-face hover:bg-chelas-gray-light"
         title="Generar Nuevos Temas"
       >
         <Bot size={24} />

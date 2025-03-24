@@ -100,20 +100,18 @@ const Conversation = () => {
               </ScrollArea>
 
               {/* Sección de tema de conversación */}
-              <div className="mt-2">
-                <ConversationTopicDisplay
-                  useTopicsWithOptions={useTopicsWithOptions}
-                  getCurrentTopic={getCurrentTopic}
-                  isLoading={isLoading}
-                  handleSelectOption={handleSelectOption}
-                  showAllTopics={showAllTopics}
-                  setShowAllTopics={setShowAllTopics}
-                  topicsWithOptions={topicsWithOptions}
-                  topics={topics}
-                  currentTopicIndex={currentTopicIndex}
-                  setCurrentTopicIndex={setCurrentTopicIndex}
-                />
-              </div>
+              <ConversationTopicDisplay
+                useTopicsWithOptions={useTopicsWithOptions}
+                getCurrentTopic={getCurrentTopic}
+                isLoading={isLoading}
+                handleSelectOption={handleSelectOption}
+                showAllTopics={showAllTopics}
+                setShowAllTopics={setShowAllTopics}
+                topicsWithOptions={topicsWithOptions}
+                topics={topics}
+                currentTopicIndex={currentTopicIndex}
+                setCurrentTopicIndex={setCurrentTopicIndex}
+              />
 
               {/* Acciones con iconos para generar nuevos temas */}
               <ConversationActions

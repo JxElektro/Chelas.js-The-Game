@@ -75,10 +75,9 @@ export const useConversationActions = (
       
     if (currentTopicIndex < maxIndex) {
       setCurrentTopicIndex(currentTopicIndex + 1);
-    } else {
-      // If we're at the end, cycle back to the first topic
-      setCurrentTopicIndex(0);
-      toast.info("Has visto todos los temas disponibles. Puedes generar nuevos temas con el botón de la IA.");
+    } else if (maxIndex >= 0) {
+      // If we're at the end, show a toast notification
+      toast.info("Has visto todos los temas disponibles. Genera nuevos temas con el botón de la IA.");
     }
   };
 
@@ -96,15 +95,20 @@ export const useConversationActions = (
         .eq('id', conversationIdRef.current)
         .then(({ error }) => {
           if (error) console.error('Error al finalizar conversación:', error);
+          else {
+            toast.success("Conversación finalizada");
+            navigate('/');
+          }
         });
+    } else {
+      navigate('/');
     }
-    
-    navigate('/');
   };
   
   const handleSelectOption = (option: {emoji: string, text: string}) => {
     toast.success(`Seleccionaste: ${option.text}`);
-    // Aquí podrías implementar lógica adicional para guardar la selección o pasar al siguiente tema
+    // Here you could implement additional logic to save the selection or move to the next topic
+    handleNextTopic();
   };
 
   return {
