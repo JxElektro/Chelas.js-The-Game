@@ -137,6 +137,30 @@ export type Database = {
         }
         Relationships: []
       }
+      snake_high_scores: {
+        Row: {
+          created_at: string
+          id: string
+          score: number
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          score: number
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          score?: number
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: []
+      }
       user_interests: {
         Row: {
           created_at: string

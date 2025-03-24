@@ -89,17 +89,22 @@ const Snake: React.FC = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('snake_high_scores')
+        .rpc('get_snake_high_scores')
         .select('id, user_id, user_name, score, created_at')
         .order('score', { ascending: false })
         .limit(10);
         
       if (error) throw error;
       
-      setHighScores(data || []);
+      if (data) {
+        setHighScores(data as HighScore[]);
+      }
     } catch (error) {
       console.error('Error fetching high scores:', error);
       toast.error('Error al cargar las puntuaciones');
+      
+      // Fallback to empty array
+      setHighScores([]);
     } finally {
       setLoading(false);
     }
@@ -110,13 +115,13 @@ const Snake: React.FC = () => {
     if (!userId || !userName) return;
     
     try {
-      await supabase
-        .from('snake_high_scores')
-        .insert({
-          user_id: userId,
-          user_name: userName,
-          score: score
-        });
+      const { error } = await supabase.rpc('add_snake_high_score', {
+        user_id_param: userId,
+        user_name_param: userName,
+        score_param: score
+      });
+        
+      if (error) throw error;
         
       toast.success('¡Puntuación guardada!');
       fetchHighScores();
