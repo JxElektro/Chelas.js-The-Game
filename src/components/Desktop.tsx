@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import Avatar, { AvatarType } from '@/components/Avatar';
 import Snake from '@/components/Snake';
 import DrinkExpenses from '@/components/DrinkExpenses';
+import Tutorial from '@/pages/Tutorial';
 
 interface DesktopIcon {
   id: string;
@@ -100,6 +101,18 @@ const Desktop: React.FC = () => {
       title: 'Descargas',
       icon: '📁',
       component: <div className="p-4">Downloads folder will be implemented here</div>
+    },
+    {
+      id: 'tutorial',
+      title: 'Tutorial',
+      icon: '📚',
+      component: <Tutorial />
+    },
+    {
+      id: 'nightsaver',
+      title: 'Jhdjsjksh.exe',
+      icon: '🌙',
+      component: <div className="p-4">Nightsaver will be implemented here</div>
     }
   ];
 
