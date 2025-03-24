@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -229,7 +228,7 @@ const InterestsPage = () => {
       if (profileError) throw profileError;
 
       toast.success('Preferencias guardadas correctamente');
-      navigate('/lobby');
+      navigate('/');
     } catch (err) {
       console.error('Error al guardar intereses:', err);
       toast.error('No se pudieron guardar los intereses');
@@ -304,14 +303,13 @@ const InterestsPage = () => {
       (cat) => cat.categoryId === 'personalInfo'
     );
 
-    // Ya no necesitamos la tab de opciones avanzadas IA
+    // Ya no mostramos la tab de opciones avanzadas IA, la omitimos completamente
     const isAiTab = tabData.categories.some(
       (cat) => cat.categoryId === 'externalAnalysis'
     );
 
     if (isAiTab) {
-      // Esta pestaña ya no es necesaria, pero mantenemos el código por ahora
-      // para no romper la funcionalidad existente
+      // Esta pestaña ya no es necesaria
       return null;
     }
 
@@ -445,12 +443,14 @@ const InterestsPage = () => {
         <WindowFrame 
           title="PROPIEDADES DE INTERESES" 
           className="w-full max-w-full sm:max-w-3xl" 
-          onClose={() => navigate('/lobby')}
+          onClose={() => navigate('/')}
         >
           <div className="flex flex-col h-full">
-            {/* Añadimos la pestaña "Perfil" como primera opción */}
+            {/* Filtramos las pestañas para eliminar "Opciones avanzadas IA" */}
             <Tabs 
-              tabs={['Perfil', ...interestTabs.map(tab => tab.label)]} 
+              tabs={['Perfil', ...interestTabs
+                .filter(tab => !tab.categories.some(cat => cat.categoryId === 'externalAnalysis'))
+                .map(tab => tab.label)]} 
               activeTab={currentTabIndex} 
               onChange={setCurrentTabIndex}
             >
@@ -465,7 +465,7 @@ const InterestsPage = () => {
                     </div>
 
                     <div className="flex justify-end mt-4">
-                      <Button variant="default" onClick={() => navigate('/lobby')} className="mr-2">
+                      <Button variant="default" onClick={() => navigate('/')} className="mr-2">
                         Cancelar
                       </Button>
                       <Button variant="primary" onClick={handleSave} disabled={loading}>
