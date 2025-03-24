@@ -3,26 +3,18 @@
 // Re-exporta todas las funcionalidades de los archivos más pequeños
 // para mantener compatibilidad con el código existente
 
-import { SuperProfile, OperationResult } from './superProfile/types';
 import { createEmptySuperProfile } from './superProfile/factory';
 import { resetAllInterests, setInterestValue, extractInterestsFromSuperProfile } from './superProfile/helpers';
 import { saveSuperProfile, loadSuperProfile, updateSuperProfileFromSelections } from './superProfile/database';
 
-export {
-  // Types
-  SuperProfile,
-  OperationResult,
+// Re-export types correctly with "export type"
+export type { SuperProfile, OperationResult } from './superProfile/types';
   
-  // Factory functions
-  createEmptySuperProfile,
+// Factory functions
+export { createEmptySuperProfile };
   
-  // Helper functions
-  resetAllInterests,
-  setInterestValue,
-  extractInterestsFromSuperProfile,
+// Helper functions
+export { resetAllInterests, setInterestValue, extractInterestsFromSuperProfile };
   
-  // Database operations
-  saveSuperProfile,
-  loadSuperProfile,
-  updateSuperProfileFromSelections
-};
+// Database operations
+export { saveSuperProfile, loadSuperProfile, updateSuperProfileFromSelections };

@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { 
-  SuperProfile, 
+  type SuperProfile, 
   createEmptySuperProfile, 
   loadSuperProfile,
   extractInterestsFromSuperProfile 

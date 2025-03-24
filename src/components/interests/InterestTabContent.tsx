@@ -3,7 +3,10 @@ import React from 'react';
 import { toast } from 'sonner';
 import AiAnalysisPersonal from '@/components/AiAnalysisPersonal';
 import ProfileInfoTab from '@/components/ProfileInfoTab';
-import { TabData } from '@/utils/interestUtils';
+import { InterestTab } from '@/utils/interestUtils';
+
+// Define TabData type directly since it's not exported from interestUtils
+type TabData = InterestTab;
 
 interface InterestTabContentProps {
   currentTabIndex: number;
@@ -64,10 +67,12 @@ const InterestTabContent: React.FC<InterestTabContentProps> = ({
   if (tabData && tabData.categories.some(cat => cat.categoryId === 'externalAnalysis')) {
     return (
       <div className="p-2">
-        <AiAnalysisPersonal
-          aiAnalysis={aiAnalysis || ''}
-          setAiAnalysis={onAiAnalysisChange}
-        />
+        {userId && (
+          <AiAnalysisPersonal
+            userId={userId}
+            currentAnalysis={aiAnalysis || ''}
+          />
+        )}
       </div>
     );
   }
