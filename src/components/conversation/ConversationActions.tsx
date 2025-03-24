@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Bot, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TopicWithOptions {
@@ -28,28 +26,8 @@ const ConversationActions: React.FC<ConversationActionsProps> = ({
 }) => {
   const isMobile = useIsMobile();
   
-  return (
-    <div className="flex justify-between items-center mt-2 mb-2 px-2">
-      <Button 
-        variant="outline"
-        onClick={handleNewTopic}
-        disabled={isLoading}
-        className="w-auto bg-chelas-button-face hover:bg-chelas-gray-light"
-        title="Generar Nuevos Temas"
-      >
-        <Bot size={24} />
-      </Button>
-      
-      <Button 
-        variant="destructive"
-        onClick={handleEndConversation}
-        className="w-auto"
-      >
-        <X size={18} className="mr-2" />
-        Terminar Chat
-      </Button>
-    </div>
-  );
+  // Empty component - we're moving functionality to the topic display
+  return null;
 };
 
 export default ConversationActions;

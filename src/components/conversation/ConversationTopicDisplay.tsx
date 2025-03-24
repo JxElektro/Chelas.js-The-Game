@@ -4,7 +4,7 @@ import WindowFrame from '@/components/WindowFrame';
 import ConversationPrompt from '@/components/ConversationPrompt';
 import ConversationTopicWithOptions from '@/components/ConversationTopicWithOptions';
 import Button from '@/components/Button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 
 interface TopicOption {
   emoji: string;
@@ -27,6 +27,7 @@ interface ConversationTopicDisplayProps {
   topics: string[];
   currentTopicIndex: number;
   setCurrentTopicIndex: (index: number) => void;
+  handleNewTopic: () => void;
 }
 
 const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
@@ -37,9 +38,11 @@ const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
   topicsWithOptions,
   topics,
   currentTopicIndex,
-  setCurrentTopicIndex
+  setCurrentTopicIndex,
+  handleNewTopic
 }) => {
   const totalTopics = useTopicsWithOptions ? topicsWithOptions.length : topics.length;
+  const showGenerateButton = currentTopicIndex === totalTopics - 1 && totalTopics > 0;
   
   const handlePrevTopic = () => {
     if (currentTopicIndex > 0) {
@@ -75,7 +78,7 @@ const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
             )}
           </div>
           
-          {/* Navegación entre temas */}
+          {/* Navegación entre temas y botón de generar nuevos temas */}
           {totalTopics > 1 && (
             <div className="flex justify-between items-center mt-2">
               <Button
@@ -96,15 +99,28 @@ const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
                 )}
               </div>
               
-              <Button
-                onClick={handleNextTopic}
-                disabled={currentTopicIndex === totalTopics - 1}
-                className="px-2 flex items-center"
-                variant={currentTopicIndex === totalTopics - 1 ? "ghost" : "default"}
-              >
-                Siguiente
-                <ChevronRight size={18} className="ml-1" />
-              </Button>
+              {/* Mostrar el botón de Siguiente o el botón de generar nuevos temas */}
+              {showGenerateButton ? (
+                <Button
+                  onClick={handleNewTopic}
+                  disabled={isLoading}
+                  className="px-2 flex items-center bg-chelas-button-face hover:bg-chelas-gray-light"
+                  title="Generar Nuevos Temas"
+                >
+                  <Zap size={18} className="mr-1" />
+                  Nuevos Temas
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleNextTopic}
+                  disabled={currentTopicIndex === totalTopics - 1}
+                  className="px-2 flex items-center"
+                  variant={currentTopicIndex === totalTopics - 1 ? "ghost" : "default"}
+                >
+                  Siguiente
+                  <ChevronRight size={18} className="ml-1" />
+                </Button>
+              )}
             </div>
           )}
         </div>

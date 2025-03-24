@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -7,7 +8,6 @@ import WindowFrame from '@/components/WindowFrame';
 import ConversationHeader from '@/components/conversation/ConversationHeader';
 import ConversationMatch from '@/components/conversation/ConversationMatch';
 import ConversationTopicDisplay from '@/components/conversation/ConversationTopicDisplay';
-import ConversationActions from '@/components/conversation/ConversationActions';
 import { useConversation } from '@/hooks/useConversation';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -48,11 +48,6 @@ const Conversation = () => {
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNotes(e.target.value);
   };
-
-  // Calculamos si ya se han cargado al menos 3 preguntas para habilitar el botón.
-  const questionsLoaded = useTopicsWithOptions
-    ? topicsWithOptions.length >= 3
-    : topics.length >= 3;
 
   return (
     <div 
@@ -116,36 +111,12 @@ const Conversation = () => {
                     topics={topics}
                     currentTopicIndex={currentTopicIndex}
                     setCurrentTopicIndex={setCurrentTopicIndex}
+                    handleNewTopic={handleNewTopic}
                   />
                 </div>
               </ScrollArea>
-
-              {/* Acciones para la conversación */}
-              <div className="mt-4">
-                <ConversationActions
-                  isLoading={isLoading}
-                  useTopicsWithOptions={useTopicsWithOptions}
-                  topicsWithOptions={topicsWithOptions}
-                  topics={topics}
-                  handleNewTopic={handleNewTopic}
-                  handleEndConversation={handleEndConversation}
-                  // Se puede incluir "Siguiente Tema" dentro de ConversationActions
-                  handleNextTopic={() => {}}
-                />
-              </div>
             </div>
           </WindowFrame>
-
-          {/* Botón para generar otras 3 preguntas */}
-          <div className="flex justify-center mt-4">
-            <button
-              disabled={isLoading || !questionsLoaded}
-              onClick={handleNewTopic}
-              className="win95-button px-4 py-2 disabled:opacity-50"
-            >
-              Generar otras 3 preguntas
-            </button>
-          </div>
 
           {/* Ventana para las notas de la conversación */}
           <WindowFrame
