@@ -5,7 +5,6 @@ import Layout from '@/components/Layout';
 import WindowFrame from '@/components/WindowFrame';
 import Button from '@/components/Button';
 import Avatar, { AvatarType } from '@/components/Avatar';
-import Timer from '@/components/Timer';
 import ConversationPrompt from '@/components/ConversationPrompt';
 import ConversationTopicWithOptions from '@/components/ConversationTopicWithOptions';
 import MatchPercentage from '@/components/MatchPercentage';
@@ -15,7 +14,7 @@ import {
   generateTopicWithOptions,
   mockTopicsWithOptions
 } from '@/services/deepseekService';
-import { ArrowLeft, RefreshCw, Clock, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, RefreshCw, X, ChevronDown, ChevronUp, Star, BookmarkPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, Conversation as ConversationType, InterestOption } from '@/types/supabase';
 import { toast } from 'sonner';
@@ -50,6 +49,8 @@ const Conversation = () => {
   const [allInterests, setAllInterests] = useState<any[]>([]);
   const [showAllTopics, setShowAllTopics] = useState(false);
   const [useTopicsWithOptions, setUseTopicsWithOptions] = useState(true);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFollowUp, setIsFollowUp] = useState(false);
   const conversationIdRef = useRef<string | null>(null);
   const isMobile = useIsMobile();
   
@@ -102,7 +103,7 @@ const Conversation = () => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!userId) {
-        navigate('/lobby');
+        navigate('/');
         return;
       }
 
@@ -131,14 +132,14 @@ const Conversation = () => {
         if (error || !data) {
           console.error('Error al cargar el perfil del usuario:', error);
           toast.error('No se pudo cargar el perfil del usuario');
-          navigate('/lobby');
+          navigate('/');
           return;
         }
         
         setOtherUserProfile(data as Profile);
       } catch (error) {
         console.error('Error al procesar el perfil del usuario:', error);
-        navigate('/lobby');
+        navigate('/');
       }
     };
 
@@ -387,29 +388,58 @@ const Conversation = () => {
     }
   };
 
-  const handleTimeUp = () => {
-    console.log('¡Se acabó el tiempo!');
-    toast.info('Se acabó el tiempo de esta conversación');
-  };
-
   const handleEndConversation = () => {
     // Update conversation end time if we have a conversation ID
     if (conversationIdRef.current) {
       supabase
         .from('conversations')
-        .update({ ended_at: new Date().toISOString() })
+        .update({ 
+          ended_at: new Date().toISOString(),
+          is_favorite: isFavorite,
+          follow_up: isFollowUp
+        })
         .eq('id', conversationIdRef.current)
         .then(({ error }) => {
           if (error) console.error('Error al finalizar conversación:', error);
         });
     }
     
-    navigate('/lobby');
+    navigate('/');
   };
   
   const handleSelectOption = (option: TopicOption) => {
     toast.success(`Seleccionaste: ${option.text}`);
     // Aquí podrías implementar lógica adicional para guardar la selección o pasar al siguiente tema
+  };
+
+  const toggleFavorite = () => {
+    setIsFavorite(!isFavorite);
+    toast.success(isFavorite ? 'Eliminado de favoritos' : 'Añadido a favoritos');
+    
+    if (conversationIdRef.current) {
+      supabase
+        .from('conversations')
+        .update({ is_favorite: !isFavorite })
+        .eq('id', conversationIdRef.current)
+        .then(({ error }) => {
+          if (error) console.error('Error al marcar como favorito:', error);
+        });
+    }
+  };
+  
+  const toggleFollowUp = () => {
+    setIsFollowUp(!isFollowUp);
+    toast.success(isFollowUp ? 'Follow-up cancelado' : 'Follow-up marcado');
+    
+    if (conversationIdRef.current) {
+      supabase
+        .from('conversations')
+        .update({ follow_up: !isFollowUp })
+        .eq('id', conversationIdRef.current)
+        .then(({ error }) => {
+          if (error) console.error('Error al marcar para seguimiento:', error);
+        });
+    }
   };
 
   const getCurrentTopic = () => {
@@ -446,16 +476,44 @@ const Conversation = () => {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col min-h-[90vh] w-full"
       >
-        <Button 
-          variant="ghost" 
-          className="self-start mb-4"
-          onClick={handleEndConversation}
-        >
-          <ArrowLeft size={16} className="mr-1" />
-          Volver al Lobby
-        </Button>
+        <div className="flex justify-between items-center mb-4">
+          <Button 
+            variant="ghost" 
+            className="self-start"
+            onClick={handleEndConversation}
+          >
+            <ArrowLeft size={16} className="mr-1" />
+            Volver
+          </Button>
+          
+          <div className="flex space-x-2">
+            <Button 
+              variant={isFavorite ? "primary" : "default"}
+              className="flex items-center" 
+              onClick={toggleFavorite}
+              title="Marcar como favorito"
+            >
+              <Star size={16} className={isFavorite ? "text-black fill-current" : ""} />
+              {!isMobile && <span className="ml-1">Favorito</span>}
+            </Button>
+            
+            <Button 
+              variant={isFollowUp ? "primary" : "default"}
+              className="flex items-center" 
+              onClick={toggleFollowUp}
+              title="Marcar para seguimiento"
+            >
+              <BookmarkPlus size={16} className={isFollowUp ? "text-black fill-current" : ""} />
+              {!isMobile && <span className="ml-1">Follow-up</span>}
+            </Button>
+          </div>
+        </div>
 
-        <WindowFrame title="COMPAÑERO DE CONVERSACIÓN" className="mb-6">
+        <WindowFrame 
+          title="COMPAÑERO DE CONVERSACIÓN" 
+          className="mb-6"
+          onClose={handleEndConversation}
+        >
           <div className="flex items-center">
             <Avatar type={otherUserProfile.avatar as AvatarType} size="lg" />
             <div className="ml-4">
@@ -474,25 +532,29 @@ const Conversation = () => {
           />
         )}
 
-        <Timer 
-          initialMinutes={3} 
-          onTimeUp={handleTimeUp}
-          onExtend={() => console.log('Tiempo extendido')}
-          autoStart={topicsLoaded} 
-          isLoading={isLoading} 
-        />
-
         {useTopicsWithOptions ? (
-          <ConversationTopicWithOptions 
-            topic={getCurrentTopic() as TopicWithOptions} 
-            isLoading={isLoading}
-            onSelectOption={handleSelectOption}
-          />
+          <WindowFrame 
+            title="TEMA DE CONVERSACIÓN" 
+            className="mb-6"
+            onClose={() => setShowAllTopics(!showAllTopics)}
+          >
+            <ConversationTopicWithOptions 
+              topic={getCurrentTopic() as TopicWithOptions} 
+              isLoading={isLoading}
+              onSelectOption={handleSelectOption}
+            />
+          </WindowFrame>
         ) : (
-          <ConversationPrompt 
-            prompt={getCurrentTopic() as string} 
-            isLoading={isLoading} 
-          />
+          <WindowFrame 
+            title="TEMA DE CONVERSACIÓN" 
+            className="mb-6"
+            onClose={() => setShowAllTopics(!showAllTopics)}
+          >
+            <ConversationPrompt 
+              prompt={getCurrentTopic() as string} 
+              isLoading={isLoading} 
+            />
+          </WindowFrame>
         )}
         
         {(useTopicsWithOptions ? topicsWithOptions.length > 1 : topics.length > 1) && (
@@ -516,8 +578,11 @@ const Conversation = () => {
             </Button>
             
             {showAllTopics && (
-              <div className="mt-2 p-3 bg-white border border-chelas-gray-dark rounded-sm">
-                <p className="text-sm font-medium mb-2 text-black">Todos los temas disponibles:</p>
+              <WindowFrame 
+                title="TODOS LOS TEMAS" 
+                className="mt-2"
+                onClose={() => setShowAllTopics(false)}
+              >
                 <div className="space-y-2">
                   {useTopicsWithOptions ? (
                     topicsWithOptions.map((topic, index) => (
@@ -549,7 +614,7 @@ const Conversation = () => {
                     ))
                   )}
                 </div>
-              </div>
+              </WindowFrame>
             )}
           </div>
         )}

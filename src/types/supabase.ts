@@ -1,4 +1,3 @@
-
 // Custom types for Supabase that don't require modifying the auto-generated types
 import type { Database } from '@/integrations/supabase/types';
 
@@ -53,3 +52,14 @@ export type ChatMessage = {
   content: string;
   suggestions?: string[]; // Optional suggested interests that can be clicked
 };
+
+export interface Conversation {
+  id: string;
+  user_a: string;
+  user_b: string;
+  started_at: string;
+  ended_at: string | null;
+  match_percentage: number | null;
+  is_favorite: boolean;
+  follow_up: boolean;
+}
