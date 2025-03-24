@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&display=swap');
 
@@ -119,7 +120,7 @@
   .win95-button {
     @apply bg-chelas-button-face border-2 shadow-win95-button px-4 py-1 
     active:shadow-win95-button-pressed active:pt-[5px] active:pb-[3px] 
-    transition-shadow focus:outline-none;
+    transition-shadow focus:outline-none text-black;
   }
   
   .win95-inset {

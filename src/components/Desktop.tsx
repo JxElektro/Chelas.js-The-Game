@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Wifi, WifiOff, ChevronUp, X } from 'lucide-react';
@@ -12,7 +11,6 @@ import Avatar, { AvatarType } from '@/components/Avatar';
 import Snake from '@/components/Snake';
 import DrinkExpenses from '@/components/DrinkExpenses';
 
-// Desktop application icons
 interface DesktopIcon {
   id: string;
   title: string;
@@ -34,7 +32,6 @@ const Desktop: React.FC = () => {
   } | null>(null);
   const isMobile = useIsMobile();
 
-  // Desktop applications
   const applications: DesktopIcon[] = [
     {
       id: 'msn',
@@ -105,12 +102,10 @@ const Desktop: React.FC = () => {
   ];
 
   useEffect(() => {
-    // Update clock every second (changed from minute to second)
     const intervalId = setInterval(() => {
       setTime(new Date());
     }, 1000);
 
-    // Check authentication status
     checkAuthStatus();
 
     return () => clearInterval(intervalId);
@@ -126,7 +121,6 @@ const Desktop: React.FC = () => {
 
       const userId = sessionData.session.user.id;
       
-      // Get user profile
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
         .select('id, name, avatar, is_available')
@@ -145,10 +139,8 @@ const Desktop: React.FC = () => {
           avatar: userProfile.avatar as AvatarType
         });
         
-        // Set availability status from profile
         setIsAvailable(userProfile.is_available || true);
         
-        // Make sure the user is marked as available when logging in
         if (!userProfile.is_available) {
           await supabase
             .from('profiles')
@@ -173,7 +165,6 @@ const Desktop: React.FC = () => {
       const newStatus = !isAvailable;
       setIsAvailable(newStatus);
       
-      // Update in Supabase
       const { error } = await supabase
         .from('profiles')
         .update({ is_available: newStatus })
@@ -187,7 +178,7 @@ const Desktop: React.FC = () => {
         
     } catch (err) {
       console.error('Error changing availability:', err);
-      setIsAvailable(!isAvailable); // Revert local change
+      setIsAvailable(!isAvailable);
       toast.error('Error al cambiar tu estado de disponibilidad');
     }
   };
@@ -218,13 +209,11 @@ const Desktop: React.FC = () => {
   const handleLogout = async () => {
     if (currentUser) {
       try {
-        // Set user as unavailable before logging out
         await supabase
           .from('profiles')
           .update({ is_available: false })
           .eq('id', currentUser.id);
           
-        // Then sign out
         await supabase.auth.signOut();
         
         toast.success('Sesión cerrada correctamente');
@@ -239,7 +228,6 @@ const Desktop: React.FC = () => {
     }
   };
 
-  // If user is not authenticated, redirect to login
   useEffect(() => {
     if (currentUser === null) {
       const checkAuth = async () => {
@@ -261,14 +249,11 @@ const Desktop: React.FC = () => {
         backgroundPosition: 'center'
       }}
     >
-      {/* Chelas.JS Logo Background */}
       <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
         <h1 className="text-chelas-yellow text-9xl font-pixel tracking-tighter">CHELAS.JS</h1>
       </div>
       
-      {/* Mobile-friendly desktop area */}
       <div className="flex-grow relative p-2 md:p-4 overflow-y-auto noise-bg">
-        {/* Desktop icons in grid layout optimized for mobile */}
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-4 content-start">
           {applications.map((app) => (
             <div 
@@ -282,7 +267,6 @@ const Desktop: React.FC = () => {
           ))}
         </div>
 
-        {/* Application windows - take full screen on mobile */}
         <AnimatePresence>
           {openWindows.map((appId) => {
             const app = applications.find(a => a.id === appId);
@@ -317,20 +301,17 @@ const Desktop: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* Mobile-optimized Taskbar */}
       <div className="w-full bg-chelas-button-face border-t-2 border-chelas-button-highlight">
         <div className="flex items-center justify-between h-12 md:h-10 px-2">
-          {/* Start button */}
           <div className="flex items-center">
             <button 
               className={`win95-button flex items-center space-x-1 ${isStartMenuOpen ? 'shadow-win95-button-pressed' : ''}`}
               onClick={toggleStartMenu}
             >
-              <span className="font-bold text-xs md:text-sm">Inicio</span>
-              {isStartMenuOpen && <ChevronUp size={12} />}
+              <span className="font-bold text-xs md:text-sm text-black">Inicio</span>
+              {isStartMenuOpen && <ChevronUp size={12} className="text-black" />}
             </button>
             
-            {/* Compact open application tabs - only show on non-mobile */}
             {!isMobile && (
               <div className="hidden md:flex space-x-1 ml-1">
                 {openWindows.map((appId) => {
@@ -345,7 +326,7 @@ const Desktop: React.FC = () => {
                       onClick={() => setActiveWindow(appId)}
                     >
                       <span className="mr-1">{app.icon}</span>
-                      {app.title}
+                      <span className="text-black">{app.title}</span>
                     </button>
                   );
                 })}
@@ -353,9 +334,7 @@ const Desktop: React.FC = () => {
             )}
           </div>
           
-          {/* System tray */}
           <div className="flex items-center space-x-1 md:space-x-2">
-            {/* Availability toggle */}
             <button 
               className="h-8 w-8 flex items-center justify-center hover:bg-chelas-button-highlight/20"
               onClick={handleToggleAvailability}
@@ -368,14 +347,12 @@ const Desktop: React.FC = () => {
               )}
             </button>
             
-            {/* Clock */}
-            <div className="win95-inset px-2 py-1 text-sm">
+            <div className="win95-inset px-2 py-1 text-sm text-black">
               {formatTime(time)}
             </div>
           </div>
         </div>
         
-        {/* Start menu - mobile optimized */}
         <AnimatePresence>
           {isStartMenuOpen && (
             <motion.div 
@@ -396,7 +373,7 @@ const Desktop: React.FC = () => {
                     onClick={() => openApplication(app.id)}
                   >
                     <div className="text-xl mr-2">{app.icon}</div>
-                    <span className="text-sm">{app.title}</span>
+                    <span className="text-sm text-black hover:text-white">{app.title}</span>
                   </div>
                 ))}
                 <div className="border-t border-chelas-gray-dark my-1"></div>
@@ -405,7 +382,7 @@ const Desktop: React.FC = () => {
                   onClick={handleLogout}
                 >
                   <div className="text-xl mr-2">🚪</div>
-                  <span className="text-sm">Cerrar sesión</span>
+                  <span className="text-sm text-black hover:text-white">Cerrar sesión</span>
                 </div>
               </div>
             </motion.div>
