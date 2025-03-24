@@ -79,7 +79,7 @@ const Conversation = () => {
               {/* Área scrolleable para el contenido principal */}
               <ScrollArea 
                 className="flex-1 overflow-auto" 
-                style={{ maxHeight: 'calc(100vh - 350px)' }}
+                style={{ maxHeight: 'calc(100vh - 150px)' }}
               >
                 <ConversationHeader
                   otherUserProfile={otherUserProfile}
@@ -114,22 +114,18 @@ const Conversation = () => {
                     handleNewTopic={handleNewTopic}
                   />
                 </div>
+                
+                {/* Integración de las notas dentro de la misma ventana */}
+                <div className="mt-6 p-2">
+                  <div className="mb-2 text-xs font-bold tracking-tight">NOTAS DE LA CONVERSACIÓN</div>
+                  <Textarea
+                    placeholder="Escribe tus notas sobre esta conversación aquí..."
+                    className="win95-inset bg-white w-full min-h-[100px] text-black text-sm"
+                    value={notes}
+                    onChange={handleNotesChange}
+                  />
+                </div>
               </ScrollArea>
-            </div>
-          </WindowFrame>
-
-          {/* Ventana para las notas de la conversación */}
-          <WindowFrame
-            title="NOTAS DE LA CONVERSACIÓN"
-            className="w-full mt-6"
-          >
-            <div className="p-2">
-              <Textarea
-                placeholder="Escribe tus notas sobre esta conversación aquí..."
-                className="win95-inset bg-white w-full min-h-[100px] text-black text-sm"
-                value={notes}
-                onChange={handleNotesChange}
-              />
             </div>
           </WindowFrame>
         </motion.div>
