@@ -3,7 +3,12 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { SuperProfile, createEmptySuperProfile, loadSuperProfile } from '@/utils/superProfileUtils';
+import { 
+  SuperProfile, 
+  createEmptySuperProfile, 
+  loadSuperProfile,
+  extractInterestsFromSuperProfile 
+} from '@/utils/superProfileUtils';
 
 export const useInterestsState = () => {
   const navigate = useNavigate();
@@ -115,37 +120,6 @@ export const useInterestsState = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Función para extraer los intereses seleccionados del SuperProfile
-  const extractInterestsFromSuperProfile = (
-    profile: SuperProfile,
-    selectedArr: string[],
-    avoidArr: string[]
-  ) => {
-    // Recorremos todo el perfil
-    Object.keys(profile).forEach(tabKey => {
-      const tab = profile[tabKey as keyof SuperProfile];
-      
-      Object.keys(tab).forEach(categoryKey => {
-        const category = tab[categoryKey as string];
-        
-        Object.keys(category).forEach(interestKey => {
-          // Saltamos el campo 'ia' que es string
-          if (interestKey === 'ia') return;
-          
-          // @ts-ignore - Sabemos que es un objeto con propiedades booleanas
-          if (category[interestKey] === true) {
-            // Si es de la categoría "avoid", va al array de evitar
-            if (categoryKey === 'avoid') {
-              avoidArr.push(interestKey);
-            } else {
-              selectedArr.push(interestKey);
-            }
-          }
-        });
-      });
-    });
   };
 
   return {

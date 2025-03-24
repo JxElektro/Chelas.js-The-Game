@@ -1,15 +1,15 @@
 
 import React from 'react';
-import { SubInterest, Category } from '@/utils/interestUtils';
-import { useIsMobile } from '@/hooks/use-mobile';
-import AiAnalysisUnified from '@/components/AiAnalysisUnified';
+import { toast } from 'sonner';
+import AiAnalysisPersonal from '@/components/AiAnalysisPersonal';
 import ProfileInfoTab from '@/components/ProfileInfoTab';
+import { TabData } from '@/utils/interestUtils';
 
 interface InterestTabContentProps {
   currentTabIndex: number;
   personalNote: string;
   onPersonalNoteChange: (note: string) => void;
-  aiAnalysis: string | undefined;
+  aiAnalysis?: string;
   onAiAnalysisChange: (analysis: string) => void;
   profileData: {
     name: string;
@@ -25,7 +25,7 @@ interface InterestTabContentProps {
     twitter?: string;
     facebook?: string;
   }) => void;
-  tabData: any;
+  tabData: TabData | null;
   selectedInterests: string[];
   avoidInterests: string[];
   onToggleInterest: (interestId: string, isAvoid: boolean) => void;
@@ -46,132 +46,97 @@ const InterestTabContent: React.FC<InterestTabContentProps> = ({
   onToggleInterest,
   userId
 }) => {
-  const isMobile = useIsMobile();
-
-  // Si es la primera pestaña (info de perfil)
+  // Pestaña de Perfil personal
   if (currentTabIndex === 0) {
     return (
-      <ProfileInfoTab 
-        profileData={profileData} 
-        onProfileDataChange={onProfileDataChange}
-        personalNote={personalNote}
-        onPersonalNoteChange={onPersonalNoteChange}
-      />
-    );
-  }
-
-  if (!tabData) return null;
-
-  // Si es la pestaña "Sobre Mí", mostraremos la info del prompt para ChatGPT
-  const isAboutMeTab = tabData.categories.some(
-    (cat: Category) => cat.categoryId === 'personalInfo'
-  );
-
-  // Ya no mostramos la tab de opciones avanzadas IA, la omitimos completamente
-  const isAiTab = tabData.categories.some(
-    (cat: Category) => cat.categoryId === 'externalAnalysis'
-  );
-
-  if (isAiTab) {
-    // Esta pestaña ya no es necesaria
-    return null;
-  }
-
-  if (isAboutMeTab) {
-    // Mostramos la sección "Sobre Mí" con el botón para copiar el prompt
-    return (
       <div className="p-2">
-        <div className="space-y-4">
-          <h3 className={`${isMobile ? 'text-sm' : 'text-base'} font-bold text-black mb-2`}>
-            Descripción personal
-          </h3>
-          <textarea
-            value={personalNote}
-            onChange={(e) => onPersonalNoteChange(e.target.value)}
-            className="win95-inset w-full min-h-[120px] p-2 bg-white text-black text-sm"
-            placeholder="Cuéntanos un poco sobre ti..."
-          />
-          
-          {aiAnalysis && (
-            <div className="mt-4">
-              <h3 className={`${isMobile ? 'text-sm' : 'text-base'} font-bold text-black mb-2`}>
-                Prompt para ChatGPT
-              </h3>
-              <div className="relative">
-                <div className="win95-inset p-2 bg-white text-black text-xs overflow-auto max-h-[150px]">
-                  {aiAnalysis}
-                </div>
-                <button 
-                  onClick={() => {
-                    navigator.clipboard.writeText(aiAnalysis);
-                    toast.success('Prompt copiado al portapapeles');
-                  }}
-                  className="win95-button absolute top-2 right-2 py-0.5 px-2 text-xs"
-                >
-                  Copiar
-                </button>
-              </div>
-              <p className="text-xs text-black mt-1">
-                Pega este texto en ChatGPT para obtener sugerencias personalizadas.
-              </p>
-            </div>
-          )}
-
-          <div className="mt-4">
-            <AiAnalysisUnified
-              mode="prompt"
-              userId={userId || undefined}
-              personalNote={personalNote}
-              onPersonalNoteChange={onPersonalNoteChange}
-              selectedInterests={selectedInterests.map(id => ({ id, label: id, category: 'other' }))}
-              avoidTopics={avoidInterests.map(id => ({ id, label: id, category: 'avoid' }))}
-              onSaveResponse={onAiAnalysisChange}
-            />
-          </div>
-        </div>
+        <ProfileInfoTab
+          personalNote={personalNote}
+          onPersonalNoteChange={onPersonalNoteChange}
+          profileData={profileData}
+          onProfileDataChange={onProfileDataChange}
+        />
       </div>
     );
   }
 
-  // De lo contrario, desplegamos las categorías y subInterests
+  // Pestaña de análisis de IA
+  if (tabData && tabData.categories.some(cat => cat.categoryId === 'externalAnalysis')) {
+    return (
+      <div className="p-2">
+        <AiAnalysisPersonal
+          aiAnalysis={aiAnalysis || ''}
+          setAiAnalysis={onAiAnalysisChange}
+        />
+      </div>
+    );
+  }
+
+  // Procesamos la pestaña de intereses normal
+  if (!tabData) {
+    return <p>Selecciona una pestaña para ver su contenido</p>;
+  }
+
+  const getInterestsByCategory = (categoryId: string) => {
+    // Solo devuelve los intereses para la categoría actual
+    const currentCategory = tabData.categories.find(cat => cat.categoryId === categoryId);
+    if (!currentCategory) return [];
+
+    return currentCategory.interests.map(interest => ({
+      id: interest.id,
+      isSelected: categoryId === 'avoid'
+        ? avoidInterests.includes(interest.id)
+        : selectedInterests.includes(interest.id),
+      label: interest.label
+    }));
+  };
+
+  const handleInterestClick = (interestId: string, categoryId: string) => {
+    const isAvoid = categoryId === 'avoid';
+    onToggleInterest(interestId, isAvoid);
+    
+    // Como feedback visual
+    if (isAvoid) {
+      toast.info(`${avoidInterests.includes(interestId) ? 'Dejando de evitar' : 'Evitando'} "${getInterestLabel(interestId)}"`);
+    } else {
+      toast.info(`${selectedInterests.includes(interestId) ? 'Quitando' : 'Añadiendo'} "${getInterestLabel(interestId)}"`);
+    }
+  };
+  
+  const getInterestLabel = (interestId: string): string => {
+    // Buscar en todas las categorías
+    for (const category of tabData.categories) {
+      const interest = category.interests.find(int => int.id === interestId);
+      if (interest) return interest.label;
+    }
+    return 'Interés';
+  };
+
   return (
-    <div className="space-y-4">
-      {tabData.categories.map((cat: Category) => {
-        // Revisamos si es la categoría "avoid"
-        const isAvoidCategory = cat.categoryId === 'avoid';
-
-        return (
-          <div key={cat.categoryId} className="bg-white border border-gray-300 p-2">
-            <h3 className="text-sm font-bold text-black mb-2">{cat.label}</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {cat.subInterests?.map((sub: SubInterest) => {
-                // Si es "avoid", lo buscamos en avoidInterests
-                const isSelected = isAvoidCategory
-                  ? avoidInterests.includes(sub.id)
-                  : selectedInterests.includes(sub.id);
-
-                return (
-                  <div
-                    key={sub.id}
-                    onClick={() => onToggleInterest(sub.id, isAvoidCategory)}
-                    className={`cursor-pointer flex items-center gap-2 border border-chelas-gray-dark p-2 ${
-                      isSelected ? 'bg-chelas-yellow/20' : 'bg-chelas-button-face'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => onToggleInterest(sub.id, isAvoidCategory)}
-                      className="text-black"
-                    />
-                    <span className="text-sm text-black">{sub.label}</span>
-                  </div>
-                );
-              })}
-            </div>
+    <div className="p-2 space-y-4">
+      <h2 className="text-2xl font-semibold mb-4">{tabData.label}</h2>
+      
+      {tabData.categories.map((category) => (
+        <div key={category.categoryId} className="mb-6">
+          <h3 className="text-xl font-medium mb-2">{category.label}</h3>
+          
+          <div className="flex flex-wrap gap-2">
+            {getInterestsByCategory(category.categoryId).map((interest) => (
+              <button
+                key={interest.id}
+                onClick={() => handleInterestClick(interest.id, category.categoryId)}
+                className={`px-3 py-1.5 border rounded-md cursor-pointer transition-colors
+                  ${interest.isSelected
+                    ? 'bg-chelas-yellow text-black'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                  }`}
+              >
+                {interest.label}
+              </button>
+            ))}
           </div>
-        );
-      })}
+        </div>
+      ))}
     </div>
   );
 };
