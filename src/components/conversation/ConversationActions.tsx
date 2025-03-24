@@ -58,7 +58,7 @@ const ConversationActions: React.FC<ConversationActionsProps> = ({
       </Button>
       
       <Button 
-        variant="primary"
+        variant="destructive"
         onClick={handleEndConversation}
         className="w-full sm:w-auto"
       >
