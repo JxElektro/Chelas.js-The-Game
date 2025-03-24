@@ -136,52 +136,54 @@ const InterestsPage = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`flex flex-col items-center justify-center min-h-[80vh] w-full ${isMobile ? 'p-2' : 'p-4'}`}
+        className="flex flex-col w-full px-2 sm:px-6 md:px-8"
       >
-        <InterestActions 
-          isAdmin={isAdmin}
-          loading={loading}
-          setLoading={setLoading}
-          onSave={onSave}
-        />
+        <div className="mx-auto w-full max-w-5xl mt-8 mb-12">
+          <InterestActions 
+            isAdmin={isAdmin}
+            loading={loading}
+            setLoading={setLoading}
+            onSave={onSave}
+          />
 
-        <WindowFrame 
-          title="PROPIEDADES DE INTERESES" 
-          className="w-full max-w-full sm:max-w-3xl" 
-          onClose={() => navigate('/')}
-          onMinimize={() => navigate('/')}
-        >
-          <div className="flex flex-col h-full">
-            {/* Filtramos las pestañas para eliminar "Opciones avanzadas IA" */}
-            <Tabs 
-              tabs={['Perfil', ...interestTabs
-                .filter(tab => !tab.categories.some(cat => cat.categoryId === 'externalAnalysis'))
-                .map(tab => tab.label)]} 
-              activeTab={currentTabIndex} 
-              onChange={setCurrentTabIndex}
-            >
-              {/* Contenido de la pestaña */}
-              <div className={`${isMobile ? 'p-1' : 'p-2 sm:p-4'} flex-1 overflow-auto`}>
-                {loading ? (
-                  <p className="text-sm text-black mb-4">Cargando...</p>
-                ) : (
-                  <>
-                    <div className="win95-inset bg-white p-2 overflow-auto max-h-[60vh]">
-                      {renderCurrentTab()}
-                    </div>
+          <WindowFrame 
+            title="PROPIEDADES DE INTERESES" 
+            className="w-full mt-6" 
+            onClose={() => navigate('/')}
+            onMinimize={() => navigate('/')}
+          >
+            <div className="flex flex-col h-full">
+              {/* Filtramos las pestañas para eliminar "Opciones avanzadas IA" */}
+              <Tabs 
+                tabs={['Perfil', ...interestTabs
+                  .filter(tab => !tab.categories.some(cat => cat.categoryId === 'externalAnalysis'))
+                  .map(tab => tab.label)]} 
+                activeTab={currentTabIndex} 
+                onChange={setCurrentTabIndex}
+              >
+                {/* Contenido de la pestaña */}
+                <div className={`${isMobile ? 'p-1' : 'p-2 sm:p-4'} flex-1 overflow-auto`}>
+                  {loading ? (
+                    <p className="text-sm text-black mb-4">Cargando...</p>
+                  ) : (
+                    <>
+                      <div className="win95-inset bg-white p-2 overflow-auto max-h-[60vh]">
+                        {renderCurrentTab()}
+                      </div>
 
-                    <InterestActions 
-                      isAdmin={false}
-                      loading={loading}
-                      setLoading={setLoading}
-                      onSave={onSave}
-                    />
-                  </>
-                )}
-              </div>
-            </Tabs>
-          </div>
-        </WindowFrame>
+                      <InterestActions 
+                        isAdmin={false}
+                        loading={loading}
+                        setLoading={setLoading}
+                        onSave={onSave}
+                      />
+                    </>
+                  )}
+                </div>
+              </Tabs>
+            </div>
+          </WindowFrame>
+        </div>
       </motion.div>
     </Layout>
   );
