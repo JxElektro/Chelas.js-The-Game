@@ -87,13 +87,13 @@ const InterestTabContent: React.FC<InterestTabContentProps> = ({
     const currentCategory = tabData.categories.find(cat => cat.categoryId === categoryId);
     if (!currentCategory) return [];
 
-    return currentCategory.interests.map(interest => ({
+    return currentCategory.subInterests?.map(interest => ({
       id: interest.id,
       isSelected: categoryId === 'avoid'
         ? avoidInterests.includes(interest.id)
         : selectedInterests.includes(interest.id),
       label: interest.label
-    }));
+    })) || [];
   };
 
   const handleInterestClick = (interestId: string, categoryId: string) => {
@@ -111,7 +111,7 @@ const InterestTabContent: React.FC<InterestTabContentProps> = ({
   const getInterestLabel = (interestId: string): string => {
     // Buscar en todas las categorías
     for (const category of tabData.categories) {
-      const interest = category.interests.find(int => int.id === interestId);
+      const interest = category.subInterests?.find(int => int.id === interestId);
       if (interest) return interest.label;
     }
     return 'Interés';
