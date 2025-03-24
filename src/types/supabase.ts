@@ -18,8 +18,8 @@ export type UserInterest = Database['public']['Tables']['user_interests']['Row']
 // Conversation type derived from Database type
 export type ConversationType = Database['public']['Tables']['conversations']['Row'] & {
   match_percentage?: number;
-  is_favorite?: boolean;
-  follow_up?: boolean;
+  is_favorite: boolean;
+  follow_up: boolean;
 };
 
 // ConversationTopic type derived from Database type

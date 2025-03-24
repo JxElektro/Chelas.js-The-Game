@@ -1,6 +1,6 @@
 
 import React from 'react';
-import Button from '@/components/Button';
+import { Button } from '@/components/ui/button';
 import { RefreshCw, ChevronDown, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -88,7 +87,7 @@ export const useConversation = (userId: string | undefined) => {
       console.error('Error al cargar intereses:', error);
     }
   };
-  
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!userId) {
@@ -177,12 +176,12 @@ export const useConversation = (userId: string | undefined) => {
       updateConversationMatchPercentage(currentUserProfile.id, userId as string, percentage);
     }
   };
-  
+
   const updateConversationMatchPercentage = async (userA: string, userB: string, percentage: number) => {
     try {
       const { data: existingConversation, error: findError } = await supabase
         .from('conversations')
-        .select('id')
+        .select('id, is_favorite, follow_up')
         .or(`user_a.eq.${userA},user_b.eq.${userA}`)
         .or(`user_a.eq.${userB},user_b.eq.${userB}`)
         .order('started_at', { ascending: false })
@@ -194,6 +193,10 @@ export const useConversation = (userId: string | undefined) => {
       }
       
       if (existingConversation && existingConversation.length > 0) {
+        conversationIdRef.current = existingConversation[0].id;
+        setIsFavorite(existingConversation[0].is_favorite || false);
+        setIsFollowUp(existingConversation[0].follow_up || false);
+        
         const { error: updateError } = await supabase
           .from('conversations')
           .update({ match_percentage: percentage })
@@ -251,13 +254,15 @@ export const useConversation = (userId: string | undefined) => {
           }, 1500);
         }
 
-        // Create the conversation record
-        if (otherUserProfile && currentUserProfile) {
+        // Create the conversation record if it doesn't exist yet
+        if (otherUserProfile && currentUserProfile && !conversationIdRef.current) {
           const { data: conversation, error } = await supabase
             .from('conversations')
             .insert({
               user_a: currentUserProfile.id,
-              user_b: otherUserProfile.id
+              user_b: otherUserProfile.id,
+              is_favorite: false,
+              follow_up: false
             })
             .select()
             .single();
@@ -380,13 +385,13 @@ export const useConversation = (userId: string | undefined) => {
   const handleEndConversation = () => {
     // When conversation ends, navigate to home
     if (conversationIdRef.current) {
-      // We need to be careful with the database fields we're updating
-      // Only update fields that exist in the database schema
+      // Update the database with the current state
       supabase
         .from('conversations')
         .update({ 
-          ended_at: new Date().toISOString()
-          // Note: is_favorite and follow_up are currently removed due to schema issues
+          ended_at: new Date().toISOString(),
+          is_favorite: isFavorite,
+          follow_up: isFollowUp
         })
         .eq('id', conversationIdRef.current)
         .then(({ error }) => {
@@ -402,22 +407,46 @@ export const useConversation = (userId: string | undefined) => {
     // Aquí podrías implementar lógica adicional para guardar la selección o pasar al siguiente tema
   };
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    toast.success(isFavorite ? 'Eliminado de favoritos' : 'Añadido a favoritos');
+  const toggleFavorite = async () => {
+    const newFavoriteState = !isFavorite;
+    setIsFavorite(newFavoriteState);
+    toast.success(newFavoriteState ? 'Añadido a favoritos' : 'Eliminado de favoritos');
     
-    // Note: This feature requires database schema update
-    // Consider adding is_favorite column to conversations table
-    console.log('Favorito toggle:', !isFavorite);
+    // Update the favorite status in the database
+    if (conversationIdRef.current) {
+      const { error } = await supabase
+        .from('conversations')
+        .update({ is_favorite: newFavoriteState })
+        .eq('id', conversationIdRef.current);
+        
+      if (error) {
+        console.error('Error al actualizar estado de favorito:', error);
+        // Revert the UI state if the update failed
+        setIsFavorite(!newFavoriteState);
+        toast.error('Error al guardar favorito');
+      }
+    }
   };
   
-  const toggleFollowUp = () => {
-    setIsFollowUp(!isFollowUp);
-    toast.success(isFollowUp ? 'Follow-up cancelado' : 'Follow-up marcado');
+  const toggleFollowUp = async () => {
+    const newFollowUpState = !isFollowUp;
+    setIsFollowUp(newFollowUpState);
+    toast.success(newFollowUpState ? 'Follow-up marcado' : 'Follow-up cancelado');
     
-    // Note: This feature requires database schema update
-    // Consider adding follow_up column to conversations table
-    console.log('Follow-up toggle:', !isFollowUp);
+    // Update the follow-up status in the database
+    if (conversationIdRef.current) {
+      const { error } = await supabase
+        .from('conversations')
+        .update({ follow_up: newFollowUpState })
+        .eq('id', conversationIdRef.current);
+        
+      if (error) {
+        console.error('Error al actualizar estado de follow-up:', error);
+        // Revert the UI state if the update failed
+        setIsFollowUp(!newFollowUpState);
+        toast.error('Error al guardar follow-up');
+      }
+    }
   };
 
   const getCurrentTopic = () => {

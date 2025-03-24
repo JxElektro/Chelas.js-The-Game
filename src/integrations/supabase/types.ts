@@ -41,7 +41,9 @@ export type Database = {
       conversations: {
         Row: {
           ended_at: string | null
+          follow_up: boolean
           id: string
+          is_favorite: boolean
           match_percentage: number | null
           started_at: string
           user_a: string
@@ -49,7 +51,9 @@ export type Database = {
         }
         Insert: {
           ended_at?: string | null
+          follow_up?: boolean
           id?: string
+          is_favorite?: boolean
           match_percentage?: number | null
           started_at?: string
           user_a: string
@@ -57,7 +61,9 @@ export type Database = {
         }
         Update: {
           ended_at?: string | null
+          follow_up?: boolean
           id?: string
+          is_favorite?: boolean
           match_percentage?: number | null
           started_at?: string
           user_a?: string
