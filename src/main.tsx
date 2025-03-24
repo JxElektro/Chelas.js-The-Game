@@ -9,7 +9,7 @@ import './App.css'
 document.body.classList.add('bg-chelas-window-bg');
 document.body.style.margin = '0';
 document.body.style.padding = '0';
-document.body.style.overflow = 'hidden';
+//document.body.style.overflow = 'hidden';
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error('Root element not found');
