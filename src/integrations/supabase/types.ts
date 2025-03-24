@@ -205,7 +205,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_snake_high_score: {
+        Args: {
+          user_id_param: string
+          user_name_param: string
+          score_param: number
+        }
+        Returns: undefined
+      }
+      get_snake_high_scores: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          id: string
+          score: number
+          user_id: string
+          user_name: string
+        }[]
+      }
     }
     Enums: {
       topic_category:

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -90,9 +89,6 @@ const Snake: React.FC = () => {
     try {
       const { data, error } = await supabase
         .rpc('get_snake_high_scores')
-        .select('id, user_id, user_name, score, created_at')
-        .order('score', { ascending: false })
-        .limit(10);
         
       if (error) throw error;
       
