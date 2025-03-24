@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/supabase';
 import { TopicWithOptions } from '@/types/conversation';
@@ -17,6 +18,10 @@ export const useConversationTopics = (
   setCurrentTopicIndex: (index: number) => void,
   conversationIdRef: MutableRefObject<string | null>
 ) => {
+  // Define local state variables to store topics
+  const [localTopicsWithOptions, setLocalTopicsWithOptions] = useState<TopicWithOptions[]>([]);
+  const [localTopics, setLocalTopics] = useState<string[]>([]);
+
   // Generate conversation topics
   useEffect(() => {
     if (!otherUserProfile || !currentUserProfile) return;
@@ -47,6 +52,7 @@ export const useConversationTopics = (
           
           setTimeout(() => {
             setTopicsWithOptions(topicsOptions);
+            setLocalTopicsWithOptions(topicsOptions);
             setCurrentTopicIndex(0);
             setIsLoading(false);
           }, 1500);
@@ -56,6 +62,7 @@ export const useConversationTopics = (
           
           setTimeout(() => {
             setTopics(mockTopics);
+            setLocalTopics(mockTopics);
             setCurrentTopicIndex(0);
             setIsLoading(false);
           }, 1500);
@@ -101,7 +108,9 @@ export const useConversationTopics = (
         }
       } catch (error) {
         console.error('Error al generar tema:', error);
-        setTopicsWithOptions(mockTopicsWithOptions());
+        const fallbackTopics = mockTopicsWithOptions();
+        setTopicsWithOptions(fallbackTopics);
+        setLocalTopicsWithOptions(fallbackTopics);
         setIsLoading(false);
       }
     };
@@ -111,8 +120,8 @@ export const useConversationTopics = (
 
   // Helper to save topics to the database
   const saveTopicsToDatabase = (conversationId: string) => {
-    if (useTopicsWithOptions && topicsWithOptions.length > 0) {
-      const topicPromises = topicsWithOptions.map(topic => {
+    if (useTopicsWithOptions && localTopicsWithOptions.length > 0) {
+      const topicPromises = localTopicsWithOptions.map(topic => {
         return supabase
           .from('conversation_topics')
           .insert({
@@ -124,8 +133,8 @@ export const useConversationTopics = (
       Promise.all(topicPromises).catch(error => 
         console.error('Error al guardar temas:', error)
       );
-    } else if (topics.length > 0) {
-      const topicPromises = topics.map(topic => {
+    } else if (localTopics.length > 0) {
+      const topicPromises = localTopics.map(topic => {
         return supabase
           .from('conversation_topics')
           .insert({
