@@ -52,6 +52,7 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
             onChange={(e) => onProfileDataChange({ email: e.target.value })}
             className="border-chelas-gray-dark text-black"
             placeholder="tu@email.com"
+            disabled // Disabled since we can't save this field
           />
         </div>
       </div>
@@ -69,6 +70,7 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
             onChange={(e) => onProfileDataChange({ instagram: e.target.value })}
             className="border-chelas-gray-dark text-black"
             placeholder="@tu_usuario"
+            disabled // Disabled since we can't save this field yet
           />
         </div>
         
@@ -82,6 +84,7 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
             onChange={(e) => onProfileDataChange({ twitter: e.target.value })}
             className="border-chelas-gray-dark text-black"
             placeholder="@tu_usuario"
+            disabled // Disabled since we can't save this field yet
           />
         </div>
         
@@ -95,6 +98,7 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
             onChange={(e) => onProfileDataChange({ facebook: e.target.value })}
             className="border-chelas-gray-dark text-black"
             placeholder="facebook.com/tu_usuario"
+            disabled // Disabled since we can't save this field yet
           />
         </div>
       </div>

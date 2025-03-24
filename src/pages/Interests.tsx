@@ -109,27 +109,33 @@ const InterestsPage = () => {
       // También cargamos el perfil básico para la descripción personal
       const { data, error } = await supabase
         .from('profiles')
-        .select('name, email, instagram, twitter, facebook, descripcion_personal, analisis_externo')
+        .select('name, avatar, descripcion_personal, analisis_externo')
         .eq('id', userId)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error al cargar perfil de usuario:', error);
-        toast.error('Error al cargar tu perfil');
+      if (error) {
+        // Si el error es "PGRST116" quiere decir que no encontró registro, no es crítico.
+        if (error.code !== 'PGRST116') {
+          console.error('Error al cargar perfil de usuario:', error);
+          toast.error('Error al cargar tu perfil');
+        }
         return;
       }
 
       if (data) {
-        if (data.descripcion_personal) setPersonalNote(data.descripcion_personal);
-        if (data.analisis_externo && !aiAnalysis) setAiAnalysis(data.analisis_externo);
+        // Solo accedemos a las propiedades si data es un objeto válido
+        setPersonalNote(data.descripcion_personal || '');
+        if (data.analisis_externo && !aiAnalysis) {
+          setAiAnalysis(data.analisis_externo);
+        }
         
-        // Cargar datos de perfil
+        // Cargar datos de perfil con valores predeterminados
         setProfileData({
           name: data.name || '',
-          email: data.email || '',
-          instagram: data.instagram || '',
-          twitter: data.twitter || '',
-          facebook: data.facebook || ''
+          email: '', // No tenemos acceso a email en la tabla de perfiles
+          instagram: '', // Estos campos aún no existen en la tabla
+          twitter: '', 
+          facebook: ''
         });
       }
       
@@ -215,10 +221,6 @@ const InterestsPage = () => {
         .from('profiles')
         .update({
           name: profileData.name,
-          email: profileData.email,
-          instagram: profileData.instagram,
-          twitter: profileData.twitter,
-          facebook: profileData.facebook,
           descripcion_personal: personalNote,
           analisis_externo: aiAnalysis
         })
