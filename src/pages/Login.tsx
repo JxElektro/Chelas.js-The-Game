@@ -47,7 +47,7 @@ const Login = () => {
       if (error) throw error;
       
       toast.success('Sesión iniciada correctamente');
-      navigate('/lobby');
+      navigate('/');
     } catch (error: any) {
       console.error('Error al iniciar sesión:', error);
       if (error.message.includes('Invalid login credentials')) {

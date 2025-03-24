@@ -7,6 +7,8 @@ import { supabase } from '@/integrations/supabase/client';
 import Lobby from '@/pages/Lobby';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useNavigate } from 'react-router-dom';
+import Avatar, { AvatarType } from '@/components/Avatar';
 
 // Desktop application icons
 interface DesktopIcon {
@@ -17,6 +19,7 @@ interface DesktopIcon {
 }
 
 const Desktop: React.FC = () => {
+  const navigate = useNavigate();
   const [isStartMenuOpen, setIsStartMenuOpen] = useState(false);
   const [openWindows, setOpenWindows] = useState<string[]>([]);
   const [activeWindow, setActiveWindow] = useState<string | null>(null);
@@ -25,6 +28,7 @@ const Desktop: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<{
     id: string;
     name: string;
+    avatar?: AvatarType;
   } | null>(null);
   const isMobile = useIsMobile();
 
@@ -44,9 +48,45 @@ const Desktop: React.FC = () => {
     },
     {
       id: 'mypc',
-      title: 'My PC',
+      title: 'Mi PC',
       icon: '💻',
-      component: <div className="p-4">My PC module will be implemented here</div>
+      component: 
+        <div className="p-4">
+          {currentUser && (
+            <div className="flex flex-col">
+              <div className="win95-window mb-4">
+                <div className="win95-window-title text-sm font-bold">
+                  TU PERFIL
+                </div>
+                <div className="p-4">
+                  <div className="flex items-center">
+                    <Avatar type={currentUser.avatar || 'user'} size="lg" />
+                    <div className="ml-4">
+                      <h2 className="text-black text-lg font-bold">{currentUser.name}</h2>
+                      <p className="text-sm text-chelas-gray-dark">
+                        Estado: {isAvailable ? 'Disponible para chatear' : 'No disponible'}
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    className="win95-button mt-4"
+                    onClick={() => navigate('/interests')}
+                  >
+                    Editar preferencias
+                  </button>
+                </div>
+              </div>
+              <div className="win95-window">
+                <div className="win95-window-title text-sm font-bold">
+                  CONFIGURACIÓN
+                </div>
+                <div className="p-4">
+                  <p className="text-sm text-black">Ajustes del usuario e historial de informes</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
     },
     {
       id: 'snake',
@@ -78,6 +118,7 @@ const Desktop: React.FC = () => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
+        navigate('/login');
         return;
       }
 
@@ -86,7 +127,7 @@ const Desktop: React.FC = () => {
       // Get user profile
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('id, name, is_available')
+        .select('id, name, avatar, is_available')
         .eq('id', userId)
         .single();
 
@@ -98,7 +139,8 @@ const Desktop: React.FC = () => {
       if (userProfile) {
         setCurrentUser({
           id: userProfile.id,
-          name: userProfile.name || 'Usuario'
+          name: userProfile.name || 'Usuario',
+          avatar: userProfile.avatar as AvatarType
         });
         setIsAvailable(userProfile.is_available || true);
       }
@@ -158,6 +200,19 @@ const Desktop: React.FC = () => {
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  // If user is not authenticated, redirect to login
+  useEffect(() => {
+    if (currentUser === null) {
+      const checkAuth = async () => {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          navigate('/login');
+        }
+      };
+      checkAuth();
+    }
+  }, [currentUser, navigate]);
 
   return (
     <div 

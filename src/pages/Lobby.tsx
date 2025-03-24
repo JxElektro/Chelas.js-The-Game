@@ -2,16 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import Layout from '@/components/Layout';
-import WindowFrame from '@/components/WindowFrame';
-import Button from '@/components/Button';
-import Avatar, { AvatarType } from '@/components/Avatar';
 import UserList from '@/components/UserList';
-import { UserCog, Users, Wifi, WifiOff } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/supabase';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import Avatar, { AvatarType } from '@/components/Avatar';
 
 // ID del bot predefinido
 const BOT_ID = '00000000-0000-0000-0000-000000000000';
@@ -19,7 +16,6 @@ const BOT_ID = '00000000-0000-0000-0000-000000000000';
 const Lobby = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [isAvailable, setIsAvailable] = useState(true);
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<{
@@ -100,7 +96,6 @@ const Lobby = () => {
           avatar: userProfile.avatar as AvatarType || 'user',
           is_available: userProfile.is_available || true
         });
-        setIsAvailable(userProfile.is_available || true);
       }
     } catch (error) {
       console.error('Error verificando sesión:', error);
@@ -138,7 +133,7 @@ const Lobby = () => {
         .single();
       
       if (botError && botError.code !== 'PGRST116') {
-        // PGRST116 significa "no se encontraron resultados", lo que está bien si el bot no existe
+        // PGRST116 significa "no se encontraron resultados"
         console.error('Error al cargar el perfil del bot:', botError);
       }
       
@@ -158,141 +153,69 @@ const Lobby = () => {
     }
   };
 
-  const handleStatusToggle = async () => {
-    if (!currentUser) return;
-    
-    try {
-      const newStatus = !isAvailable;
-      setIsAvailable(newStatus);
-      
-      // Actualizar en Supabase
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_available: newStatus })
-        .eq('id', currentUser.id);
-        
-      if (error) throw error;
-      
-      // Actualizar el estado local
-      setCurrentUser({
-        ...currentUser,
-        is_available: newStatus
-      });
-      
-      toast.success(newStatus 
-        ? 'Ahora estás disponible para chatear' 
-        : 'Ya no estás disponible para chatear');
-        
-    } catch (err) {
-      console.error('Error al cambiar estado:', err);
-      setIsAvailable(!isAvailable); // Revertir cambio local
-      toast.error('Error al cambiar tu estado de disponibilidad');
-    }
-  };
-
   const handleSelectUser = (userId: string) => {
     console.log('Iniciando conversación con el usuario:', userId);
     navigate(`/conversation/${userId}`);
   };
 
   if (!currentUser) {
-    return <Layout>
+    return (
       <div className="flex items-center justify-center min-h-[80vh]">
         <p>Cargando tu perfil...</p>
       </div>
-    </Layout>;
+    );
   }
 
   return (
-    <Layout>
+    <div className="h-full overflow-auto p-1">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col min-h-[90vh] w-full"
+        className="flex flex-col h-full"
       >
-        <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-3">
-          <h1 className="text-chelas-yellow text-2xl">¡Bienvenido!</h1>
-          <Button
-            variant={isAvailable ? 'primary' : 'default'}
-            onClick={handleStatusToggle}
-            className="flex items-center w-full sm:w-auto"
-          >
-            {isAvailable ? (
-              <>
-                <Wifi size={16} className="mr-1" />
-                Disponible
-              </>
-            ) : (
-              <>
-                <WifiOff size={16} className="mr-1" />
-                No disponible
-              </>
-            )}
-          </Button>
+        <div className="flex items-center mb-4">
+          <Users size={16} className="mr-2" />
+          <h2 className="text-black text-sm font-bold">PERSONAS DISPONIBLES</h2>
         </div>
 
-        <WindowFrame title="TU PERFIL" className="mb-6">
-          <div className="flex items-center">
-            <Avatar type={currentUser.avatar} size="lg" />
-            <div className="ml-4">
-              <h2 className="text-black text-lg font-bold">{currentUser.name}</h2>
-              <p className="text-sm text-chelas-gray-dark">
-                Estado: {isAvailable ? 'Disponible para chatear' : 'No disponible'}
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 flex gap-2 justify-end">
-            <Button 
-              variant="default" 
-              size="sm"
-              onClick={() => navigate('/interests')}
-            >
-              <UserCog size={14} className="mr-1" />
-              Preferencias
-            </Button>
-          </div>
-        </WindowFrame>
-
-        <WindowFrame title="PERSONAS DISPONIBLES" className="flex-grow mb-4">
-          {loading ? (
-            <p className="text-sm text-black mb-3">Cargando usuarios...</p>
-          ) : (
-            <>
-              <p className="text-sm text-black mb-3">
-                {users.length > 0 
-                  ? 'Estas personas están disponibles para chatear ahora:' 
-                  : 'No hay personas disponibles para chatear en este momento.'}
-              </p>
-              
-              {users.length > 0 ? (
-                <UserList 
-                  users={[...users.map(user => ({
-                    id: user.id,
-                    name: user.name,
-                    avatar: user.avatar as AvatarType,
-                    isAvailable: user.is_available
-                  })), {
-                    id: currentUser.id,
-                    name: currentUser.name,
-                    avatar: currentUser.avatar,
-                    isAvailable: currentUser.is_available
-                  }]} 
-                  onSelectUser={handleSelectUser}
-                  currentUserId={currentUser.id}
-                />
-              ) : (
-                <div className="p-4 bg-chelas-gray-light border border-chelas-gray-dark text-center">
-                  <p className="text-black text-sm">
-                    No hay otros usuarios disponibles en este momento. 
-                    Vuelve a intentarlo más tarde o puedes hablar con nuestro Bot.
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-        </WindowFrame>
+        {loading ? (
+          <p className="text-sm text-black mb-3">Cargando usuarios...</p>
+        ) : (
+          <>
+            <p className="text-xs text-black mb-3">
+              {users.length > 0 
+                ? 'Estas personas están disponibles para chatear ahora:' 
+                : 'No hay personas disponibles para chatear en este momento.'}
+            </p>
+            
+            {users.length > 0 ? (
+              <UserList 
+                users={[...users.map(user => ({
+                  id: user.id,
+                  name: user.name,
+                  avatar: user.avatar as AvatarType,
+                  isAvailable: user.is_available
+                })), {
+                  id: currentUser.id,
+                  name: currentUser.name,
+                  avatar: currentUser.avatar,
+                  isAvailable: currentUser.is_available
+                }]} 
+                onSelectUser={handleSelectUser}
+                currentUserId={currentUser.id}
+              />
+            ) : (
+              <div className="p-4 bg-chelas-gray-light border border-chelas-gray-dark text-center">
+                <p className="text-black text-xs">
+                  No hay otros usuarios disponibles en este momento. 
+                  Vuelve a intentarlo más tarde o puedes hablar con nuestro Bot.
+                </p>
+              </div>
+            )}
+          </>
+        )}
       </motion.div>
-    </Layout>
+    </div>
   );
 };
 
