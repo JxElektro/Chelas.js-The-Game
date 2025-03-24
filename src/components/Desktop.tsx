@@ -288,7 +288,7 @@ const Desktop: React.FC = () => {
       }}
     >
       <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-        <h1 className="text-chelas-yellow text-9xl font-pixel tracking-tighter">CHELAS.JS</h1>
+        <h1 className="text-chelas-yellow text-9xl font-pixel tracking-tighter">JS</h1>
       </div>
       
       <div className="flex-grow relative p-2 md:p-4 overflow-y-auto noise-bg">

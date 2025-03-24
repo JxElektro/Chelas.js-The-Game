@@ -176,7 +176,7 @@ const DrinkExpenses = () => {
       </div>
 
       <div className="flex-grow overflow-hidden bg-white border-2 border-chelas-gray-dark">
-        <ScrollArea className="h-full w-full">
+        <ScrollArea className="h-full w-full pb-safe">
           <Table className="excel-table">
             <TableHeader className="sticky top-0 bg-chelas-gray-medium">
               <TableRow className="border-b border-chelas-gray-dark hover:bg-chelas-gray-light">
