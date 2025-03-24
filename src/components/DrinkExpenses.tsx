@@ -39,6 +39,10 @@ export default function DrinkExpenses() {
     setTotal(sum);
   }, [expenses]);
 
+  // Calculamos propina del 10%
+  const tip = total * 0.1;
+  const finalWithTip = total + tip;
+
   async function checkUser() {
     const { data } = await supabase.auth.getSession();
     if (data.session) {
@@ -132,8 +136,11 @@ export default function DrinkExpenses() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col p-2 overflow-hidden">
-      <div className="grid grid-cols-12 gap-2 mb-3">
+    // Contenedor principal (flex vertical)
+    <div className="flex flex-col h-full min-h-0 p-2">
+
+      {/* Formulario de ingreso */}
+      <div className="grid grid-cols-12 gap-2 mb-3 flex-shrink-0">
         <div className="col-span-12 md:col-span-6">
           <Input
             placeholder="Descripción (ej. Cerveza, Shots, etc.)"
@@ -163,18 +170,11 @@ export default function DrinkExpenses() {
           </Button>
         </div>
       </div>
-      
-      <div className="p-2 win95-window bg-chelas-gray-medium mb-3">
-        <div className="flex justify-between items-center">
-          <span className="font-bold text-black">Total gastado:</span>
-          <span className="font-bold text-xl text-black">
-            {formatCurrency(total)}
-          </span>
-        </div>
-      </div>
 
-      <div className="flex-grow overflow-hidden border-2 border-chelas-gray-dark flex flex-col">
-        <div className="bg-chelas-gray-medium">
+      {/* Contenedor para la tabla con scroll interno */}
+      <div className="flex-grow min-h-0 border-2 border-chelas-gray-dark flex flex-col">
+        {/* Cabecera de la tabla */}
+        <div className="bg-chelas-gray-medium flex-shrink-0">
           <Table>
             <TableHeader>
               <TableRow className="border-b border-chelas-gray-dark hover:bg-chelas-gray-light">
@@ -192,9 +192,10 @@ export default function DrinkExpenses() {
             </TableHeader>
           </Table>
         </div>
-        
-        <div className="flex-grow bg-white">
-          <ScrollArea className="h-[calc(100vh-280px)] w-full rounded-none border-t border-chelas-gray-dark">
+
+        {/* Cuerpo de la tabla scrolleable */}
+        <div className="flex-grow min-h-0 overflow-auto bg-white">
+          <ScrollArea className="w-full h-full">
             <Table>
               <TableBody>
                 {loading ? (
@@ -240,6 +241,30 @@ export default function DrinkExpenses() {
               </TableBody>
             </Table>
           </ScrollArea>
+        </div>
+      </div>
+
+      {/* Sección de totales (al estilo Excel) al final */}
+      <div className="mt-3 flex flex-col flex-shrink-0 p-2 win95-window bg-chelas-gray-medium text-black">
+        {/* Total sin propina */}
+        <div className="flex justify-between items-center mb-1">
+          <span className="font-bold">Total sin propina:</span>
+          <span className="font-bold text-xl">{formatCurrency(total)}</span>
+        </div>
+
+        {/* Propina 10% */}
+        <div className="flex justify-between items-center mb-1">
+          <span className="font-bold">Propina (10%):</span>
+          <span className="font-bold text-xl">{formatCurrency(tip)}</span>
+        </div>
+
+        {/* Línea divisoria */}
+        <div className="border-t border-black my-1" />
+
+        {/* Total final (con propina) */}
+        <div className="flex justify-between items-center">
+          <span className="font-bold">Total + propina:</span>
+          <span className="font-bold text-xl">{formatCurrency(finalWithTip)}</span>
         </div>
       </div>
     </div>

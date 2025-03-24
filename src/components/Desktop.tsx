@@ -330,7 +330,7 @@ const Desktop: React.FC = () => {
                   onMinimize={() => minimizeApplication(appId)}
                   className={`h-full ${activeWindow === appId ? 'shadow-lg' : 'opacity-90'}`}
                 >
-                  <div className="h-full overflow-auto">
+                  <div className="flex flex-col h-full min-h-0">
                     {app.component}
                   </div>
                 </WindowFrame>
