@@ -80,6 +80,30 @@ export type Database = {
           },
         ]
       }
+      drink_expenses: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          price: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          price: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          price?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       interests: {
         Row: {
           category: Database["public"]["Enums"]["topic_category"]

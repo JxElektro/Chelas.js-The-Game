@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Wifi, WifiOff, ChevronUp, X } from 'lucide-react';
@@ -9,6 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 import Avatar, { AvatarType } from '@/components/Avatar';
 import Snake from '@/components/Snake';
+import DrinkExpenses from '@/components/DrinkExpenses';
 
 // Desktop application icons
 interface DesktopIcon {
@@ -42,9 +44,9 @@ const Desktop: React.FC = () => {
     },
     {
       id: 'excel',
-      title: 'Excel',
+      title: 'Control de Gastos',
       icon: '📊',
-      component: <div className="p-4">Excel module will be implemented here</div>
+      component: <DrinkExpenses />
     },
     {
       id: 'mypc',
