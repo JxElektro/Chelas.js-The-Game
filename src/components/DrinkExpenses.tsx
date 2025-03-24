@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -8,7 +9,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -166,11 +166,10 @@ export default function DrinkExpenses() {
         </div>
       </div>
 
-      {/* Contenedor para la tabla y el total */}
-      <div className="flex flex-col flex-grow overflow-hidden">
-        {/* Área de la tabla con scroll interno */}
-        <div className="flex-grow overflow-auto bg-white border-2 border-chelas-gray-dark">
-          <ScrollArea className="w-full pb-safe">
+      {/* Tabla con altura fija */}
+      <div className="flex-grow flex flex-col overflow-hidden">
+        <div className="flex-grow flex flex-col overflow-hidden border-2 border-chelas-gray-dark">
+          <div className="bg-chelas-gray-medium">
             <Table className="excel-table">
               <TableHeader className="sticky top-0 bg-chelas-gray-medium">
                 <TableRow className="border-b border-chelas-gray-dark hover:bg-chelas-gray-light">
@@ -186,50 +185,57 @@ export default function DrinkExpenses() {
                   <TableHead className="w-[50px]" />
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-black">
-                      Cargando...
-                    </TableCell>
-                  </TableRow>
-                ) : expenses.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-black">
-                      No hay gastos registrados. ¡Agrega tu primera bebida!
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  expenses.map((expense) => (
-                    <TableRow
-                      key={expense.id}
-                      className="border-b border-chelas-gray-dark hover:bg-chelas-gray-light"
-                    >
-                      <TableCell className="border-r border-chelas-gray-dark text-black text-sm">
-                        {formatDate(expense.created_at)}
-                      </TableCell>
-                      <TableCell className="border-r border-chelas-gray-dark text-black text-sm">
-                        {expense.description}
-                      </TableCell>
-                      <TableCell className="text-right border-r border-chelas-gray-dark text-black text-sm">
-                        {formatCurrency(expense.price)}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          onClick={() => handleDeleteExpense(expense.id)}
-                          variant="ghost"
-                          size="sm"
-                          className="p-1 h-6 w-6"
-                        >
-                          <Trash2 size={14} className="text-black" />
-                        </Button>
+            </Table>
+          </div>
+          
+          <div className="flex-grow overflow-auto bg-white">
+            <ScrollArea className="h-full w-full">
+              <Table className="excel-table">
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-black">
+                        Cargando...
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </ScrollArea>
+                  ) : expenses.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-black">
+                        No hay gastos registrados. ¡Agrega tu primera bebida!
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    expenses.map((expense) => (
+                      <TableRow
+                        key={expense.id}
+                        className="border-b border-chelas-gray-dark hover:bg-chelas-gray-light"
+                      >
+                        <TableCell className="border-r border-chelas-gray-dark text-black text-sm">
+                          {formatDate(expense.created_at)}
+                        </TableCell>
+                        <TableCell className="border-r border-chelas-gray-dark text-black text-sm">
+                          {expense.description}
+                        </TableCell>
+                        <TableCell className="text-right border-r border-chelas-gray-dark text-black text-sm">
+                          {formatCurrency(expense.price)}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            onClick={() => handleDeleteExpense(expense.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="p-1 h-6 w-6"
+                          >
+                            <Trash2 size={14} className="text-black" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </div>
         </div>
 
         {/* Sección fija del total, siempre visible */}
