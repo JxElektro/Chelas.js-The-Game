@@ -39,7 +39,6 @@ const Conversation = () => {
     toggleFollowUp,
     handleEndConversation,
     handleNewTopic,
-    handleNextTopic,
     handleSelectOption,
     getCurrentTopic,
   } = useConversation(userId);
@@ -65,7 +64,6 @@ const Conversation = () => {
       </div>
       
       <div className="relative z-20 flex flex-col items-center w-full max-w-5xl mx-auto">
-        {/* Contenedor principal con estilo similar al Desktop */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -79,7 +77,7 @@ const Conversation = () => {
           >
             <div className="flex flex-col h-full">
               {/* Área scrolleable para el contenido principal */}
-              <ScrollArea className="flex-1 pr-2 pb-2 overflow-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
+              <ScrollArea className="flex-1 overflow-auto" style={{ maxHeight: 'calc(100vh - 350px)' }}>
                 {/* Cabecera con datos del otro usuario y acciones (favorito, follow-up, etc.) */}
                 <ConversationHeader
                   otherUserProfile={otherUserProfile}
@@ -99,36 +97,33 @@ const Conversation = () => {
                     isFollowUp={isFollowUp}
                   />
                 )}
-
-                {/* Sección de tema de conversación */}
-                <div className="mt-4">
-                  <ConversationTopicDisplay
-                    useTopicsWithOptions={useTopicsWithOptions}
-                    getCurrentTopic={getCurrentTopic}
-                    isLoading={isLoading}
-                    handleSelectOption={handleSelectOption}
-                    showAllTopics={showAllTopics}
-                    setShowAllTopics={setShowAllTopics}
-                    topicsWithOptions={topicsWithOptions}
-                    topics={topics}
-                    currentTopicIndex={currentTopicIndex}
-                    setCurrentTopicIndex={setCurrentTopicIndex}
-                  />
-                </div>
               </ScrollArea>
 
-              {/* Acciones para avanzar en la conversación */}
-              <div className="mt-4">
-                <ConversationActions
-                  isLoading={isLoading}
+              {/* Sección de tema de conversación */}
+              <div className="mt-2">
+                <ConversationTopicDisplay
                   useTopicsWithOptions={useTopicsWithOptions}
+                  getCurrentTopic={getCurrentTopic}
+                  isLoading={isLoading}
+                  handleSelectOption={handleSelectOption}
+                  showAllTopics={showAllTopics}
+                  setShowAllTopics={setShowAllTopics}
                   topicsWithOptions={topicsWithOptions}
                   topics={topics}
-                  handleNextTopic={handleNextTopic}
-                  handleNewTopic={handleNewTopic}
-                  handleEndConversation={handleEndConversation}
+                  currentTopicIndex={currentTopicIndex}
+                  setCurrentTopicIndex={setCurrentTopicIndex}
                 />
               </div>
+
+              {/* Acciones con iconos para generar nuevos temas */}
+              <ConversationActions
+                isLoading={isLoading}
+                useTopicsWithOptions={useTopicsWithOptions}
+                topicsWithOptions={topicsWithOptions}
+                topics={topics}
+                handleNewTopic={handleNewTopic}
+                handleEndConversation={handleEndConversation}
+              />
             </div>
           </WindowFrame>
           

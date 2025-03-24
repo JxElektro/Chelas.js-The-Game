@@ -54,12 +54,12 @@ const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
   };
   
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <WindowFrame 
         title="TEMA DE CONVERSACIÓN" 
-        className="mb-6"
+        className="w-full mb-6"
       >
-        <div className="relative">
+        <div className="relative p-2">
           {useTopicsWithOptions ? (
             <ConversationTopicWithOptions 
               topic={getCurrentTopic() as TopicWithOptions} 

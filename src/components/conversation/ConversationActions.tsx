@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, ChevronDown, X } from 'lucide-react';
+import { Bot, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TopicWithOptions {
@@ -17,52 +17,35 @@ interface ConversationActionsProps {
   useTopicsWithOptions: boolean;
   topicsWithOptions: TopicWithOptions[];
   topics: string[];
-  handleNextTopic: () => void;
   handleNewTopic: () => void;
   handleEndConversation: () => void;
 }
 
 const ConversationActions: React.FC<ConversationActionsProps> = ({
   isLoading,
-  useTopicsWithOptions,
-  topicsWithOptions,
-  topics,
-  handleNextTopic,
   handleNewTopic,
   handleEndConversation
 }) => {
   const isMobile = useIsMobile();
   
   return (
-    <div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
-      {(useTopicsWithOptions ? topicsWithOptions.length > 1 : topics.length > 1) && (
-        <Button 
-          variant="default"
-          onClick={handleNextTopic}
-          disabled={isLoading}
-          className="w-full sm:w-auto"
-        >
-          <ChevronDown size={16} className="mr-1" />
-          Siguiente Tema
-        </Button>
-      )}
-      
+    <div className="flex justify-between items-center mt-4 px-2">
       <Button 
         variant="default"
         onClick={handleNewTopic}
         disabled={isLoading}
-        className="w-full sm:w-auto"
+        className="w-auto"
       >
-        <RefreshCw size={16} className="mr-1" />
-        Nuevos Temas
+        <Bot size={18} className="mr-2" />
+        Generar Nuevos Temas
       </Button>
       
       <Button 
         variant="destructive"
         onClick={handleEndConversation}
-        className="w-full sm:w-auto"
+        className="w-auto"
       >
-        <X size={16} className="mr-1" />
+        <X size={18} className="mr-2" />
         Terminar Chat
       </Button>
     </div>
