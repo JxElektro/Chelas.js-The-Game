@@ -1,8 +1,16 @@
+
 #root {
-  max-width: 1280px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0;
   text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #root {
+    padding: 0;
+  }
 }
 
 .logo {
@@ -39,4 +47,20 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Windows 95 mobile optimizations */
+.win95-window {
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .win95-button {
+    padding: 0.5rem 1rem;
+  }
+  
+  .win95-window-title {
+    padding: 0.3rem 0.5rem;
+  }
 }

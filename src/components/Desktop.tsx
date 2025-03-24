@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Wifi, WifiOff, ChevronUp } from 'lucide-react';
+import { Clock, Wifi, WifiOff, ChevronUp, X } from 'lucide-react';
 import WindowFrame from './WindowFrame';
 import { supabase } from '@/integrations/supabase/client';
 import Lobby from '@/pages/Lobby';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Desktop application icons
 interface DesktopIcon {
@@ -25,6 +26,7 @@ const Desktop: React.FC = () => {
     id: string;
     name: string;
   } | null>(null);
+  const isMobile = useIsMobile();
 
   // Desktop applications
   const applications: DesktopIcon[] = [
@@ -158,23 +160,36 @@ const Desktop: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col bg-chelas-window-bg overflow-hidden">
-      {/* Desktop area */}
-      <div className="flex-grow relative p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 content-start">
-        {/* Desktop icons */}
-        {applications.map((app) => (
-          <div 
-            key={app.id}
-            className="flex flex-col items-center cursor-pointer p-2 hover:bg-chelas-button-face/30"
-            onClick={() => openApplication(app.id)}
-            onDoubleClick={() => openApplication(app.id)}
-          >
-            <div className="text-4xl mb-1">{app.icon}</div>
-            <span className="text-sm text-center font-ms-sans">{app.title}</span>
-          </div>
-        ))}
+    <div 
+      className="h-screen w-full flex flex-col overflow-hidden relative"
+      style={{
+        backgroundImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.9))',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}
+    >
+      {/* Chelas.JS Logo Background */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+        <h1 className="text-chelas-yellow text-9xl font-pixel tracking-tighter">CHELAS.JS</h1>
+      </div>
+      
+      {/* Mobile-friendly desktop area */}
+      <div className="flex-grow relative p-2 md:p-4 overflow-y-auto noise-bg">
+        {/* Desktop icons in grid layout optimized for mobile */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-4 content-start">
+          {applications.map((app) => (
+            <div 
+              key={app.id}
+              className="flex flex-col items-center cursor-pointer p-2 hover:bg-chelas-button-face/30 active:bg-chelas-button-face/50 rounded-md transition-colors"
+              onClick={() => openApplication(app.id)}
+            >
+              <div className="text-3xl md:text-4xl mb-1">{app.icon}</div>
+              <span className="text-xs md:text-sm text-center font-ms-sans text-white">{app.title}</span>
+            </div>
+          ))}
+        </div>
 
-        {/* Application windows */}
+        {/* Application windows - take full screen on mobile */}
         <AnimatePresence>
           {openWindows.map((appId) => {
             const app = applications.find(a => a.id === appId);
@@ -191,7 +206,7 @@ const Desktop: React.FC = () => {
                 }}
                 exit={{ scale: 0.8, opacity: 0 }}
                 transition={{ type: "spring", damping: 20 }}
-                className="absolute top-10 left-10 w-4/5 h-4/5 md:w-3/4 md:h-3/4"
+                className={`absolute inset-0 md:inset-auto ${isMobile ? 'w-full h-full' : 'md:top-10 md:left-10 md:w-3/4 md:h-3/4'}`}
                 onClick={() => setActiveWindow(appId)}
               >
                 <WindowFrame 
@@ -209,42 +224,44 @@ const Desktop: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* Taskbar */}
+      {/* Mobile-optimized Taskbar */}
       <div className="w-full bg-chelas-button-face border-t-2 border-chelas-button-highlight">
-        <div className="flex items-center justify-between h-10 px-2">
+        <div className="flex items-center justify-between h-12 md:h-10 px-2">
           {/* Start button */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center">
             <button 
               className={`win95-button flex items-center space-x-1 ${isStartMenuOpen ? 'shadow-win95-button-pressed' : ''}`}
               onClick={toggleStartMenu}
             >
-              <span className="font-bold">Inicio</span>
+              <span className="font-bold text-xs md:text-sm">Inicio</span>
               {isStartMenuOpen && <ChevronUp size={12} />}
             </button>
             
-            {/* Open application tabs */}
-            <div className="flex space-x-1">
-              {openWindows.map((appId) => {
-                const app = applications.find(a => a.id === appId);
-                if (!app) return null;
-                
-                return (
-                  <button 
-                    key={appId}
-                    className={`win95-button px-2 py-1 text-xs truncate max-w-[100px] sm:max-w-xs 
-                      ${activeWindow === appId ? 'shadow-win95-button-pressed' : ''}`}
-                    onClick={() => setActiveWindow(appId)}
-                  >
-                    <span className="mr-1">{app.icon}</span>
-                    {app.title}
-                  </button>
-                );
-              })}
-            </div>
+            {/* Compact open application tabs - only show on non-mobile */}
+            {!isMobile && (
+              <div className="hidden md:flex space-x-1 ml-1">
+                {openWindows.map((appId) => {
+                  const app = applications.find(a => a.id === appId);
+                  if (!app) return null;
+                  
+                  return (
+                    <button 
+                      key={appId}
+                      className={`win95-button px-2 py-1 text-xs truncate max-w-[100px] sm:max-w-xs 
+                        ${activeWindow === appId ? 'shadow-win95-button-pressed' : ''}`}
+                      onClick={() => setActiveWindow(appId)}
+                    >
+                      <span className="mr-1">{app.icon}</span>
+                      {app.title}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
           
           {/* System tray */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 md:space-x-2">
             {/* Availability toggle */}
             <button 
               className="h-8 w-8 flex items-center justify-center hover:bg-chelas-button-highlight/20"
@@ -265,33 +282,33 @@ const Desktop: React.FC = () => {
           </div>
         </div>
         
-        {/* Start menu */}
+        {/* Start menu - mobile optimized */}
         <AnimatePresence>
           {isStartMenuOpen && (
             <motion.div 
-              className="absolute bottom-10 left-0 w-64 bg-chelas-button-face border-2 shadow-win95 z-50"
+              className="absolute bottom-12 md:bottom-10 left-0 w-48 md:w-64 bg-chelas-button-face border-2 shadow-win95 z-50"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="bg-chelas-window-title py-4 px-2 flex items-center">
-                <div className="font-bold text-white">Windows 95</div>
+              <div className="bg-chelas-window-title py-2 px-2 flex items-center">
+                <div className="font-bold text-white text-sm">Windows 95</div>
               </div>
-              <div className="p-2 space-y-1">
+              <div className="p-1 space-y-0.5">
                 {applications.map((app) => (
                   <div 
                     key={app.id}
-                    className="flex items-center p-2 hover:bg-chelas-window-title hover:text-white cursor-pointer"
+                    className="flex items-center p-1.5 hover:bg-chelas-window-title hover:text-white cursor-pointer"
                     onClick={() => openApplication(app.id)}
                   >
-                    <div className="text-xl mr-3">{app.icon}</div>
-                    <span>{app.title}</span>
+                    <div className="text-xl mr-2">{app.icon}</div>
+                    <span className="text-sm">{app.title}</span>
                   </div>
                 ))}
-                <div className="border-t border-chelas-gray-dark my-2"></div>
+                <div className="border-t border-chelas-gray-dark my-1"></div>
                 <div 
-                  className="flex items-center p-2 hover:bg-chelas-window-title hover:text-white cursor-pointer"
+                  className="flex items-center p-1.5 hover:bg-chelas-window-title hover:text-white cursor-pointer"
                   onClick={() => {
                     setIsStartMenuOpen(false);
                     supabase.auth.signOut().then(() => {
@@ -299,8 +316,8 @@ const Desktop: React.FC = () => {
                     });
                   }}
                 >
-                  <div className="text-xl mr-3">🚪</div>
-                  <span>Cerrar sesión</span>
+                  <div className="text-xl mr-2">🚪</div>
+                  <span className="text-sm">Cerrar sesión</span>
                 </div>
               </div>
             </motion.div>

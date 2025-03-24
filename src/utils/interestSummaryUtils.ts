@@ -1,6 +1,4 @@
 
-import { SuperProfile } from '@/types/supabase';
-
 /**
  * Extracts random interests from a SuperProfile object
  * @param superProfile The user's SuperProfile data
