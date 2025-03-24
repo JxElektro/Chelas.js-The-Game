@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Wifi, WifiOff, ChevronUp, X } from 'lucide-react';
+import { Clock, Wifi, WifiOff, ChevronUp, X, Minus } from 'lucide-react';
 import WindowFrame from './WindowFrame';
 import { supabase } from '@/integrations/supabase/client';
 import Lobby from '@/pages/Lobby';
@@ -22,6 +23,7 @@ const Desktop: React.FC = () => {
   const navigate = useNavigate();
   const [isStartMenuOpen, setIsStartMenuOpen] = useState(false);
   const [openWindows, setOpenWindows] = useState<string[]>([]);
+  const [minimizedWindows, setMinimizedWindows] = useState<string[]>([]);
   const [activeWindow, setActiveWindow] = useState<string | null>(null);
   const [isAvailable, setIsAvailable] = useState(true);
   const [time, setTime] = useState(new Date());
@@ -188,6 +190,14 @@ const Desktop: React.FC = () => {
   };
 
   const openApplication = (appId: string) => {
+    // Si está minimizada, solo la restauramos
+    if (minimizedWindows.includes(appId)) {
+      setMinimizedWindows(minimizedWindows.filter(id => id !== appId));
+      setActiveWindow(appId);
+      return;
+    }
+    
+    // Si no está abierta, la abrimos
     if (!openWindows.includes(appId)) {
       setOpenWindows([...openWindows, appId]);
     }
@@ -195,10 +205,38 @@ const Desktop: React.FC = () => {
     setIsStartMenuOpen(false);
   };
 
+  const minimizeApplication = (appId: string) => {
+    if (!minimizedWindows.includes(appId)) {
+      setMinimizedWindows([...minimizedWindows, appId]);
+    }
+    
+    // Activar otra ventana si hay alguna abierta
+    const availableWindows = openWindows.filter(
+      id => id !== appId && !minimizedWindows.includes(id)
+    );
+    
+    if (availableWindows.length > 0) {
+      setActiveWindow(availableWindows[availableWindows.length - 1]);
+    } else {
+      setActiveWindow(null);
+    }
+  };
+
   const closeApplication = (appId: string) => {
     setOpenWindows(openWindows.filter(id => id !== appId));
+    setMinimizedWindows(minimizedWindows.filter(id => id !== appId));
+    
     if (activeWindow === appId) {
-      setActiveWindow(openWindows.length > 1 ? openWindows[openWindows.length - 2] : null);
+      // Activar otra ventana si hay alguna abierta y no minimizada
+      const availableWindows = openWindows.filter(
+        id => id !== appId && !minimizedWindows.includes(id)
+      );
+      
+      if (availableWindows.length > 0) {
+        setActiveWindow(availableWindows[availableWindows.length - 1]);
+      } else {
+        setActiveWindow(null);
+      }
     }
   };
 
@@ -270,7 +308,7 @@ const Desktop: React.FC = () => {
         <AnimatePresence>
           {openWindows.map((appId) => {
             const app = applications.find(a => a.id === appId);
-            if (!app) return null;
+            if (!app || minimizedWindows.includes(appId)) return null;
             
             return (
               <motion.div
@@ -289,6 +327,7 @@ const Desktop: React.FC = () => {
                 <WindowFrame 
                   title={app.title}
                   onClose={() => closeApplication(appId)}
+                  onMinimize={() => minimizeApplication(appId)}
                   className={`h-full ${activeWindow === appId ? 'shadow-lg' : 'opacity-90'}`}
                 >
                   <div className="h-full overflow-auto">
@@ -312,26 +351,27 @@ const Desktop: React.FC = () => {
               {isStartMenuOpen && <ChevronUp size={12} className="text-black" />}
             </button>
             
-            {!isMobile && (
-              <div className="hidden md:flex space-x-1 ml-1">
-                {openWindows.map((appId) => {
-                  const app = applications.find(a => a.id === appId);
-                  if (!app) return null;
-                  
-                  return (
-                    <button 
-                      key={appId}
-                      className={`win95-button px-2 py-1 text-xs truncate max-w-[100px] sm:max-w-xs 
-                        ${activeWindow === appId ? 'shadow-win95-button-pressed' : ''}`}
-                      onClick={() => setActiveWindow(appId)}
-                    >
-                      <span className="mr-1">{app.icon}</span>
-                      <span className="text-black">{app.title}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            <div className="flex space-x-1 ml-1 overflow-x-auto scrollbar-none max-w-[60vw]">
+              {openWindows.map((appId) => {
+                const app = applications.find(a => a.id === appId);
+                if (!app) return null;
+                
+                const isMinimized = minimizedWindows.includes(appId);
+                
+                return (
+                  <button 
+                    key={appId}
+                    className={`win95-button px-2 py-1 text-xs truncate max-w-[100px] sm:max-w-xs 
+                      ${activeWindow === appId && !isMinimized ? 'shadow-win95-button-pressed' : ''}
+                      ${isMinimized ? 'opacity-70' : ''}`}
+                    onClick={() => openApplication(appId)}
+                  >
+                    <span className="mr-1">{app.icon}</span>
+                    <span className="text-black hidden sm:inline-block">{app.title}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
           
           <div className="flex items-center space-x-1 md:space-x-2">

@@ -4,6 +4,7 @@ import Avatar, { AvatarType } from './Avatar';
 import Button from './Button';
 import { User, UserCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface UserData {
   id: string;
@@ -26,12 +27,13 @@ const UserList: React.FC<UserListProps> = ({
   const availableUsers = users.filter(user => 
     user.isAvailable && user.id !== currentUserId
   );
+  const isMobile = useIsMobile();
 
   return (
-    <div className="win95-inset py-2 px-1 max-h-64 overflow-y-auto">
+    <div className="win95-inset py-2 px-1 max-h-48 sm:max-h-64 overflow-y-auto">
       <AnimatePresence>
         {availableUsers.length > 0 ? (
-          <motion.div className="space-y-2">
+          <motion.div className="space-y-1 sm:space-y-2">
             {availableUsers.map((user) => (
               <motion.div 
                 key={user.id}
@@ -39,18 +41,18 @@ const UserList: React.FC<UserListProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="flex items-center px-2 py-1 hover:bg-chelas-gray-medium"
+                className="flex items-center px-1 sm:px-2 py-1 hover:bg-chelas-gray-medium"
               >
-                <Avatar type={user.avatar} size="sm" />
-                <span className="text-black ml-2 flex-grow">{user.name}</span>
+                <Avatar type={user.avatar} size={isMobile ? "xs" : "sm"} />
+                <span className="text-black text-xs sm:text-sm ml-1 sm:ml-2 flex-grow truncate">{user.name}</span>
                 <Button 
                   variant="primary" 
                   size="sm"
                   onClick={() => onSelectUser(user.id)}
-                  className="ml-2"
+                  className="ml-1 sm:ml-2"
                 >
-                  <UserCheck size={12} className="mr-1" />
-                  <span className="text-xs">Chat</span>
+                  <UserCheck size={isMobile ? 10 : 12} className={isMobile ? "mr-0.5" : "mr-1"} />
+                  <span className={`${isMobile ? "text-[10px]" : "text-xs"}`}>Chat</span>
                 </Button>
               </motion.div>
             ))}
@@ -59,10 +61,10 @@ const UserList: React.FC<UserListProps> = ({
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center p-4 text-chelas-gray-dark"
+            className="text-center p-2 sm:p-4 text-chelas-gray-dark"
           >
-            <User size={24} className="mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No users available right now</p>
+            <User size={isMobile ? 16 : 24} className="mx-auto mb-2 opacity-50" />
+            <p className="text-xs sm:text-sm">No hay usuarios disponibles</p>
           </motion.div>
         )}
       </AnimatePresence>

@@ -427,7 +427,7 @@ const InterestsPage = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center min-h-[80vh] w-full p-4"
+        className={`flex flex-col items-center justify-center min-h-[80vh] w-full ${isMobile ? 'p-2' : 'p-4'}`}
       >
         {isAdmin && (
           <Button 
@@ -444,6 +444,7 @@ const InterestsPage = () => {
           title="PROPIEDADES DE INTERESES" 
           className="w-full max-w-full sm:max-w-3xl" 
           onClose={() => navigate('/')}
+          onMinimize={() => navigate('/')}
         >
           <div className="flex flex-col h-full">
             {/* Filtramos las pestañas para eliminar "Opciones avanzadas IA" */}
@@ -455,7 +456,7 @@ const InterestsPage = () => {
               onChange={setCurrentTabIndex}
             >
               {/* Contenido de la pestaña */}
-              <div className="p-2 sm:p-4 flex-1 overflow-auto">
+              <div className={`${isMobile ? 'p-1' : 'p-2 sm:p-4'} flex-1 overflow-auto`}>
                 {loading ? (
                   <p className="text-sm text-black mb-4">Cargando...</p>
                 ) : (
