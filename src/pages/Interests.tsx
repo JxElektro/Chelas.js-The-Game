@@ -299,25 +299,74 @@ const InterestsPage = () => {
     const tabData = interestTabs[currentTabIndex - 1];
     if (!tabData) return null;
 
-    // Si es la pestaña "Opciones Avanzadas IA"
+    // Si es la pestaña "Sobre Mí", mostraremos la info del prompt para ChatGPT
+    const isAboutMeTab = tabData.categories.some(
+      (cat) => cat.categoryId === 'personalInfo'
+    );
+
+    // Ya no necesitamos la tab de opciones avanzadas IA
     const isAiTab = tabData.categories.some(
       (cat) => cat.categoryId === 'externalAnalysis'
     );
 
     if (isAiTab) {
-      // Usando el componente AiAnalysisUnified en modo 'prompt'
+      // Esta pestaña ya no es necesaria, pero mantenemos el código por ahora
+      // para no romper la funcionalidad existente
+      return null;
+    }
+
+    if (isAboutMeTab) {
+      // Mostramos la sección "Sobre Mí" con el botón para copiar el prompt
       return (
         <div className="p-2">
-          <AiAnalysisUnified
-            mode="prompt"
-            userId={profileId || undefined}
-            personalNote={personalNote}
-            onPersonalNoteChange={setPersonalNote}
-            // Convertir IDs de intereses a objetos InterestOption para AiAnalysisUnified
-            selectedInterests={selectedInterests.map(id => ({ id, label: id, category: 'other' }))}
-            avoidTopics={avoidInterests.map(id => ({ id, label: id, category: 'avoid' }))}
-            onSaveResponse={handleAiAnalysisChange}
-          />
+          <div className="space-y-4">
+            <h3 className={`${isMobile ? 'text-sm' : 'text-base'} font-bold text-black mb-2`}>
+              Descripción personal
+            </h3>
+            <textarea
+              value={personalNote}
+              onChange={(e) => setPersonalNote(e.target.value)}
+              className="win95-inset w-full min-h-[120px] p-2 bg-white text-black text-sm"
+              placeholder="Cuéntanos un poco sobre ti..."
+            />
+            
+            {aiAnalysis && (
+              <div className="mt-4">
+                <h3 className={`${isMobile ? 'text-sm' : 'text-base'} font-bold text-black mb-2`}>
+                  Prompt para ChatGPT
+                </h3>
+                <div className="relative">
+                  <div className="win95-inset p-2 bg-white text-black text-xs overflow-auto max-h-[150px]">
+                    {aiAnalysis}
+                  </div>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(aiAnalysis);
+                      toast.success('Prompt copiado al portapapeles');
+                    }}
+                    className="win95-button absolute top-2 right-2 py-0.5 px-2 text-xs"
+                  >
+                    Copiar
+                  </button>
+                </div>
+                <p className="text-xs text-black mt-1">
+                  Pega este texto en ChatGPT para obtener sugerencias personalizadas.
+                </p>
+              </div>
+            )}
+
+            <div className="mt-4">
+              <AiAnalysisUnified
+                mode="prompt"
+                userId={profileId || undefined}
+                personalNote={personalNote}
+                onPersonalNoteChange={setPersonalNote}
+                selectedInterests={selectedInterests.map(id => ({ id, label: id, category: 'other' }))}
+                avoidTopics={avoidInterests.map(id => ({ id, label: id, category: 'avoid' }))}
+                onSaveResponse={handleAiAnalysisChange}
+              />
+            </div>
+          </div>
         </div>
       );
     }
@@ -382,10 +431,6 @@ const InterestsPage = () => {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col items-center justify-center min-h-[80vh] w-full p-4"
       >
-        <h1 className={`text-chelas-yellow ${isMobile ? 'text-xl' : 'text-2xl'} mb-4`}>
-          Configura Tus Intereses
-        </h1>
-        
         {isAdmin && (
           <Button 
             variant="primary" 
@@ -397,7 +442,11 @@ const InterestsPage = () => {
           </Button>
         )}
 
-        <WindowFrame title="PROPIEDADES DE INTERESES" className="w-full max-w-full sm:max-w-3xl">
+        <WindowFrame 
+          title="PROPIEDADES DE INTERESES" 
+          className="w-full max-w-full sm:max-w-3xl" 
+          onClose={() => navigate('/lobby')}
+        >
           <div className="flex flex-col h-full">
             {/* Añadimos la pestaña "Perfil" como primera opción */}
             <Tabs 

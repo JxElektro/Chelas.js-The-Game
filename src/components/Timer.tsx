@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Timer as TimerIcon, Plus } from 'lucide-react';
 import Button from './Button';
@@ -100,11 +99,10 @@ const Timer: React.FC<TimerProps> = ({
     }
   }, [conversationTimeLeft, mode, isBlinking]);
 
-  // Función para formatear el tiempo en mm:ss
+  // Función para formatear el tiempo en minutos solamente (sin segundos)
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const mins = Math.ceil(seconds / 60); // Redondeamos hacia arriba para mostrar siempre al menos 1 minuto
+    return `${mins} min`;
   };
 
   // Función para extender el tiempo en modo conversación

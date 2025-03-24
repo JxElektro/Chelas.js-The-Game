@@ -29,15 +29,13 @@ const WindowFrame: React.FC<WindowFrameProps> = ({
     >
       <div className="win95-window-title select-none flex items-center justify-between">
         <div className={`text-sm font-bold tracking-tight ${isMobile ? 'py-0.5 text-xs' : ''}`}>{title}</div>
-        {onClose && (
-          <button 
-            onClick={onClose}
-            className={`win95-button h-5 w-5 flex items-center justify-center p-0 bg-chelas-button-face ${isMobile ? 'h-6 w-6' : ''}`}
-            aria-label="Close window"
-          >
-            <X size={isMobile ? 14 : 14} strokeWidth={2.5} className="text-black" />
-          </button>
-        )}
+        <button 
+          onClick={onClose || (() => {})}
+          className={`win95-button h-5 w-5 flex items-center justify-center p-0 bg-chelas-button-face ${isMobile ? 'h-6 w-6' : ''}`}
+          aria-label="Close window"
+        >
+          <X size={isMobile ? 14 : 14} strokeWidth={2.5} className="text-black" />
+        </button>
       </div>
       <div className={`${isMobile ? 'p-1 sm:p-2' : 'p-4'}`}>
         {children}
