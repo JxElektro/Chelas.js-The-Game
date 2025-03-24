@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -20,7 +19,7 @@ const Conversation = () => {
   const navigate = useNavigate();
   const [notes, setNotes] = useState<string>('');
 
-  // Extraemos las variables y funciones del hook useConversation
+  // Extraemos variables y funciones del hook de conversación.
   const {
     isLoading,
     topics,
@@ -43,12 +42,17 @@ const Conversation = () => {
     getCurrentTopic,
   } = useConversation(userId);
 
-  // Si no se cargó el perfil del otro usuario, no renderizamos nada
+  // Si aún no se cargó el perfil del otro usuario, no se renderiza.
   if (!otherUserProfile) return null;
 
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNotes(e.target.value);
   };
+
+  // Calculamos si ya se han cargado al menos 3 preguntas para habilitar el botón.
+  const questionsLoaded = useTopicsWithOptions
+    ? topicsWithOptions.length >= 3
+    : topics.length >= 3;
 
   return (
     <div 
@@ -59,6 +63,7 @@ const Conversation = () => {
         backgroundPosition: 'center'
       }}
     >
+      {/* Fondo decorativo */}
       <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
         <h1 className="text-chelas-yellow text-9xl font-pixel tracking-tighter">JS</h1>
       </div>
@@ -67,7 +72,7 @@ const Conversation = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`flex flex-col min-h-[85vh] w-full`}
+          className="flex flex-col min-h-[85vh] w-full"
         >
           {/* Ventana principal de la conversación */}
           <WindowFrame
@@ -77,8 +82,10 @@ const Conversation = () => {
           >
             <div className="flex flex-col h-full">
               {/* Área scrolleable para el contenido principal */}
-              <ScrollArea className="flex-1 overflow-auto" style={{ maxHeight: 'calc(100vh - 350px)' }}>
-                {/* Cabecera con datos del otro usuario y acciones (favorito, follow-up, etc.) */}
+              <ScrollArea 
+                className="flex-1 overflow-auto" 
+                style={{ maxHeight: 'calc(100vh - 350px)' }}
+              >
                 <ConversationHeader
                   otherUserProfile={otherUserProfile}
                   isFavorite={isFavorite}
@@ -88,7 +95,6 @@ const Conversation = () => {
                   handleEndConversation={handleEndConversation}
                 />
 
-                {/* Muestra el match si existe */}
                 {matchPercentage > 0 && (
                   <ConversationMatch
                     percentage={matchPercentage}
@@ -97,38 +103,54 @@ const Conversation = () => {
                     isFollowUp={isFollowUp}
                   />
                 )}
+
+                <div className="mt-4">
+                  <ConversationTopicDisplay
+                    useTopicsWithOptions={useTopicsWithOptions}
+                    getCurrentTopic={getCurrentTopic}
+                    isLoading={isLoading}
+                    handleSelectOption={handleSelectOption}
+                    showAllTopics={showAllTopics}
+                    setShowAllTopics={setShowAllTopics}
+                    topicsWithOptions={topicsWithOptions}
+                    topics={topics}
+                    currentTopicIndex={currentTopicIndex}
+                    setCurrentTopicIndex={setCurrentTopicIndex}
+                  />
+                </div>
               </ScrollArea>
 
-              {/* Sección de tema de conversación */}
-              <ConversationTopicDisplay
-                useTopicsWithOptions={useTopicsWithOptions}
-                getCurrentTopic={getCurrentTopic}
-                isLoading={isLoading}
-                handleSelectOption={handleSelectOption}
-                showAllTopics={showAllTopics}
-                setShowAllTopics={setShowAllTopics}
-                topicsWithOptions={topicsWithOptions}
-                topics={topics}
-                currentTopicIndex={currentTopicIndex}
-                setCurrentTopicIndex={setCurrentTopicIndex}
-              />
-
-              {/* Acciones con iconos para generar nuevos temas */}
-              <ConversationActions
-                isLoading={isLoading}
-                useTopicsWithOptions={useTopicsWithOptions}
-                topicsWithOptions={topicsWithOptions}
-                topics={topics}
-                handleNewTopic={handleNewTopic}
-                handleEndConversation={handleEndConversation}
-              />
+              {/* Acciones para la conversación */}
+              <div className="mt-4">
+                <ConversationActions
+                  isLoading={isLoading}
+                  useTopicsWithOptions={useTopicsWithOptions}
+                  topicsWithOptions={topicsWithOptions}
+                  topics={topics}
+                  handleNewTopic={handleNewTopic}
+                  handleEndConversation={handleEndConversation}
+                  // Se puede incluir "Siguiente Tema" dentro de ConversationActions
+                  handleNextTopic={() => {}}
+                />
+              </div>
             </div>
           </WindowFrame>
-          
-          {/* Ventana para las notas */}
+
+          {/* Botón para generar otras 3 preguntas */}
+          <div className="flex justify-center mt-4">
+            <button
+              disabled={isLoading || !questionsLoaded}
+              onClick={handleNewTopic}
+              className="win95-button px-4 py-2 disabled:opacity-50"
+            >
+              Generar otras 3 preguntas
+            </button>
+          </div>
+
+          {/* Ventana para las notas de la conversación */}
           <WindowFrame
             title="NOTAS DE LA CONVERSACIÓN"
-            className="w-full"
+            className="w-full mt-6"
           >
             <div className="p-2">
               <Textarea
