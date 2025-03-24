@@ -89,13 +89,16 @@ const InterestSelector: React.FC<InterestSelectorProps> = ({
 
   // Calcular altura según el modo de visualización
   const getContentHeight = () => {
+    if (isMobile) {
+      return expandedView ? '300px' : '180px';
+    }
     return expandedView ? '500px' : '240px';
   };
 
   return (
-    <div className="mb-6 bg-chelas-gray-dark/20 p-3 rounded-md border border-chelas-gray-dark">
+    <div className="mb-4 bg-chelas-gray-dark/20 p-2 rounded-md border border-chelas-gray-dark">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm text-white font-medium">{title}</h3>
+        <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} text-white font-medium`}>{title}</h3>
         <div className="flex items-center gap-2">
           <span className="text-xs text-chelas-gray-light">
             {selectedOptions.length}/{maxSelections}
@@ -104,31 +107,31 @@ const InterestSelector: React.FC<InterestSelectorProps> = ({
             variant="ghost" 
             size="sm"
             onClick={() => setExpandedView(!expandedView)}
-            className="h-7 w-7 p-0"
+            className={`${isMobile ? 'h-6 w-6' : 'h-7 w-7'} p-0`}
           >
-            {expandedView ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            {expandedView ? <ChevronUp size={isMobile ? 12 : 16} /> : <ChevronDown size={isMobile ? 12 : 16} />}
           </Button>
         </div>
       </div>
       
       {/* Barra de búsqueda */}
       <div className="relative mb-2">
-        <Search size={16} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-chelas-gray-light" />
+        <Search size={isMobile ? 12 : 16} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-chelas-gray-light" />
         <input
           type="text"
           placeholder="Buscar intereses..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-chelas-button-face pl-8 pr-4 py-1 text-sm text-black border-2 border-chelas-gray-dark"
+          className={`w-full bg-chelas-button-face pl-7 pr-4 ${isMobile ? 'py-0.5 text-xs' : 'py-1 text-sm'} text-black border-2 border-chelas-gray-dark`}
         />
         {searchQuery && (
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={() => setSearchQuery('')}
-            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-5 w-5 p-0"
+            className={`absolute right-1 top-1/2 transform -translate-y-1/2 ${isMobile ? 'h-4 w-4' : 'h-5 w-5'} p-0`}
           >
-            <X size={14} />
+            <X size={isMobile ? 10 : 14} />
           </Button>
         )}
       </div>
@@ -141,11 +144,11 @@ const InterestSelector: React.FC<InterestSelectorProps> = ({
               key={category}
               onClick={() => setActiveCategory(activeCategory === category ? null : category)}
               className={`
-                text-xs px-2 py-1 rounded-sm flex items-center gap-1
+                ${isMobile ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1'} rounded-sm flex items-center gap-1
                 ${activeCategory === category ? 'bg-chelas-yellow text-black' : 'bg-chelas-button-face text-black'}
               `}
             >
-              <Tag size={12} />
+              <Tag size={isMobile ? 8 : 12} />
               {categoryNames[category] || category}
             </button>
           ))}
@@ -168,7 +171,7 @@ const InterestSelector: React.FC<InterestSelectorProps> = ({
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
                   className={`
-                    p-2 cursor-pointer flex items-center gap-2
+                    p-1.5 cursor-pointer flex items-center gap-2
                     ${isSelected ? 'bg-chelas-yellow/20 text-black' : 'bg-chelas-button-face text-black'}
                     border border-chelas-gray-dark shadow-win95-button rounded-sm
                   `}
@@ -182,7 +185,7 @@ const InterestSelector: React.FC<InterestSelectorProps> = ({
                   />
                   <Label 
                     htmlFor={`interest-${option.id}`} 
-                    className="text-sm truncate cursor-pointer flex-1"
+                    className={`${isMobile ? 'text-xs' : 'text-sm'} truncate cursor-pointer flex-1 text-black`}
                   >
                     {option.label}
                   </Label>
@@ -194,13 +197,13 @@ const InterestSelector: React.FC<InterestSelectorProps> = ({
           {/* Sección para añadir interés personalizado */}
           {onCustomInterestSubmit && expandedView && (
             <div className="mt-4 border-t border-chelas-gray-light pt-4">
-              <h4 className="text-sm text-black mb-2">¿No encuentras lo que buscas? Añade un interés personalizado:</h4>
+              <h4 className={`${isMobile ? 'text-xs' : 'text-sm'} text-black mb-2`}>¿No encuentras lo que buscas? Añade un interés personalizado:</h4>
               <div className="flex gap-2">
                 <Textarea
                   value={customInterest}
                   onChange={(e) => setCustomInterest(e.target.value)}
                   placeholder="Escribe un interés personalizado..."
-                  className="text-sm min-h-[60px] border-chelas-gray-dark"
+                  className={`${isMobile ? 'text-xs' : 'text-sm'} min-h-[60px] border-chelas-gray-dark`}
                 />
                 <Button 
                   onClick={handleCustomInterestSubmit}

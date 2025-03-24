@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -20,9 +21,12 @@ import {
   loadSuperProfile, 
   updateSuperProfileFromSelections 
 } from '@/utils/superProfileUtils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import ProfileInfoTab from '@/components/ProfileInfoTab';
 
 const InterestsPage = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [currentTabIndex, setCurrentTabIndex] = useState(0);
 
   // Arrays para los IDs seleccionados
@@ -35,6 +39,15 @@ const InterestsPage = () => {
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false); // Para mostrar botón admin
   const [userAuthenticated, setUserAuthenticated] = useState(false);
+
+  // Información de perfil
+  const [profileData, setProfileData] = useState({
+    name: '',
+    email: '',
+    instagram: '',
+    twitter: '',
+    facebook: ''
+  });
 
   // Nuevo state para manejar el SuperProfile
   const [superProfile, setSuperProfile] = useState<SuperProfile | null>(null);
@@ -96,7 +109,7 @@ const InterestsPage = () => {
       // También cargamos el perfil básico para la descripción personal
       const { data, error } = await supabase
         .from('profiles')
-        .select('descripcion_personal, analisis_externo')
+        .select('name, email, instagram, twitter, facebook, descripcion_personal, analisis_externo')
         .eq('id', userId)
         .single();
 
@@ -109,6 +122,15 @@ const InterestsPage = () => {
       if (data) {
         if (data.descripcion_personal) setPersonalNote(data.descripcion_personal);
         if (data.analisis_externo && !aiAnalysis) setAiAnalysis(data.analisis_externo);
+        
+        // Cargar datos de perfil
+        setProfileData({
+          name: data.name || '',
+          email: data.email || '',
+          instagram: data.instagram || '',
+          twitter: data.twitter || '',
+          facebook: data.facebook || ''
+        });
       }
       
     } catch (err) {
@@ -188,12 +210,16 @@ const InterestsPage = () => {
         throw result.error;
       }
       
-      // También actualizamos la descripción personal en el perfil básico
+      // También actualizamos los datos de perfil básico
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
+          name: profileData.name,
+          email: profileData.email,
+          instagram: profileData.instagram,
+          twitter: profileData.twitter,
+          facebook: profileData.facebook,
           descripcion_personal: personalNote,
-          // También guardamos el análisis para compatibilidad
           analisis_externo: aiAnalysis
         })
         .eq('id', profileId);
@@ -208,6 +234,20 @@ const InterestsPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Actualizar los datos del perfil
+  const handleProfileDataChange = (data: {
+    name?: string;
+    email?: string;
+    instagram?: string;
+    twitter?: string;
+    facebook?: string;
+  }) => {
+    setProfileData(prevData => ({
+      ...prevData,
+      ...data
+    }));
   };
 
   // Alternar selección al hacer clic
@@ -241,7 +281,20 @@ const InterestsPage = () => {
 
   // Renderizado de la pestaña actual
   const renderCurrentTab = () => {
-    const tabData = interestTabs[currentTabIndex];
+    // Si es la primera pestaña (info de perfil)
+    if (currentTabIndex === 0) {
+      return (
+        <ProfileInfoTab 
+          profileData={profileData} 
+          onProfileDataChange={handleProfileDataChange}
+          personalNote={personalNote}
+          onPersonalNoteChange={setPersonalNote}
+        />
+      );
+    }
+    
+    // Ahora tenemos que ajustar el índice para los datos originales de pestañas
+    const tabData = interestTabs[currentTabIndex - 1];
     if (!tabData) return null;
 
     // Si es la pestaña "Opciones Avanzadas IA"
@@ -269,7 +322,7 @@ const InterestsPage = () => {
 
     // De lo contrario, desplegamos las categorías y subInterests
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {tabData.categories.map((cat: Category) => {
           // Revisamos si es la categoría "avoid"
           const isAvoidCategory = cat.categoryId === 'avoid';
@@ -296,6 +349,7 @@ const InterestsPage = () => {
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => handleToggleInterest(sub.id, isAvoidCategory)}
+                        className="text-black"
                       />
                       <span className="text-sm text-black">{sub.label}</span>
                     </div>
@@ -326,7 +380,9 @@ const InterestsPage = () => {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col items-center justify-center min-h-[80vh] w-full p-4"
       >
-        <h1 className="text-chelas-yellow text-2xl mb-6">Configura Tus Intereses</h1>
+        <h1 className={`text-chelas-yellow ${isMobile ? 'text-xl' : 'text-2xl'} mb-4`}>
+          Configura Tus Intereses
+        </h1>
         
         {isAdmin && (
           <Button 
@@ -341,19 +397,21 @@ const InterestsPage = () => {
 
         <WindowFrame title="PROPIEDADES DE INTERESES" className="w-full max-w-full sm:max-w-3xl">
           <div className="flex flex-col h-full">
-            {/* Renderizado de pestañas con el componente Tabs */}
+            {/* Añadimos la pestaña "Perfil" como primera opción */}
             <Tabs 
-              tabs={interestTabs.map(tab => tab.label)} 
+              tabs={['Perfil', ...interestTabs.map(tab => tab.label)]} 
               activeTab={currentTabIndex} 
               onChange={setCurrentTabIndex}
             >
               {/* Contenido de la pestaña */}
-              <div className="p-4 flex-1 overflow-auto">
+              <div className="p-2 sm:p-4 flex-1 overflow-auto">
                 {loading ? (
                   <p className="text-sm text-black mb-4">Cargando...</p>
                 ) : (
                   <>
-                    {renderCurrentTab()}
+                    <div className="win95-inset bg-white p-2 overflow-auto max-h-[60vh]">
+                      {renderCurrentTab()}
+                    </div>
 
                     <div className="flex justify-end mt-4">
                       <Button variant="default" onClick={() => navigate('/lobby')} className="mr-2">

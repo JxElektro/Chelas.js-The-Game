@@ -1,15 +1,18 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TabsProps {
   tabs: string[];
   activeTab: number;
   onChange: (index: number) => void;
-  children?: React.ReactNode; // Añadimos soporte para children
+  children?: React.ReactNode;
 }
 
 const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, children }) => {
+  const isMobile = useIsMobile();
+  
   return (
     <div className="flex flex-col w-full">
       {/* Panel de pestañas horizontal al estilo Windows */}
@@ -21,7 +24,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, children }) => {
               key={label}
               onClick={() => onChange(i)}
               className={`
-                px-4 py-2
+                ${isMobile ? 'px-2 py-1 text-xs' : 'px-4 py-2 text-sm'}
                 text-center
                 text-black
                 border-l border-r border-t border-chelas-gray-dark
@@ -43,7 +46,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, children }) => {
       </div>
       
       {/* Contenedor para el contenido de la pestaña activa */}
-      <div className="bg-chelas-button-face border-x border-b border-chelas-gray-dark p-4">
+      <div className="bg-chelas-button-face border-x border-b border-chelas-gray-dark p-2 sm:p-4">
         {children}
       </div>
     </div>

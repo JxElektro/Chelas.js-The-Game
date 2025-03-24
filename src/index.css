@@ -110,7 +110,7 @@
 
 @layer components {
   .win95-window {
-    @apply bg-chelas-window-bg border-2 shadow-win95;
+    @apply bg-chelas-button-face border-2 shadow-win95;
   }
   
   .win95-window-title {
@@ -135,5 +135,37 @@
     content: '';
     @apply absolute inset-0 z-10 opacity-5 pointer-events-none;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+  
+  /* Mejora para textos y botones */
+  .win95-button,
+  .win95-inset input,
+  .win95-inset textarea,
+  .win95-inset select,
+  .win95-inset label,
+  .win95-inset span,
+  .win95-inset div,
+  .win95-inset p {
+    @apply text-black;
+  }
+  
+  /* Clase para asegurar scrolling en contenedores */
+  .scrollable-container {
+    @apply overflow-y-auto max-h-[60vh];
+  }
+  
+  /* Mejoras para móvil */
+  @media (max-width: 640px) {
+    .win95-button {
+      @apply px-2 py-0.5 text-sm;
+    }
+    
+    h1 {
+      @apply text-xl;
+    }
+    
+    .win95-window-title {
+      @apply py-0.5 text-xs;
+    }
   }
 }
