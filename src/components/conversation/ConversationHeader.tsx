@@ -36,13 +36,13 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full bg-chelas-window-bg win95-inset p-3 mb-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center">
+        <div className="flex items-center space-x-3">
           <Avatar type={otherUserProfile.avatar as AvatarType} size="lg" />
-          <div className="ml-4">
+          <div>
             <h2 className="text-black text-lg font-bold">{otherUserProfile.name}</h2>
-            <p className="text-sm text-chelas-gray-dark">
+            <p className="text-sm text-chelas-gray-dark max-w-[70vw] sm:max-w-[40vw] md:max-w-[50vw]">
               {getUserSummary()}
             </p>
           </div>
@@ -54,6 +54,7 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
             className="flex items-center p-1 h-8 w-8" 
             onClick={toggleFavorite}
             title={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
+            aria-label={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
           >
             <Star size={16} className={isFavorite ? "text-black fill-current" : ""} />
           </Button>
@@ -63,6 +64,7 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
             className="flex items-center p-1 h-8 w-8" 
             onClick={toggleFollowUp}
             title={isFollowUp ? "Quitar seguimiento" : "Marcar para seguimiento"}
+            aria-label={isFollowUp ? "Quitar seguimiento" : "Marcar para seguimiento"}
           >
             <BookmarkPlus size={16} className={isFollowUp ? "text-black fill-current" : ""} />
           </Button>

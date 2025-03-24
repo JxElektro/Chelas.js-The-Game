@@ -82,32 +82,28 @@ const Conversation = () => {
                 style={{ maxHeight: 'calc(100vh - 150px)' }}
               >
                 {/* Información del compañero de conversación */}
-                <div className="mb-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <ConversationHeader
-                        otherUserProfile={otherUserProfile}
-                        isFavorite={isFavorite}
-                        isFollowUp={isFollowUp}
-                        toggleFavorite={toggleFavorite}
-                        toggleFollowUp={toggleFollowUp}
-                        handleEndConversation={handleEndConversation}
-                      />
-                    </div>
-                  </div>
-                </div>
+                <ConversationHeader
+                  otherUserProfile={otherUserProfile}
+                  isFavorite={isFavorite}
+                  isFollowUp={isFollowUp}
+                  toggleFavorite={toggleFavorite}
+                  toggleFollowUp={toggleFollowUp}
+                  handleEndConversation={handleEndConversation}
+                />
 
                 {matchPercentage > 0 && (
-                  <ConversationMatch
-                    percentage={matchPercentage}
-                    matchCount={matchCount}
-                    isFavorite={isFavorite}
-                    isFollowUp={isFollowUp}
-                  />
+                  <div className="px-3 mb-4">
+                    <ConversationMatch
+                      percentage={matchPercentage}
+                      matchCount={matchCount}
+                      isFavorite={isFavorite}
+                      isFollowUp={isFollowUp}
+                    />
+                  </div>
                 )}
 
                 {/* Tema de conversación */}
-                <div className="mt-4 mb-6">
+                <div className="px-3 mb-6">
                   <ConversationTopicDisplay
                     useTopicsWithOptions={useTopicsWithOptions}
                     getCurrentTopic={getCurrentTopic}
@@ -124,7 +120,7 @@ const Conversation = () => {
                 </div>
                 
                 {/* Integración de las notas dentro de la misma ventana */}
-                <div className="mt-6 p-2">
+                <div className="px-3 mt-6 mb-4">
                   <div className="mb-2 text-xs font-bold tracking-tight text-black">NOTAS DE LA CONVERSACIÓN</div>
                   <Textarea
                     placeholder="Escribe tus notas sobre esta conversación aquí..."

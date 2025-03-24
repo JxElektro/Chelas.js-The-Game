@@ -57,7 +57,6 @@ const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
   
   return (
     <div className="relative w-full">
-      <div className="mb-2 text-xs font-bold tracking-tight text-black">TEMA DE CONVERSACIÓN</div>
       <div className="relative p-2 win95-inset bg-chelas-window-bg">
         <div className="mb-4">
           {useTopicsWithOptions ? (
@@ -83,6 +82,7 @@ const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
               className="px-2 flex items-center"
               variant={currentTopicIndex === 0 ? "ghost" : "default"}
               title="Tema anterior"
+              aria-label="Tema anterior"
             >
               <ChevronLeft size={18} className="mr-1" />
               Anterior
@@ -115,6 +115,7 @@ const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
                 className="px-2 flex items-center"
                 variant={currentTopicIndex === totalTopics - 1 ? "ghost" : "default"}
                 title="Tema siguiente"
+                aria-label="Tema siguiente"
               >
                 Siguiente
                 <ChevronRight size={18} className="ml-1" />
