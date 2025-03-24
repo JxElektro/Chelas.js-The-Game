@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Table,
   TableBody,
@@ -13,7 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 
 type DrinkExpense = {
   id: string;
@@ -85,11 +85,13 @@ export default function DrinkExpenses() {
     try {
       const { error } = await supabase
         .from('drink_expenses')
-        .insert([{
-          user_id: userId,
-          description: newDescription,
-          price: price,
-        }]);
+        .insert([
+          {
+            user_id: userId,
+            description: newDescription,
+            price: price,
+          },
+        ]);
       if (error) throw error;
       toast.success('Gasto agregado correctamente');
       setNewDescription('');
@@ -132,6 +134,7 @@ export default function DrinkExpenses() {
 
   return (
     <div className="w-full h-full flex flex-col p-2 overflow-hidden">
+      {/* Formulario de ingreso */}
       <div className="grid grid-cols-12 gap-2 mb-3">
         <div className="col-span-12 md:col-span-6">
           <Input
@@ -163,9 +166,11 @@ export default function DrinkExpenses() {
         </div>
       </div>
 
+      {/* Contenedor para la tabla y el total */}
       <div className="flex flex-col flex-grow overflow-hidden">
-        <div className="flex-grow overflow-hidden bg-white border-2 border-chelas-gray-dark">
-          <ScrollArea className="h-full w-full pb-safe">
+        {/* Área de la tabla con scroll interno */}
+        <div className="flex-grow overflow-auto bg-white border-2 border-chelas-gray-dark">
+          <ScrollArea className="w-full pb-safe">
             <Table className="excel-table">
               <TableHeader className="sticky top-0 bg-chelas-gray-medium">
                 <TableRow className="border-b border-chelas-gray-dark hover:bg-chelas-gray-light">
@@ -227,7 +232,8 @@ export default function DrinkExpenses() {
           </ScrollArea>
         </div>
 
-        <div className="mt-3 p-2 win95-window bg-chelas-gray-medium">
+        {/* Sección fija del total, siempre visible */}
+        <div className="mt-3 p-2 win95-window bg-chelas-gray-medium flex-shrink-0">
           <div className="flex justify-between items-center">
             <span className="font-bold text-black">Total gastado:</span>
             <span className="font-bold text-xl text-black">
