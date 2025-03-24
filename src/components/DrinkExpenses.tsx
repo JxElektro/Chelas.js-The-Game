@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -193,16 +192,10 @@ export default function DrinkExpenses() {
             </TableHeader>
           </Table>
         </div>
-<<<<<<< HEAD
 
         {/* Cuerpo de la tabla scrolleable */}
         <div className="flex-grow min-h-0 overflow-auto bg-white">
           <ScrollArea className="w-full h-full">
-=======
-        
-        <div className="flex-grow bg-white">
-          <ScrollArea className="h-[calc(100vh-280px)] w-full rounded-none border-t border-chelas-gray-dark" style={{ overflow: 'visible' }}>
->>>>>>> 42203afad7eb3d0b4edba96f80abf783ca497dcf
             <Table>
               <TableBody>
                 {loading ? (
