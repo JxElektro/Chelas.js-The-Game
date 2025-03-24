@@ -43,7 +43,7 @@ const Desktop: React.FC = () => {
     },
     {
       id: 'excel',
-      title: 'Control de Gastos',
+      title: 'Excel',
       icon: '📊',
       component: <DrinkExpenses />
     },
