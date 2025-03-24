@@ -1,0 +1,112 @@
+
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { TopicWithOptions } from '@/types/conversation';
+import { toast } from 'sonner';
+import { generateMockTopic, mockTopicsWithOptions } from '@/services/deepseekService';
+
+export const useConversationActions = (
+  useTopicsWithOptions: boolean,
+  topicsWithOptions: TopicWithOptions[],
+  topics: string[],
+  setTopicsWithOptions: (topics: TopicWithOptions[]) => void,
+  setTopics: (topics: string[]) => void,
+  currentTopicIndex: number,
+  setCurrentTopicIndex: (index: number) => void,
+  setIsLoading: (isLoading: boolean) => void,
+  conversationIdRef: React.MutableRefObject<string | null>,
+  isFavorite: boolean,
+  isFollowUp: boolean
+) => {
+  const navigate = useNavigate();
+
+  const handleNewTopic = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      if (useTopicsWithOptions) {
+        const newTopicsWithOptions = mockTopicsWithOptions();
+        setTopicsWithOptions(newTopicsWithOptions);
+        setCurrentTopicIndex(0);
+      } else {
+        const newTopics = generateMockTopic();
+        setTopics(newTopics);
+        setCurrentTopicIndex(0);
+      }
+      setIsLoading(false);
+      
+      // Save new topics to database if we have a conversation ID
+      if (conversationIdRef.current) {
+        if (useTopicsWithOptions) {
+          topicsWithOptions.forEach(topic => {
+            supabase
+              .from('conversation_topics')
+              .insert({
+                conversation_id: conversationIdRef.current as string,
+                topic: topic.question
+              })
+              .then(({ error }) => {
+                if (error) console.error('Error al guardar nuevo tema:', error);
+              });
+          });
+        } else {
+          topics.forEach(topic => {
+            supabase
+              .from('conversation_topics')
+              .insert({
+                conversation_id: conversationIdRef.current as string,
+                topic: topic
+              })
+              .then(({ error }) => {
+                if (error) console.error('Error al guardar nuevo tema:', error);
+              });
+          });
+        }
+      }
+    }, 1500);
+  };
+  
+  const handleNextTopic = () => {
+    const maxIndex = useTopicsWithOptions 
+      ? topicsWithOptions.length - 1 
+      : topics.length - 1;
+      
+    if (currentTopicIndex < maxIndex) {
+      setCurrentTopicIndex(currentTopicIndex + 1);
+    } else {
+      // If we're at the end, cycle back to the first topic
+      setCurrentTopicIndex(0);
+    }
+  };
+
+  const handleEndConversation = () => {
+    // When conversation ends, navigate to home
+    if (conversationIdRef.current) {
+      // Update the database with the current state
+      supabase
+        .from('conversations')
+        .update({ 
+          ended_at: new Date().toISOString(),
+          is_favorite: isFavorite,
+          follow_up: isFollowUp
+        })
+        .eq('id', conversationIdRef.current)
+        .then(({ error }) => {
+          if (error) console.error('Error al finalizar conversación:', error);
+        });
+    }
+    
+    navigate('/');
+  };
+  
+  const handleSelectOption = (option: {emoji: string, text: string}) => {
+    toast.success(`Seleccionaste: ${option.text}`);
+    // Aquí podrías implementar lógica adicional para guardar la selección o pasar al siguiente tema
+  };
+
+  return {
+    handleNewTopic,
+    handleNextTopic,
+    handleEndConversation,
+    handleSelectOption
+  };
+};
