@@ -11,6 +11,7 @@ interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>
   onClick?: () => void;
   type?: 'button' | 'submit' | 'reset';
   disabled?: boolean;
+  title?: string; // Added title prop
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -21,6 +22,7 @@ const Button: React.FC<ButtonProps> = ({
   onClick,
   type = 'button',
   disabled = false,
+  title,
   ...props
 }) => {
   const baseClasses = 'win95-button select-none focus:outline-none inline-flex items-center justify-center font-ms-sans transition-shadow';
@@ -51,6 +53,7 @@ const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       type={type}
       disabled={disabled}
+      title={title}
       {...props as any}
     >
       {children}

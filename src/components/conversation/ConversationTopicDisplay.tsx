@@ -105,6 +105,7 @@ const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
                   onClick={handleNewTopic}
                   disabled={isLoading}
                   className="px-2 flex items-center bg-chelas-button-face hover:bg-chelas-gray-light"
+                  aria-label="Generar Nuevos Temas"
                   title="Generar Nuevos Temas"
                 >
                   <Zap size={18} className="mr-1" />
