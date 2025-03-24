@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -134,56 +133,50 @@ export default function DrinkExpenses() {
 
   return (
     <div className="w-full h-full flex flex-col p-2 overflow-hidden">
-      {/* Formulario y total */}
-      <div className="flex flex-col gap-3 mb-3">
-        {/* Formulario de ingreso */}
-        <div className="grid grid-cols-12 gap-2">
-          <div className="col-span-12 md:col-span-6">
-            <Input
-              placeholder="Descripción (ej. Cerveza, Shots, etc.)"
-              value={newDescription}
-              onChange={(e) => setNewDescription(e.target.value)}
-              className="win95-inset w-full border-chelas-gray-dark text-black text-sm"
-            />
-          </div>
-          <div className="col-span-12 md:col-span-3">
-            <Input
-              placeholder="Precio"
-              type="number"
-              min="0"
-              step="0.01"
-              value={newPrice}
-              onChange={(e) => setNewPrice(e.target.value)}
-              className="win95-inset w-full border-chelas-gray-dark text-black text-sm"
-            />
-          </div>
-          <div className="col-span-12 md:col-span-3">
-            <Button
-              onClick={handleAddExpense}
-              className="win95-button w-full text-black"
-              disabled={!userId}
-            >
-              Agregar
-            </Button>
-          </div>
+      <div className="grid grid-cols-12 gap-2 mb-3">
+        <div className="col-span-12 md:col-span-6">
+          <Input
+            placeholder="Descripción (ej. Cerveza, Shots, etc.)"
+            value={newDescription}
+            onChange={(e) => setNewDescription(e.target.value)}
+            className="win95-inset w-full border-chelas-gray-dark text-black text-sm"
+          />
         </div>
-        
-        {/* Sección del total, ahora antes de la tabla */}
-        <div className="p-2 win95-window bg-chelas-gray-medium">
-          <div className="flex justify-between items-center">
-            <span className="font-bold text-black">Total gastado:</span>
-            <span className="font-bold text-xl text-black">
-              {formatCurrency(total)}
-            </span>
-          </div>
+        <div className="col-span-12 md:col-span-3">
+          <Input
+            placeholder="Precio"
+            type="number"
+            min="0"
+            step="0.01"
+            value={newPrice}
+            onChange={(e) => setNewPrice(e.target.value)}
+            className="win95-inset w-full border-chelas-gray-dark text-black text-sm"
+          />
+        </div>
+        <div className="col-span-12 md:col-span-3">
+          <Button
+            onClick={handleAddExpense}
+            className="win95-button w-full text-black"
+            disabled={!userId}
+          >
+            Agregar
+          </Button>
+        </div>
+      </div>
+      
+      <div className="p-2 win95-window bg-chelas-gray-medium mb-3">
+        <div className="flex justify-between items-center">
+          <span className="font-bold text-black">Total gastado:</span>
+          <span className="font-bold text-xl text-black">
+            {formatCurrency(total)}
+          </span>
         </div>
       </div>
 
-      {/* Tabla con scroll */}
-      <div className="flex-grow overflow-hidden border-2 border-chelas-gray-dark">
+      <div className="flex-grow overflow-hidden border-2 border-chelas-gray-dark flex flex-col">
         <div className="bg-chelas-gray-medium">
-          <Table className="excel-table">
-            <TableHeader className="sticky top-0 bg-chelas-gray-medium">
+          <Table>
+            <TableHeader>
               <TableRow className="border-b border-chelas-gray-dark hover:bg-chelas-gray-light">
                 <TableHead className="w-[100px] text-black text-sm font-bold border-r border-chelas-gray-dark">
                   Hora
@@ -200,9 +193,9 @@ export default function DrinkExpenses() {
           </Table>
         </div>
         
-        <div className="h-full overflow-auto bg-white">
-          <ScrollArea className="h-[calc(100vh-250px)]">
-            <Table className="excel-table">
+        <div className="flex-grow bg-white">
+          <ScrollArea className="h-[calc(100vh-280px)] w-full rounded-none border-t border-chelas-gray-dark">
+            <Table>
               <TableBody>
                 {loading ? (
                   <TableRow>
