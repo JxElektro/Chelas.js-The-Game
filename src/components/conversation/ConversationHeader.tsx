@@ -1,6 +1,5 @@
 
 import React from 'react';
-import WindowFrame from '@/components/WindowFrame';
 import Avatar, { AvatarType } from '@/components/Avatar';
 import { Profile } from '@/types/supabase';
 import { Star, BookmarkPlus } from 'lucide-react';
@@ -37,11 +36,7 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
   };
 
   return (
-    <WindowFrame 
-      title="COMPAÑERO DE CONVERSACIÓN" 
-      className="mb-6"
-      onClose={handleEndConversation}
-    >
+    <div className="w-full">
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <Avatar type={otherUserProfile.avatar as AvatarType} size="lg" />
@@ -58,6 +53,7 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
             variant={isFavorite ? "primary" : "default"}
             className="flex items-center p-1 h-8 w-8" 
             onClick={toggleFavorite}
+            title={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
           >
             <Star size={16} className={isFavorite ? "text-black fill-current" : ""} />
           </Button>
@@ -66,12 +62,13 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
             variant={isFollowUp ? "primary" : "default"}
             className="flex items-center p-1 h-8 w-8" 
             onClick={toggleFollowUp}
+            title={isFollowUp ? "Quitar seguimiento" : "Marcar para seguimiento"}
           >
             <BookmarkPlus size={16} className={isFollowUp ? "text-black fill-current" : ""} />
           </Button>
         </div>
       </div>
-    </WindowFrame>
+    </div>
   );
 };
 
