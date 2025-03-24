@@ -1,3 +1,57 @@
+
+import { SuperProfile } from '@/types/supabase';
+
+/**
+ * Extracts random interests from a SuperProfile object
+ * @param superProfile The user's SuperProfile data
+ * @param count Maximum number of interests to extract
+ * @returns Array of interest strings
+ */
+export const getRandomInterestsFromSuperProfile = (superProfile: any, count: number): string[] => {
+  if (!superProfile || typeof superProfile !== 'object') {
+    return [];
+  }
+
+  try {
+    // Collect all valid interests from the superProfile
+    const allInterests: string[] = [];
+    
+    // Check each major category in the SuperProfile
+    const categories = ['general', 'ocio', 'cultura', 'otros'];
+    
+    categories.forEach(category => {
+      if (superProfile[category] && typeof superProfile[category] === 'object') {
+        // Look for arrays or objects containing interests
+        Object.values(superProfile[category]).forEach((value: any) => {
+          if (Array.isArray(value)) {
+            // If the value is an array, add all string elements
+            value.forEach((item: any) => {
+              if (typeof item === 'string' && item.trim() !== '') {
+                allInterests.push(item);
+              }
+            });
+          } else if (typeof value === 'string' && value.trim() !== '') {
+            // If the value itself is a string, add it
+            allInterests.push(value);
+          }
+        });
+      }
+    });
+
+    // If no interests were found, return empty array
+    if (allInterests.length === 0) {
+      return [];
+    }
+
+    // Shuffle and select random interests
+    const shuffled = [...allInterests].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, Math.min(count, shuffled.length));
+  } catch (error) {
+    console.error('Error extracting interests:', error);
+    return [];
+  }
+};
+
 /**
  * Creates a summary string based on random interests from a user's profile
  * @param superProfile The user's SuperProfile or Json data
@@ -10,7 +64,7 @@ export const createInterestSummary = (superProfile: any): string => {
   }
   
   try {
-    const randomInterests = getRandomInterestsFromSuperProfile(superProfile as SuperProfile, 3);
+    const randomInterests = getRandomInterestsFromSuperProfile(superProfile, 3);
     
     if (randomInterests.length === 0) {
       return "Compañero ideal para conversar y descubrir nuevos temas.";
