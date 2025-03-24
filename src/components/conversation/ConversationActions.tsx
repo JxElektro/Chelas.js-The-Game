@@ -31,13 +31,13 @@ const ConversationActions: React.FC<ConversationActionsProps> = ({
   return (
     <div className="flex justify-between items-center mt-4 px-2">
       <Button 
-        variant="default"
+        variant="outline"
         onClick={handleNewTopic}
         disabled={isLoading}
         className="w-auto"
+        title="Generar Nuevos Temas"
       >
-        <Bot size={18} className="mr-2" />
-        Generar Nuevos Temas
+        <Bot size={24} />
       </Button>
       
       <Button 

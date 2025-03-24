@@ -60,21 +60,23 @@ const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
         className="w-full mb-6"
       >
         <div className="relative p-2">
-          {useTopicsWithOptions ? (
-            <ConversationTopicWithOptions 
-              topic={getCurrentTopic() as TopicWithOptions} 
-              isLoading={isLoading}
-              onSelectOption={handleSelectOption}
-            />
-          ) : (
-            <ConversationPrompt 
-              prompt={getCurrentTopic() as string} 
-              isLoading={isLoading} 
-            />
-          )}
+          <div className="mb-4">
+            {useTopicsWithOptions ? (
+              <ConversationTopicWithOptions 
+                topic={getCurrentTopic() as TopicWithOptions} 
+                isLoading={isLoading}
+                onSelectOption={handleSelectOption}
+              />
+            ) : (
+              <ConversationPrompt 
+                prompt={getCurrentTopic() as string} 
+                isLoading={isLoading} 
+              />
+            )}
+          </div>
           
           {/* Navegación entre temas */}
-          <div className="flex justify-between items-center mt-4">
+          <div className="flex justify-between items-center mt-2">
             <Button
               onClick={handlePrevTopic}
               disabled={currentTopicIndex === 0}

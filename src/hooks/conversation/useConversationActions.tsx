@@ -22,6 +22,8 @@ export const useConversationActions = (
 
   const handleNewTopic = () => {
     setIsLoading(true);
+    toast.info("Generando nuevos temas...");
+    
     setTimeout(() => {
       if (useTopicsWithOptions) {
         const newTopicsWithOptions = mockTopicsWithOptions();
@@ -33,6 +35,7 @@ export const useConversationActions = (
         setCurrentTopicIndex(0);
       }
       setIsLoading(false);
+      toast.success("Nuevos temas generados");
       
       // Save new topics to database if we have a conversation ID
       if (conversationIdRef.current) {
@@ -75,6 +78,7 @@ export const useConversationActions = (
     } else {
       // If we're at the end, cycle back to the first topic
       setCurrentTopicIndex(0);
+      toast.info("Has visto todos los temas disponibles. Puedes generar nuevos temas con el botón de la IA.");
     }
   };
 
