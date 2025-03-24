@@ -1,3 +1,4 @@
+
 // Custom types for Supabase that don't require modifying the auto-generated types
 import type { Database } from '@/integrations/supabase/types';
 
@@ -15,8 +16,10 @@ export type Interest = Database['public']['Tables']['interests']['Row'];
 export type UserInterest = Database['public']['Tables']['user_interests']['Row'];
 
 // Conversation type derived from Database type
-export type Conversation = Database['public']['Tables']['conversations']['Row'] & {
+export type ConversationType = Database['public']['Tables']['conversations']['Row'] & {
   match_percentage?: number;
+  is_favorite?: boolean;
+  follow_up?: boolean;
 };
 
 // ConversationTopic type derived from Database type
@@ -53,7 +56,8 @@ export type ChatMessage = {
   suggestions?: string[]; // Optional suggested interests that can be clicked
 };
 
-export interface Conversation {
+// Export the updated conversation interface
+export type Conversation = {
   id: string;
   user_a: string;
   user_b: string;
@@ -62,4 +66,4 @@ export interface Conversation {
   match_percentage: number | null;
   is_favorite: boolean;
   follow_up: boolean;
-}
+};

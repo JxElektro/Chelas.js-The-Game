@@ -8,6 +8,7 @@ import Avatar, { AvatarType } from '@/components/Avatar';
 import ConversationPrompt from '@/components/ConversationPrompt';
 import ConversationTopicWithOptions from '@/components/ConversationTopicWithOptions';
 import MatchPercentage from '@/components/MatchPercentage';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   generateConversationTopic, 
   generateMockTopic, 
@@ -16,11 +17,10 @@ import {
 } from '@/services/deepseekService';
 import { ArrowLeft, RefreshCw, X, ChevronDown, ChevronUp, Star, BookmarkPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Profile, Conversation as ConversationType, InterestOption } from '@/types/supabase';
+import { Profile, ConversationType, InterestOption } from '@/types/supabase';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Json } from '@/integrations/supabase/types';
-import { SuperProfile } from '@/utils/superProfileUtils';
 import { createInterestSummary } from '@/utils/interestSummaryUtils';
 
 interface TopicOption {
@@ -294,7 +294,7 @@ const Conversation = () => {
               }
             }
             
-            // Save topics in the database - modify for topics with options
+            // Save topics in the database
             if (useTopicsWithOptions && topicsWithOptions.length > 0) {
               const topicPromises = topicsWithOptions.map(topic => {
                 return supabase
@@ -389,14 +389,15 @@ const Conversation = () => {
   };
 
   const handleEndConversation = () => {
-    // Update conversation end time if we have a conversation ID
+    // When conversation ends, navigate to home
     if (conversationIdRef.current) {
+      // We need to be careful with the database fields we're updating
+      // Only update fields that exist in the database schema
       supabase
         .from('conversations')
         .update({ 
-          ended_at: new Date().toISOString(),
-          is_favorite: isFavorite,
-          follow_up: isFollowUp
+          ended_at: new Date().toISOString()
+          // Note: is_favorite and follow_up are currently removed due to schema issues
         })
         .eq('id', conversationIdRef.current)
         .then(({ error }) => {
@@ -416,30 +417,18 @@ const Conversation = () => {
     setIsFavorite(!isFavorite);
     toast.success(isFavorite ? 'Eliminado de favoritos' : 'Añadido a favoritos');
     
-    if (conversationIdRef.current) {
-      supabase
-        .from('conversations')
-        .update({ is_favorite: !isFavorite })
-        .eq('id', conversationIdRef.current)
-        .then(({ error }) => {
-          if (error) console.error('Error al marcar como favorito:', error);
-        });
-    }
+    // Note: This feature requires database schema update
+    // Consider adding is_favorite column to conversations table
+    console.log('Favorito toggle:', !isFavorite);
   };
   
   const toggleFollowUp = () => {
     setIsFollowUp(!isFollowUp);
     toast.success(isFollowUp ? 'Follow-up cancelado' : 'Follow-up marcado');
     
-    if (conversationIdRef.current) {
-      supabase
-        .from('conversations')
-        .update({ follow_up: !isFollowUp })
-        .eq('id', conversationIdRef.current)
-        .then(({ error }) => {
-          if (error) console.error('Error al marcar para seguimiento:', error);
-        });
-    }
+    // Note: This feature requires database schema update
+    // Consider adding follow_up column to conversations table
+    console.log('Follow-up toggle:', !isFollowUp);
   };
 
   const getCurrentTopic = () => {
@@ -485,141 +474,141 @@ const Conversation = () => {
             <ArrowLeft size={16} className="mr-1" />
             Volver
           </Button>
-          
-          <div className="flex space-x-2">
-            <Button 
-              variant={isFavorite ? "primary" : "default"}
-              className="flex items-center" 
-              onClick={toggleFavorite}
-              title="Marcar como favorito"
-            >
-              <Star size={16} className={isFavorite ? "text-black fill-current" : ""} />
-              {!isMobile && <span className="ml-1">Favorito</span>}
-            </Button>
-            
-            <Button 
-              variant={isFollowUp ? "primary" : "default"}
-              className="flex items-center" 
-              onClick={toggleFollowUp}
-              title="Marcar para seguimiento"
-            >
-              <BookmarkPlus size={16} className={isFollowUp ? "text-black fill-current" : ""} />
-              {!isMobile && <span className="ml-1">Follow-up</span>}
-            </Button>
-          </div>
         </div>
 
-        <WindowFrame 
-          title="COMPAÑERO DE CONVERSACIÓN" 
-          className="mb-6"
-          onClose={handleEndConversation}
-        >
-          <div className="flex items-center">
-            <Avatar type={otherUserProfile.avatar as AvatarType} size="lg" />
-            <div className="ml-4">
-              <h2 className="text-black text-lg font-bold">{otherUserProfile.name}</h2>
-              <p className="text-sm text-chelas-gray-dark">
-                {getUserSummary()}
-              </p>
-            </div>
-          </div>
-        </WindowFrame>
-
-        {matchPercentage > 0 && (
-          <MatchPercentage 
-            percentage={matchPercentage} 
-            matchCount={matchCount} 
-          />
-        )}
-
-        {useTopicsWithOptions ? (
+        <ScrollArea className="flex-1 pr-2 pb-4">
           <WindowFrame 
-            title="TEMA DE CONVERSACIÓN" 
+            title="COMPAÑERO DE CONVERSACIÓN" 
             className="mb-6"
-            onClose={() => setShowAllTopics(!showAllTopics)}
+            onClose={handleEndConversation}
           >
-            <ConversationTopicWithOptions 
-              topic={getCurrentTopic() as TopicWithOptions} 
-              isLoading={isLoading}
-              onSelectOption={handleSelectOption}
-            />
-          </WindowFrame>
-        ) : (
-          <WindowFrame 
-            title="TEMA DE CONVERSACIÓN" 
-            className="mb-6"
-            onClose={() => setShowAllTopics(!showAllTopics)}
-          >
-            <ConversationPrompt 
-              prompt={getCurrentTopic() as string} 
-              isLoading={isLoading} 
-            />
-          </WindowFrame>
-        )}
-        
-        {(useTopicsWithOptions ? topicsWithOptions.length > 1 : topics.length > 1) && (
-          <div className="mb-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowAllTopics(!showAllTopics)}
-              className="w-full text-sm"
-            >
-              {showAllTopics ? (
-                <>
-                  <ChevronUp size={16} className="mr-1" />
-                  Ocultar más temas
-                </>
-              ) : (
-                <>
-                  <ChevronDown size={16} className="mr-1" />
-                  Ver todos los temas ({useTopicsWithOptions ? topicsWithOptions.length : topics.length})
-                </>
-              )}
-            </Button>
-            
-            {showAllTopics && (
-              <WindowFrame 
-                title="TODOS LOS TEMAS" 
-                className="mt-2"
-                onClose={() => setShowAllTopics(false)}
-              >
-                <div className="space-y-2">
-                  {useTopicsWithOptions ? (
-                    topicsWithOptions.map((topic, index) => (
-                      <div 
-                        key={index}
-                        className={`p-2 cursor-pointer text-sm rounded-sm
-                          ${index === currentTopicIndex ? 
-                            'bg-chelas-yellow text-black' : 
-                            'bg-chelas-button-face hover:bg-chelas-gray-light/30 text-black'}
-                        `}
-                        onClick={() => setCurrentTopicIndex(index)}
-                      >
-                        {topic.question}
-                      </div>
-                    ))
-                  ) : (
-                    topics.map((topic, index) => (
-                      <div 
-                        key={index}
-                        className={`p-2 cursor-pointer text-sm rounded-sm
-                          ${index === currentTopicIndex ? 
-                            'bg-chelas-yellow text-black' : 
-                            'bg-chelas-button-face hover:bg-chelas-gray-light/30 text-black'}
-                        `}
-                        onClick={() => setCurrentTopicIndex(index)}
-                      >
-                        {topic}
-                      </div>
-                    ))
-                  )}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Avatar type={otherUserProfile.avatar as AvatarType} size="lg" />
+                <div className="ml-4">
+                  <h2 className="text-black text-lg font-bold">{otherUserProfile.name}</h2>
+                  <p className="text-sm text-chelas-gray-dark">
+                    {getUserSummary()}
+                  </p>
                 </div>
-              </WindowFrame>
-            )}
-          </div>
-        )}
+              </div>
+              
+              <div className="flex space-x-1">
+                <Button 
+                  variant={isFavorite ? "primary" : "default"}
+                  className="flex items-center p-1 h-8 w-8" 
+                  onClick={toggleFavorite}
+                >
+                  <Star size={16} className={isFavorite ? "text-black fill-current" : ""} />
+                </Button>
+                
+                <Button 
+                  variant={isFollowUp ? "primary" : "default"}
+                  className="flex items-center p-1 h-8 w-8" 
+                  onClick={toggleFollowUp}
+                >
+                  <BookmarkPlus size={16} className={isFollowUp ? "text-black fill-current" : ""} />
+                </Button>
+              </div>
+            </div>
+          </WindowFrame>
 
-        <div className="flex flex-col sm:flex-row justify-center gap-3 mt-auto">
+          {matchPercentage > 0 && (
+            <MatchPercentage 
+              percentage={matchPercentage} 
+              matchCount={matchCount} 
+            />
+          )}
+
+          {useTopicsWithOptions ? (
+            <WindowFrame 
+              title="TEMA DE CONVERSACIÓN" 
+              className="mb-6"
+              onClose={() => setShowAllTopics(!showAllTopics)}
+            >
+              <ConversationTopicWithOptions 
+                topic={getCurrentTopic() as TopicWithOptions} 
+                isLoading={isLoading}
+                onSelectOption={handleSelectOption}
+              />
+            </WindowFrame>
+          ) : (
+            <WindowFrame 
+              title="TEMA DE CONVERSACIÓN" 
+              className="mb-6"
+              onClose={() => setShowAllTopics(!showAllTopics)}
+            >
+              <ConversationPrompt 
+                prompt={getCurrentTopic() as string} 
+                isLoading={isLoading} 
+              />
+            </WindowFrame>
+          )}
+          
+          {(useTopicsWithOptions ? topicsWithOptions.length > 1 : topics.length > 1) && (
+            <div className="mb-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowAllTopics(!showAllTopics)}
+                className="w-full text-sm"
+              >
+                {showAllTopics ? (
+                  <>
+                    <ChevronUp size={16} className="mr-1" />
+                    Ocultar más temas
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown size={16} className="mr-1" />
+                    Ver todos los temas ({useTopicsWithOptions ? topicsWithOptions.length : topics.length})
+                  </>
+                )}
+              </Button>
+              
+              {showAllTopics && (
+                <WindowFrame 
+                  title="TODOS LOS TEMAS" 
+                  className="mt-2"
+                  onClose={() => setShowAllTopics(false)}
+                >
+                  <div className="space-y-2">
+                    {useTopicsWithOptions ? (
+                      topicsWithOptions.map((topic, index) => (
+                        <div 
+                          key={index}
+                          className={`p-2 cursor-pointer text-sm rounded-sm
+                            ${index === currentTopicIndex ? 
+                              'bg-chelas-yellow text-black' : 
+                              'bg-chelas-button-face hover:bg-chelas-gray-light/30 text-black'}
+                          `}
+                          onClick={() => setCurrentTopicIndex(index)}
+                        >
+                          {topic.question}
+                        </div>
+                      ))
+                    ) : (
+                      topics.map((topic, index) => (
+                        <div 
+                          key={index}
+                          className={`p-2 cursor-pointer text-sm rounded-sm
+                            ${index === currentTopicIndex ? 
+                              'bg-chelas-yellow text-black' : 
+                              'bg-chelas-button-face hover:bg-chelas-gray-light/30 text-black'}
+                          `}
+                          onClick={() => setCurrentTopicIndex(index)}
+                        >
+                          {topic}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </WindowFrame>
+              )}
+            </div>
+          )}
+        </ScrollArea>
+
+        <div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
           {(useTopicsWithOptions ? topicsWithOptions.length > 1 : topics.length > 1) && (
             <Button 
               variant="default"
