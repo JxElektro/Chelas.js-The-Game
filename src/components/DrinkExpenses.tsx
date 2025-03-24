@@ -5,6 +5,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -142,16 +143,14 @@ const DrinkExpenses = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col p-4">
-      <h2 className="text-xl font-bold mb-4">Control de Gastos de Bebidas</h2>
-      
-      <div className="grid grid-cols-12 gap-2 mb-4">
+    <div className="w-full h-full flex flex-col p-2 overflow-hidden">
+      <div className="grid grid-cols-12 gap-2 mb-3">
         <div className="col-span-12 md:col-span-6">
           <Input
             placeholder="Descripción (ej. Cerveza, Shots, etc.)"
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
-            className="win95-inset w-full"
+            className="win95-inset w-full border-chelas-gray-dark text-black text-sm"
           />
         </div>
         <div className="col-span-12 md:col-span-3">
@@ -162,13 +161,13 @@ const DrinkExpenses = () => {
             step="0.01"
             value={newPrice}
             onChange={(e) => setNewPrice(e.target.value)}
-            className="win95-inset w-full"
+            className="win95-inset w-full border-chelas-gray-dark text-black text-sm"
           />
         </div>
         <div className="col-span-12 md:col-span-3">
           <Button
             onClick={handleAddExpense}
-            className="win95-button w-full"
+            className="win95-button w-full text-black"
             disabled={!userId}
           >
             Agregar
@@ -176,53 +175,54 @@ const DrinkExpenses = () => {
         </div>
       </div>
 
-      <div className="flex-grow win95-inset overflow-auto">
-        <Table>
-          <TableCaption>Lista de bebidas y gastos de la noche</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[150px]">Hora</TableHead>
-              <TableHead>Descripción</TableHead>
-              <TableHead className="text-right">Precio</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center">Cargando...</TableCell>
+      <div className="flex-grow overflow-hidden bg-white border-2 border-chelas-gray-dark">
+        <ScrollArea className="h-full w-full">
+          <Table className="excel-table">
+            <TableHeader className="sticky top-0 bg-chelas-gray-medium">
+              <TableRow className="border-b border-chelas-gray-dark hover:bg-chelas-gray-light">
+                <TableHead className="w-[100px] text-black text-sm font-bold border-r border-chelas-gray-dark">Hora</TableHead>
+                <TableHead className="text-black text-sm font-bold border-r border-chelas-gray-dark">Descripción</TableHead>
+                <TableHead className="text-right text-black text-sm font-bold border-r border-chelas-gray-dark w-[120px]">Precio</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
-            ) : expenses.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center">No hay gastos registrados. ¡Agrega tu primera bebida!</TableCell>
-              </TableRow>
-            ) : (
-              expenses.map((expense) => (
-                <TableRow key={expense.id}>
-                  <TableCell>{formatDate(expense.created_at)}</TableCell>
-                  <TableCell>{expense.description}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(expense.price)}</TableCell>
-                  <TableCell>
-                    <Button
-                      onClick={() => handleDeleteExpense(expense.id)}
-                      variant="ghost"
-                      size="sm"
-                      className="p-1 h-8 w-8"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </TableCell>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-black">Cargando...</TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : expenses.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-black">No hay gastos registrados. ¡Agrega tu primera bebida!</TableCell>
+                </TableRow>
+              ) : (
+                expenses.map((expense) => (
+                  <TableRow key={expense.id} className="border-b border-chelas-gray-dark hover:bg-chelas-gray-light">
+                    <TableCell className="border-r border-chelas-gray-dark text-black text-sm">{formatDate(expense.created_at)}</TableCell>
+                    <TableCell className="border-r border-chelas-gray-dark text-black text-sm">{expense.description}</TableCell>
+                    <TableCell className="text-right border-r border-chelas-gray-dark text-black text-sm">{formatCurrency(expense.price)}</TableCell>
+                    <TableCell>
+                      <Button
+                        onClick={() => handleDeleteExpense(expense.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 h-6 w-6"
+                      >
+                        <Trash2 size={14} className="text-black" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </ScrollArea>
       </div>
 
-      <div className="mt-4 p-2 win95-window">
+      <div className="mt-3 p-2 win95-window bg-chelas-gray-medium">
         <div className="flex justify-between items-center">
-          <span className="font-bold">Total gastado:</span>
-          <span className="font-bold text-xl">{formatCurrency(total)}</span>
+          <span className="font-bold text-black">Total gastado:</span>
+          <span className="font-bold text-xl text-black">{formatCurrency(total)}</span>
         </div>
       </div>
     </div>
