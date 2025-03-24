@@ -15,6 +15,7 @@ import Login from "./pages/Login";
 import Interests from "./pages/Interests";
 import Conversation from "./pages/Conversation";
 import NotFound from "./pages/NotFound";
+import Tutorial from "./pages/Tutorial";
 
 // Create QueryClient outside the component to avoid recreation on each render
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/interests" element={<Interests />} />
               <Route path="/conversation/:userId" element={<Conversation />} />
+              <Route path="/tutorial" element={<Tutorial />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>
