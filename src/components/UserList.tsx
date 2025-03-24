@@ -43,7 +43,7 @@ const UserList: React.FC<UserListProps> = ({
                 transition={{ duration: 0.3 }}
                 className="flex items-center px-1 sm:px-2 py-1 hover:bg-chelas-gray-medium"
               >
-                <Avatar type={user.avatar} size={isMobile ? "xs" : "sm"} />
+                <Avatar type={user.avatar} size={isMobile ? "sm" : "sm"} />
                 <span className="text-black text-xs sm:text-sm ml-1 sm:ml-2 flex-grow truncate">{user.name}</span>
                 <Button 
                   variant="primary" 
