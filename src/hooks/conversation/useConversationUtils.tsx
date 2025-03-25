@@ -11,6 +11,10 @@ export const useConversationUtils = (
   currentTopicIndex: number,
   otherUserProfile: Profile | null
 ) => {
+  /**
+   * Returns the current conversation topic based on the current index
+   * This function returns either a TopicWithOptions object or a string
+   */
   const getCurrentTopic = () => {
     if (useTopicsWithOptions) {
       if (topicsWithOptions.length === 0) return null;

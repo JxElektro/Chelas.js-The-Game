@@ -2,9 +2,10 @@
 import React from 'react';
 import { MessageSquare, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { TopicWithOptions } from '@/types/conversation';
 
 interface ConversationPromptProps {
-  prompt: string;
+  prompt: string | TopicWithOptions;
   isLoading?: boolean;
 }
 
@@ -12,6 +13,11 @@ const ConversationPrompt: React.FC<ConversationPromptProps> = ({
   prompt, 
   isLoading = false 
 }) => {
+  // Extract the question text if prompt is a TopicWithOptions object
+  const displayText = typeof prompt === 'string' 
+    ? prompt 
+    : prompt?.question || '';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -36,7 +42,7 @@ const ConversationPrompt: React.FC<ConversationPromptProps> = ({
         </div>
       ) : (
         <div className="win95-inset p-2">
-          <p className="text-sm">{prompt}</p>
+          <p className="text-sm">{displayText}</p>
         </div>
       )}
     </motion.div>

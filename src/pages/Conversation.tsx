@@ -75,7 +75,7 @@ const Conversation = () => {
         
         <div className="mt-3">
           <ConversationPrompt
-            prompt={conversation.getCurrentTopic() as string}
+            prompt={conversation.getCurrentTopic() as string | TopicWithOptions}
             isLoading={conversation.isLoading}
           />
         </div>
