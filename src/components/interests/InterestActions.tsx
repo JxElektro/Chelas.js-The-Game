@@ -10,13 +10,15 @@ interface InterestActionsProps {
   loading: boolean;
   setLoading: (loading: boolean) => void;
   onSave: () => Promise<void>;
+  showSaveButtons?: boolean;
 }
 
 const InterestActions: React.FC<InterestActionsProps> = ({ 
   isAdmin, 
   loading, 
   setLoading,
-  onSave
+  onSave,
+  showSaveButtons = true
 }) => {
   const navigate = useNavigate();
   
@@ -52,14 +54,16 @@ const InterestActions: React.FC<InterestActionsProps> = ({
         </Button>
       )}
       
-      <div className="flex justify-end mt-4">
-        <Button variant="default" onClick={() => navigate('/')} className="mr-2">
-          Cancelar
-        </Button>
-        <Button variant="primary" onClick={onSave} disabled={loading}>
-          {loading ? 'Guardando...' : 'Aceptar'}
-        </Button>
-      </div>
+      {showSaveButtons && (
+        <div className="flex justify-end mt-4">
+          <Button variant="default" onClick={() => navigate('/')} className="mr-2">
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={onSave} disabled={loading}>
+            {loading ? 'Guardando...' : 'Aceptar'}
+          </Button>
+        </div>
+      )}
     </>
   );
 };

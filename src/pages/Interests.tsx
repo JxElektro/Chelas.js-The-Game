@@ -139,16 +139,19 @@ const InterestsPage = () => {
         className="flex flex-col w-full px-2 sm:px-6 md:px-8"
       >
         <div className="mx-auto w-full max-w-5xl mt-8 mb-12">
-          <InterestActions 
-            isAdmin={isAdmin}
-            loading={loading}
-            setLoading={setLoading}
-            onSave={onSave}
-          />
+          {isAdmin && (
+            <InterestActions 
+              isAdmin={true}
+              loading={loading}
+              setLoading={setLoading}
+              onSave={onSave}
+              showSaveButtons={false}
+            />
+          )}
 
           <WindowFrame 
             title="PROPIEDADES DE INTERESES" 
-            className="w-full mt-6" 
+            className="w-full mt-4 h-[80vh]" 
             onClose={() => navigate('/')}
             onMinimize={() => navigate('/')}
           >
@@ -176,6 +179,7 @@ const InterestsPage = () => {
                         loading={loading}
                         setLoading={setLoading}
                         onSave={onSave}
+                        showSaveButtons={true}
                       />
                     </>
                   )}

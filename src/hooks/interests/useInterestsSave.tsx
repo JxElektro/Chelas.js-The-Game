@@ -49,8 +49,8 @@ export const useInterestsSave = () => {
       const currentSuperProfile = currentProfileData?.super_profile || {};
       
       // Actualizamos el super_profile para incluir redes sociales
-      const updatedSuperProfile = {
-        ...currentSuperProfile,
+      const updatedSuperProfile: any = {
+        ...(typeof currentSuperProfile === 'object' ? currentSuperProfile : {}),
         redes_sociales: {
           instagram: profileData.instagram || '',
           twitter: profileData.twitter || '',
