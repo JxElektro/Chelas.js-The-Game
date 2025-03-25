@@ -1,10 +1,9 @@
 
 import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Facebook, Instagram, Twitter } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 interface ProfileInfoTabProps {
   profileData: {
@@ -13,7 +12,12 @@ interface ProfileInfoTabProps {
     twitter: string;
     facebook: string;
   };
-  onProfileDataChange: (data: Partial<ProfileInfoTabProps['profileData']>) => void;
+  onProfileDataChange: (data: {
+    name?: string;
+    instagram?: string;
+    twitter?: string;
+    facebook?: string;
+  }) => void;
   personalNote: string;
   onPersonalNoteChange: (value: string) => void;
 }
@@ -24,81 +28,72 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
   personalNote,
   onPersonalNoteChange
 }) => {
-  const isMobile = useIsMobile();
-  
+  // Añadimos console.log para depuración
+  console.log("ProfileInfoTab - profileData:", profileData);
+  console.log("ProfileInfoTab - personalNote:", personalNote);
+
   return (
-    <div className="space-y-3 p-1 sm:p-2">
-      <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-bold text-black mb-1`}>Información Personal</h3>
+    <Tabs defaultValue="general" className="w-full">
+      <TabsList className="mb-4">
+        <TabsTrigger value="general">General</TabsTrigger>
+        <TabsTrigger value="social">Redes Sociales</TabsTrigger>
+      </TabsList>
       
-      <div className="grid grid-cols-1 gap-2">
-        <div className="space-y-1">
-          <Label htmlFor="name" className="text-black text-xs">Nombre</Label>
+      <TabsContent value="general" className="space-y-4">
+        <div>
+          <Label htmlFor="user-name">Nombre de Usuario</Label>
           <Input
-            id="name"
-            value={profileData.name}
+            id="user-name"
+            value={profileData.name || ''}
             onChange={(e) => onProfileDataChange({ name: e.target.value })}
-            className="border-chelas-gray-dark text-black py-1 h-auto text-sm"
-            placeholder="Tu nombre"
+            placeholder="Tu nombre de usuario"
           />
         </div>
-      </div>
+        
+        <div>
+          <Label htmlFor="personal-note">Descripción Personal</Label>
+          <Textarea
+            id="personal-note"
+            className="min-h-[120px] win95-inset p-2"
+            value={personalNote || ''}
+            onChange={(e) => onPersonalNoteChange(e.target.value)}
+            placeholder="Escribe una breve descripción sobre ti..."
+          />
+        </div>
+      </TabsContent>
       
-      <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-bold text-black mt-3 mb-1`}>Redes Sociales</h3>
-      
-      <div className="grid grid-cols-1 gap-2">
-        <div className="space-y-1">
-          <Label htmlFor="instagram" className="text-black text-xs flex items-center">
-            <Instagram size={14} className="mr-1" /> Instagram
-          </Label>
+      <TabsContent value="social" className="space-y-4">
+        <div>
+          <Label htmlFor="instagram">Instagram</Label>
           <Input
             id="instagram"
-            value={profileData.instagram}
+            value={profileData.instagram || ''}
             onChange={(e) => onProfileDataChange({ instagram: e.target.value })}
-            className="border-chelas-gray-dark text-black py-1 h-auto text-sm"
-            placeholder="@tu_usuario"
+            placeholder="@usuario"
           />
         </div>
         
-        <div className="space-y-1">
-          <Label htmlFor="twitter" className="text-black text-xs flex items-center">
-            <Twitter size={14} className="mr-1" /> Twitter
-          </Label>
+        <div>
+          <Label htmlFor="twitter">Twitter / X</Label>
           <Input
             id="twitter"
-            value={profileData.twitter}
+            value={profileData.twitter || ''}
             onChange={(e) => onProfileDataChange({ twitter: e.target.value })}
-            className="border-chelas-gray-dark text-black py-1 h-auto text-sm"
-            placeholder="@tu_usuario"
+            placeholder="@usuario"
           />
         </div>
         
-        <div className="space-y-1">
-          <Label htmlFor="facebook" className="text-black text-xs flex items-center">
-            <Facebook size={14} className="mr-1" /> Facebook
-          </Label>
+        <div>
+          <Label htmlFor="facebook">Facebook</Label>
           <Input
             id="facebook"
-            value={profileData.facebook}
+            value={profileData.facebook || ''}
             onChange={(e) => onProfileDataChange({ facebook: e.target.value })}
-            className="border-chelas-gray-dark text-black py-1 h-auto text-sm"
-            placeholder="facebook.com/tu_usuario"
+            placeholder="URL o nombre de usuario"
           />
         </div>
-      </div>
-      
-      <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-bold text-black mt-3 mb-1`}>Sobre Mí</h3>
-      
-      <div className="space-y-1">
-        <Label htmlFor="personal-note" className="text-black text-xs">Descripción personal</Label>
-        <Textarea
-          id="personal-note"
-          value={personalNote}
-          onChange={(e) => onPersonalNoteChange(e.target.value)}
-          className="border-chelas-gray-dark text-black min-h-[80px] text-sm py-1"
-          placeholder="Cuéntanos un poco sobre ti..."
-        />
-      </div>
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 };
 

@@ -41,6 +41,7 @@ const Desktop: React.FC = () => {
     twitter: '',
     facebook: ''
   });
+  const [isLoading, setIsLoading] = useState(true);
   const isMobile = useIsMobile();
 
   const handleToggleAvailability = async () => {
@@ -78,12 +79,29 @@ const Desktop: React.FC = () => {
     }
     
     try {
+      console.log("Guardando perfil con datos:", {
+        nombre: profileData.name,
+        descripcion: personalNote,
+        redes: {
+          instagram: profileData.instagram,
+          twitter: profileData.twitter,
+          facebook: profileData.facebook
+        }
+      });
+      
       // Obtenemos el super_profile actual para actualizarlo con las redes sociales
-      const { data: currentProfileData } = await supabase
+      const { data: currentProfileData, error: fetchError } = await supabase
         .from('profiles')
         .select('super_profile')
         .eq('id', currentUser.id)
         .single();
+      
+      if (fetchError) {
+        console.error("Error fetching profile:", fetchError);
+        throw fetchError;
+      }
+      
+      console.log("Current profile data:", currentProfileData);
       
       const currentSuperProfile = currentProfileData?.super_profile || {};
       
@@ -97,6 +115,8 @@ const Desktop: React.FC = () => {
         }
       };
       
+      console.log("Updated super_profile:", updatedSuperProfile);
+      
       // También actualizamos los datos de perfil básico
       const { error: profileError } = await supabase
         .from('profiles')
@@ -107,7 +127,10 @@ const Desktop: React.FC = () => {
         })
         .eq('id', currentUser.id);
       
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Error updating profile:", profileError);
+        throw profileError;
+      }
 
       toast.success('Perfil actualizado correctamente');
       
@@ -137,12 +160,16 @@ const Desktop: React.FC = () => {
       component: 
         <ScrollArea className="h-full overflow-auto">
           <div className="p-4">
-            {currentUser && (
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <p className="text-black text-lg">Cargando perfil...</p>
+              </div>
+            ) : currentUser ? (
               <div className="flex flex-col">
                 <div className="flex items-center mb-4">
                   <Avatar type={currentUser.avatar || 'user'} size="lg" />
                   <div className="ml-4">
-                    <h2 className="text-black text-lg font-bold">{profileData.name || currentUser.name}</h2>
+                    <h2 className="text-black text-lg font-bold">{profileData.name || currentUser.name || 'Usuario'}</h2>
                     <p className="text-sm text-chelas-gray-dark">
                       Estado: {isAvailable ? 'Disponible para chatear' : 'No disponible'}
                     </p>
@@ -152,9 +179,15 @@ const Desktop: React.FC = () => {
                 <div className="mt-4">
                   <ProfileInfoTab
                     profileData={profileData}
-                    onProfileDataChange={(data) => setProfileData({...profileData, ...data})}
+                    onProfileDataChange={(data) => {
+                      console.log("Updating profile data:", data);
+                      setProfileData({...profileData, ...data});
+                    }}
                     personalNote={personalNote}
-                    onPersonalNoteChange={setPersonalNote}
+                    onPersonalNoteChange={(value) => {
+                      console.log("Updating personal note:", value);
+                      setPersonalNote(value);
+                    }}
                   />
                   
                   <div className="flex justify-between mt-4">
@@ -174,6 +207,10 @@ const Desktop: React.FC = () => {
                     </button>
                   </div>
                 </div>
+              </div>
+            ) : (
+              <div className="flex justify-center items-center h-64">
+                <p className="text-black text-lg">No se pudo cargar el perfil</p>
               </div>
             )}
           </div>
@@ -217,13 +254,23 @@ const Desktop: React.FC = () => {
 
   const checkAuthStatus = async () => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
+      setIsLoading(true);
+      
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Error fetching session:", sessionError);
+        throw sessionError;
+      }
+      
       if (!sessionData.session) {
+        console.log("No session found, redirecting to login");
         navigate('/login');
         return;
       }
 
       const userId = sessionData.session.user.id;
+      console.log("User ID:", userId);
       
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
@@ -233,8 +280,12 @@ const Desktop: React.FC = () => {
 
       if (profileError) {
         console.error('Error fetching profile:', profileError);
+        toast.error('Error al cargar tu perfil');
+        setIsLoading(false);
         return;
       }
+      
+      console.log("Loaded profile:", userProfile);
       
       if (userProfile) {
         setCurrentUser({
@@ -246,41 +297,55 @@ const Desktop: React.FC = () => {
         setIsAvailable(userProfile.is_available || true);
         setPersonalNote(userProfile.descripcion_personal || '');
         
+        // Inicializar datos de perfil
+        const newProfileData = {
+          name: userProfile.name || '',
+          instagram: '',
+          twitter: '',
+          facebook: ''
+        };
+        
         // Cargar datos de redes sociales del super_profile si existen
         if (userProfile.super_profile) {
+          console.log("Super profile found:", userProfile.super_profile);
           const superProfile = 
             typeof userProfile.super_profile === 'string' 
               ? JSON.parse(userProfile.super_profile)
               : userProfile.super_profile;
               
           if (superProfile && superProfile.redes_sociales) {
-            setProfileData({
-              name: userProfile.name || '',
-              instagram: superProfile.redes_sociales.instagram || '',
-              twitter: superProfile.redes_sociales.twitter || '',
-              facebook: superProfile.redes_sociales.facebook || ''
-            });
-          } else {
-            setProfileData({
-              name: userProfile.name || '',
-              instagram: '',
-              twitter: '',
-              facebook: ''
-            });
+            console.log("Social networks found:", superProfile.redes_sociales);
+            newProfileData.instagram = superProfile.redes_sociales.instagram || '';
+            newProfileData.twitter = superProfile.redes_sociales.twitter || '';
+            newProfileData.facebook = superProfile.redes_sociales.facebook || '';
           }
         }
         
+        setProfileData(newProfileData);
+        console.log("Profile data set:", newProfileData);
+        
+        // Asegurar que el usuario esté disponible
         if (!userProfile.is_available) {
-          await supabase
-            .from('profiles')
-            .update({ is_available: true })
-            .eq('id', userProfile.id);
-          
-          setIsAvailable(true);
+          try {
+            await supabase
+              .from('profiles')
+              .update({ is_available: true })
+              .eq('id', userProfile.id);
+            
+            setIsAvailable(true);
+          } catch (updateError) {
+            console.error("Error updating availability:", updateError);
+          }
         }
+      } else {
+        console.log("No profile found for user", userId);
+        toast.error('No se encontró tu perfil');
       }
     } catch (error) {
       console.error('Error checking session:', error);
+      toast.error('Error al verificar tu sesión');
+    } finally {
+      setIsLoading(false);
     }
   };
 
