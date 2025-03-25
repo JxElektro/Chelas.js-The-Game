@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
@@ -10,8 +10,9 @@ import { interestTabs } from '@/utils/interestUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useInterestsState } from '@/hooks/interests/useInterestsState';
 import { useInterestsSave } from '@/hooks/interests/useInterestsSave';
-import InterestActions from '@/components/interests/InterestActions';
 import InterestTabContent from '@/components/interests/InterestTabContent';
+import InterestActions from '@/components/interests/InterestActions';
+import { useDebouncedCallback } from '@/hooks/use-debounced-callback';
 
 const InterestsPage = () => {
   const navigate = useNavigate();
@@ -42,6 +43,33 @@ const InterestsPage = () => {
   
   const { handleSave } = useInterestsSave();
 
+  // Create a debounced save function to prevent too many saves
+  const debouncedSave = useDebouncedCallback(async () => {
+    if (profileId) {
+      setLoading(true);
+      try {
+        await handleSave(
+          profileId,
+          selectedInterests,
+          avoidInterests,
+          aiAnalysis,
+          personalNote,
+          profileData,
+          setLoading
+        );
+        // We don't show a toast to avoid spamming the user
+      } catch (error) {
+        toast.error('No se pudieron guardar los cambios');
+      }
+      setLoading(false);
+    }
+  }, 1000);
+
+  // Save automatically when interests change
+  useEffect(() => {
+    debouncedSave();
+  }, [selectedInterests, avoidInterests, aiAnalysis]);
+
   // Alternar selección al hacer clic
   const handleToggleInterest = (interestId: string, isAvoid: boolean) => {
     if (isAvoid) {
@@ -62,8 +90,6 @@ const InterestsPage = () => {
   // Actualizar el análisis de ChatGPT
   const handleAiAnalysisChange = async (analysis: string) => {
     setAiAnalysis(analysis);
-    
-    // Si tenemos un SuperProfile, actualizamos el campo ia
     if (superProfile && profileId) {
       const updatedProfile = { ...superProfile };
       updatedProfile.cultura.tech.ia = analysis;
@@ -71,22 +97,9 @@ const InterestsPage = () => {
     }
   };
 
-  // Handle save function
-  const onSave = async () => {
-    await handleSave(
-      profileId,
-      selectedInterests,
-      avoidInterests,
-      aiAnalysis,
-      personalNote,
-      profileData,
-      setLoading
-    );
-  };
-
   // Renderizado de la pestaña actual
   const renderCurrentTab = () => {
-    // Ahora el índice corresponde directamente al array de interestTabs 
+    // Now the index corresponds directly to the interestTabs array
     const tabData = interestTabs[currentTabIndex];
     
     return (
@@ -126,7 +139,7 @@ const InterestsPage = () => {
               isAdmin={true}
               loading={loading}
               setLoading={setLoading}
-              onSave={onSave}
+              onSave={debouncedSave}
               showSaveButtons={false}
             />
           )}
@@ -138,7 +151,6 @@ const InterestsPage = () => {
             onMinimize={() => navigate('/')}
           >
             <div className="flex flex-col h-full">
-              {/* Filtramos las pestañas para mostrar solo las categorías de interés */}
               <Tabs 
                 tabs={interestTabs
                   .filter(tab => !tab.categories.some(cat => cat.categoryId === 'externalAnalysis'))
@@ -146,7 +158,6 @@ const InterestsPage = () => {
                 activeTab={currentTabIndex} 
                 onChange={setCurrentTabIndex}
               >
-                {/* Contenido de la pestaña */}
                 <div className={`${isMobile ? 'p-1' : 'p-2 sm:p-4'} flex-1 overflow-auto`}>
                   {loading ? (
                     <p className="text-sm text-black mb-4">Cargando...</p>
@@ -157,15 +168,6 @@ const InterestsPage = () => {
                   )}
                 </div>
               </Tabs>
-              
-              {/* Botones de guardar en la parte inferior */}
-              <InterestActions 
-                isAdmin={false}
-                loading={loading}
-                setLoading={setLoading}
-                onSave={onSave}
-                showSaveButtons={true}
-              />
             </div>
           </WindowFrame>
         </div>
@@ -175,4 +177,3 @@ const InterestsPage = () => {
 };
 
 export default InterestsPage;
-
