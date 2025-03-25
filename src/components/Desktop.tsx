@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Wifi, WifiOff, ChevronUp, X, Minus } from 'lucide-react';
@@ -78,14 +77,11 @@ const Desktop: React.FC = () => {
                   </button>
                 </div>
               </div>
-              <div className="win95-window">
-                <div className="win95-window-title text-sm font-bold">
-                  CONFIGURACIÓN
-                </div>
-                <div className="p-4">
-                  <p className="text-sm text-black">Ajustes del usuario e historial de informes</p>
-                </div>
-              </div>
+              <ProfileInfoView 
+                userId={currentUser.id} 
+                userName={currentUser.name} 
+                onSaveProfile={handleSaveProfile} 
+              />
             </div>
           )}
         </div>
@@ -170,6 +166,50 @@ const Desktop: React.FC = () => {
     }
   };
 
+  const handleSaveProfile = async (updatedData: {
+    name?: string;
+    personalNote?: string;
+    instagram?: string;
+    twitter?: string;
+    facebook?: string;
+  }) => {
+    if (!currentUser) {
+      toast.error('Debes iniciar sesión para guardar cambios');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: updatedData.name,
+          descripcion_personal: updatedData.personalNote,
+          super_profile: {
+            redes_sociales: {
+              instagram: updatedData.instagram || '',
+              twitter: updatedData.twitter || '',
+              facebook: updatedData.facebook || ''
+            }
+          }
+        })
+        .eq('id', currentUser.id);
+        
+      if (error) throw error;
+      
+      if (updatedData.name) {
+        setCurrentUser({
+          ...currentUser,
+          name: updatedData.name
+        });
+      }
+      
+      toast.success('Perfil actualizado correctamente');
+    } catch (err) {
+      console.error('Error actualizando perfil:', err);
+      toast.error('Error al guardar los cambios del perfil');
+    }
+  };
+
   const handleToggleAvailability = async () => {
     if (!currentUser) {
       toast.error('Debes iniciar sesión para cambiar tu disponibilidad');
@@ -203,14 +243,12 @@ const Desktop: React.FC = () => {
   };
 
   const openApplication = (appId: string) => {
-    // Si está minimizada, solo la restauramos
     if (minimizedWindows.includes(appId)) {
       setMinimizedWindows(minimizedWindows.filter(id => id !== appId));
       setActiveWindow(appId);
       return;
     }
     
-    // Si no está abierta, la abrimos
     if (!openWindows.includes(appId)) {
       setOpenWindows([...openWindows, appId]);
     }
@@ -223,7 +261,6 @@ const Desktop: React.FC = () => {
       setMinimizedWindows([...minimizedWindows, appId]);
     }
     
-    // Activar otra ventana si hay alguna abierta
     const availableWindows = openWindows.filter(
       id => id !== appId && !minimizedWindows.includes(id)
     );
@@ -240,7 +277,6 @@ const Desktop: React.FC = () => {
     setMinimizedWindows(minimizedWindows.filter(id => id !== appId));
     
     if (activeWindow === appId) {
-      // Activar otra ventana si hay alguna abierta y no minimizada
       const availableWindows = openWindows.filter(
         id => id !== appId && !minimizedWindows.includes(id)
       );
@@ -441,6 +477,89 @@ const Desktop: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
+const ProfileInfoView: React.FC<{
+  userId: string;
+  userName: string;
+  onSaveProfile: (data: any) => Promise<void>;
+}> = ({ userId, userName, onSaveProfile }) => {
+  const [profileData, setProfileData] = React.useState({
+    name: userName,
+    email: '',
+    instagram: '',
+    twitter: '',
+    facebook: ''
+  });
+  const [personalNote, setPersonalNote] = React.useState('');
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('name, descripcion_personal, super_profile')
+          .eq('id', userId)
+          .single();
+          
+        if (error) throw error;
+        
+        if (data) {
+          const socialNetworks = data.super_profile?.redes_sociales || {};
+          
+          setProfileData({
+            name: data.name || userName,
+            email: '',
+            instagram: socialNetworks.instagram || '',
+            twitter: socialNetworks.twitter || '',
+            facebook: socialNetworks.facebook || ''
+          });
+          
+          setPersonalNote(data.descripcion_personal || '');
+        }
+      } catch (err) {
+        console.error('Error al cargar datos del perfil:', err);
+        toast.error('Error al cargar información del perfil');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProfileData();
+  }, [userId, userName]);
+
+  const handleSave = () => {
+    onSaveProfile({
+      name: profileData.name,
+      personalNote: personalNote,
+      instagram: profileData.instagram,
+      twitter: profileData.twitter,
+      facebook: profileData.facebook
+    });
+  };
+
+  return (
+    <div className="win95-window">
+      <div className="win95-window-title text-sm font-bold">
+        INFORMACIÓN PERSONAL
+      </div>
+      <div className="p-4">
+        {loading ? (
+          <p className="text-sm text-black">Cargando información...</p>
+        ) : (
+          <ProfileInfoTab
+            profileData={profileData}
+            onProfileDataChange={(data) => setProfileData(prev => ({ ...prev, ...data }))}
+            personalNote={personalNote}
+            onPersonalNoteChange={setPersonalNote}
+            onSaveProfile={handleSave}
+          />
+        )}
       </div>
     </div>
   );

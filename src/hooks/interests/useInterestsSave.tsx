@@ -39,13 +39,33 @@ export const useInterestsSave = () => {
         throw result.error;
       }
       
+      // Obtenemos el super_profile actual para actualizarlo con las redes sociales
+      const { data: currentProfileData } = await supabase
+        .from('profiles')
+        .select('super_profile')
+        .eq('id', profileId)
+        .single();
+      
+      const currentSuperProfile = currentProfileData?.super_profile || {};
+      
+      // Actualizamos el super_profile para incluir redes sociales
+      const updatedSuperProfile = {
+        ...currentSuperProfile,
+        redes_sociales: {
+          instagram: profileData.instagram || '',
+          twitter: profileData.twitter || '',
+          facebook: profileData.facebook || ''
+        }
+      };
+      
       // También actualizamos los datos de perfil básico
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           name: profileData.name,
           descripcion_personal: personalNote,
-          analisis_externo: aiAnalysis
+          analisis_externo: aiAnalysis,
+          super_profile: updatedSuperProfile
         })
         .eq('id', profileId);
       
