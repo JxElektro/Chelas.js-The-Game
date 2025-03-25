@@ -11,6 +11,8 @@ import Avatar, { AvatarType } from '@/components/Avatar';
 import DinoGame from '@/components/DinoGame';
 import DrinkExpenses from '@/components/DrinkExpenses';
 import Tutorial from '@/pages/Tutorial';
+import ProfileInfoTab from '@/components/ProfileInfoTab';
+import { Json } from '@/integrations/supabase/types';
 
 interface DesktopIcon {
   id: string;
@@ -33,6 +35,50 @@ const Desktop: React.FC = () => {
     avatar?: AvatarType;
   } | null>(null);
   const isMobile = useIsMobile();
+
+  const handleSaveProfile = async (updatedData: {
+    name?: string;
+    personalNote?: string;
+    instagram?: string;
+    twitter?: string;
+    facebook?: string;
+  }) => {
+    if (!currentUser) {
+      toast.error('Debes iniciar sesión para guardar cambios');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: updatedData.name,
+          descripcion_personal: updatedData.personalNote,
+          super_profile: {
+            redes_sociales: {
+              instagram: updatedData.instagram || '',
+              twitter: updatedData.twitter || '',
+              facebook: updatedData.facebook || ''
+            }
+          }
+        })
+        .eq('id', currentUser.id);
+        
+      if (error) throw error;
+      
+      if (updatedData.name) {
+        setCurrentUser({
+          ...currentUser,
+          name: updatedData.name
+        });
+      }
+      
+      toast.success('Perfil actualizado correctamente');
+    } catch (err) {
+      console.error('Error actualizando perfil:', err);
+      toast.error('Error al guardar los cambios del perfil');
+    }
+  };
 
   const applications: DesktopIcon[] = [
     {
@@ -163,78 +209,6 @@ const Desktop: React.FC = () => {
       }
     } catch (error) {
       console.error('Error checking session:', error);
-    }
-  };
-
-  const handleSaveProfile = async (updatedData: {
-    name?: string;
-    personalNote?: string;
-    instagram?: string;
-    twitter?: string;
-    facebook?: string;
-  }) => {
-    if (!currentUser) {
-      toast.error('Debes iniciar sesión para guardar cambios');
-      return;
-    }
-    
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: updatedData.name,
-          descripcion_personal: updatedData.personalNote,
-          super_profile: {
-            redes_sociales: {
-              instagram: updatedData.instagram || '',
-              twitter: updatedData.twitter || '',
-              facebook: updatedData.facebook || ''
-            }
-          }
-        })
-        .eq('id', currentUser.id);
-        
-      if (error) throw error;
-      
-      if (updatedData.name) {
-        setCurrentUser({
-          ...currentUser,
-          name: updatedData.name
-        });
-      }
-      
-      toast.success('Perfil actualizado correctamente');
-    } catch (err) {
-      console.error('Error actualizando perfil:', err);
-      toast.error('Error al guardar los cambios del perfil');
-    }
-  };
-
-  const handleToggleAvailability = async () => {
-    if (!currentUser) {
-      toast.error('Debes iniciar sesión para cambiar tu disponibilidad');
-      return;
-    }
-    
-    try {
-      const newStatus = !isAvailable;
-      setIsAvailable(newStatus);
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_available: newStatus })
-        .eq('id', currentUser.id);
-        
-      if (error) throw error;
-      
-      toast.success(newStatus 
-        ? 'Ahora estás disponible para chatear' 
-        : 'Ya no estás disponible para chatear');
-        
-    } catch (err) {
-      console.error('Error changing availability:', err);
-      setIsAvailable(!isAvailable);
-      toast.error('Error al cambiar tu estado de disponibilidad');
     }
   };
 
@@ -510,7 +484,11 @@ const ProfileInfoView: React.FC<{
         if (error) throw error;
         
         if (data) {
-          const socialNetworks = data.super_profile?.redes_sociales || {};
+          const superProfile = data.super_profile ? 
+            (typeof data.super_profile === 'string' ? 
+              JSON.parse(data.super_profile) : data.super_profile) : {};
+          
+          const socialNetworks = superProfile?.redes_sociales || {};
           
           setProfileData({
             name: data.name || userName,
