@@ -1,9 +1,8 @@
-
 import React from 'react';
 import ConversationPrompt from '@/components/ConversationPrompt';
 import ConversationTopicWithOptions from '@/components/ConversationTopicWithOptions';
 import Button from '@/components/Button';
-import { ChevronLeft, ChevronRight, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Zap, Hourglass } from 'lucide-react';
 
 interface TopicOption {
   emoji: string;
@@ -29,6 +28,13 @@ interface ConversationTopicDisplayProps {
   handleNewTopic: () => void;
 }
 
+// Componente Spinner que se muestra mientras se cargan los datos
+const Spinner: React.FC = () => (
+  <div className="flex justify-center items-center h-24">
+    <Hourglass className="animate-spin h-12 w-12 text-blue-500" />
+  </div>
+);
+
 const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
   useTopicsWithOptions,
   getCurrentTopic,
@@ -42,37 +48,44 @@ const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
 }) => {
   const totalTopics = useTopicsWithOptions ? topicsWithOptions.length : topics.length;
   const showGenerateButton = currentTopicIndex === totalTopics - 1 && totalTopics > 0;
-  
+
   const handlePrevTopic = () => {
     if (currentTopicIndex > 0) {
       setCurrentTopicIndex(currentTopicIndex - 1);
     }
   };
-  
+
   const handleNextTopic = () => {
     if (currentTopicIndex < totalTopics - 1) {
       setCurrentTopicIndex(currentTopicIndex + 1);
     }
   };
-  
+
   return (
     <div className="relative w-full">
       <div className="relative p-2 win95-inset bg-chelas-window-bg">
         <div className="mb-4">
-          {useTopicsWithOptions ? (
-            <ConversationTopicWithOptions 
-              topic={getCurrentTopic() as TopicWithOptions} 
-              isLoading={isLoading}
-              onSelectOption={handleSelectOption}
-            />
+          {/* Si se está cargando, muestra el spinner con reloj de arena */}
+          {isLoading ? (
+            <Spinner />
           ) : (
-            <ConversationPrompt 
-              prompt={getCurrentTopic() as string} 
-              isLoading={isLoading} 
-            />
+            <>
+              {useTopicsWithOptions ? (
+                <ConversationTopicWithOptions 
+                  topic={getCurrentTopic() as TopicWithOptions} 
+                  isLoading={isLoading}
+                  onSelectOption={handleSelectOption}
+                />
+              ) : (
+                <ConversationPrompt 
+                  prompt={getCurrentTopic() as string} 
+                  isLoading={isLoading} 
+                />
+              )}
+            </>
           )}
         </div>
-        
+
         {/* Navegación entre temas y botón de generar nuevos temas */}
         {totalTopics > 1 && (
           <div className="flex justify-between items-center mt-2">
@@ -87,7 +100,7 @@ const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
               <ChevronLeft size={18} className="mr-1" />
               Anterior
             </Button>
-            
+
             <div className="text-xs text-center">
               {!isLoading && totalTopics > 0 && (
                 <span className="bg-chelas-gray-light px-2 py-0.5 rounded-sm">
@@ -95,7 +108,7 @@ const ConversationTopicDisplay: React.FC<ConversationTopicDisplayProps> = ({
                 </span>
               )}
             </div>
-            
+
             {/* Mostrar el botón de Siguiente o el botón de generar nuevos temas */}
             {showGenerateButton ? (
               <Button

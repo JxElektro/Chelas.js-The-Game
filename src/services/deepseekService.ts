@@ -4,7 +4,7 @@ import { SuperProfile } from '@/utils/superProfileUtils';
 import { Json } from '@/integrations/supabase/types';
 
 // En la primera versión, estamos utilizando la API key directamente como se especificó en los requisitos
-const DEEPSEEK_API_KEY = 'sk-c01fb7d8647b401c877020522f9a6c22';
+const DEEPSEEK_API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY;
 
 interface GenerateTopicParams {
   userAInterests: string[];
