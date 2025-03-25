@@ -151,22 +151,21 @@ const InterestsPage = () => {
                   {loading ? (
                     <p className="text-sm text-black mb-4">Cargando...</p>
                   ) : (
-                    <>
-                      <div className="win95-inset bg-white p-2 overflow-auto max-h-[60vh]">
-                        {renderCurrentTab()}
-                      </div>
-
-                      <InterestActions 
-                        isAdmin={false}
-                        loading={loading}
-                        setLoading={setLoading}
-                        onSave={onSave}
-                        showSaveButtons={true}
-                      />
-                    </>
+                    <div className="win95-inset bg-white p-2 overflow-auto max-h-[60vh]">
+                      {renderCurrentTab()}
+                    </div>
                   )}
                 </div>
               </Tabs>
+              
+              {/* Botones de guardar en la parte inferior */}
+              <InterestActions 
+                isAdmin={false}
+                loading={loading}
+                setLoading={setLoading}
+                onSave={onSave}
+                showSaveButtons={true}
+              />
             </div>
           </WindowFrame>
         </div>
@@ -176,3 +175,4 @@ const InterestsPage = () => {
 };
 
 export default InterestsPage;
+
