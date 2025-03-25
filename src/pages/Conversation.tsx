@@ -5,7 +5,6 @@ import { useConversation } from '@/hooks/useConversation';
 import ConversationHeader from '@/components/conversation/ConversationHeader';
 import ConversationTopicDisplay from '@/components/conversation/ConversationTopicDisplay';
 import ConversationActions from '@/components/conversation/ConversationActions';
-import ConversationPrompt from '@/components/ConversationPrompt';
 import ConversationTopicWithOptions from '@/components/ConversationTopicWithOptions';
 import ConversationNotes from '@/components/ConversationNotes';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -63,13 +62,6 @@ const Conversation = () => {
           handleNewTopic={conversation.handleNewTopic}
           handleEndConversation={conversation.handleEndConversation}
         />
-        
-        <div className="mt-3">
-          <ConversationPrompt
-            prompt={conversation.getCurrentTopic() as string | TopicWithOptions}
-            isLoading={conversation.isLoading}
-          />
-        </div>
       </div>
     </div>
   );
