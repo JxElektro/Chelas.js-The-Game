@@ -14,8 +14,11 @@ document.body.style.padding = '0';
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error('Root element not found');
 
-// Wrap App inside ReactDOM.createRoot().render(), ensuring proper React context
-createRoot(rootElement).render(
+// Create a React root
+const root = createRoot(rootElement);
+
+// Render the App component
+root.render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
