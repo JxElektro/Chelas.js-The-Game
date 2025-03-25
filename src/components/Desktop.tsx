@@ -436,7 +436,7 @@ const Desktop: React.FC = () => {
 
   return (
     <div 
-      className="h-screen w-full flex flex-col overflow-hidden relative"
+      className="h-screen w-full relative"
       style={{
         backgroundImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.9))',
         backgroundSize: 'cover',
@@ -447,8 +447,8 @@ const Desktop: React.FC = () => {
         <h1 className="text-chelas-yellow text-9xl font-pixel tracking-tighter">JS</h1>
       </div>
       
-      {/* Área del escritorio con flex-grow y min-h-0 para que se ajuste sin desplazar la barra de tareas */}
-      <div className="flex-grow min-h-0 relative p-2 md:p-4 overflow-y-auto noise-bg">
+      {/* Área del escritorio: se le agrega un padding bottom para reservar espacio para la taskbar */}
+      <div className="h-full pb-12 md:pb-10 p-2 md:p-4 overflow-y-auto noise-bg">
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-4 content-start">
           {applications.map((app) => (
             <div 
@@ -496,9 +496,9 @@ const Desktop: React.FC = () => {
           })}
         </AnimatePresence>
       </div>
-
-      {/* Barra de tareas: se agrega flex-shrink-0 para que siempre se mantenga visible */}
-      <div className="flex-shrink-0 w-full bg-chelas-button-face border-t-2 border-chelas-button-highlight">
+      
+      {/* Barra de tareas fija al fondo */}
+      <div className="fixed bottom-0 left-0 w-full bg-chelas-button-face border-t-2 border-chelas-button-highlight z-50">
         <div className="flex items-center justify-between h-12 md:h-10 px-2">
           <div className="flex items-center">
             <button 
