@@ -448,7 +448,7 @@ const Desktop: React.FC = () => {
       </div>
       
       {/* Área del escritorio: se le agrega un padding bottom para reservar espacio para la taskbar */}
-      <div className="h-full pb-12 md:pb-10 p-2 md:p-4 overflow-y-auto noise-bg">
+      <div className="h-full pb-16 md:pb-10 p-2 md:p-4 overflow-y-auto noise-bg">
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-4 content-start">
           {applications.map((app) => (
             <div 
