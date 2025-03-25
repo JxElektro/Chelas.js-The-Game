@@ -5,7 +5,6 @@ import { useConversation } from '@/hooks/useConversation';
 import ConversationHeader from '@/components/conversation/ConversationHeader';
 import ConversationTopicDisplay from '@/components/conversation/ConversationTopicDisplay';
 import ConversationActions from '@/components/conversation/ConversationActions';
-import ConversationMatch from '@/components/conversation/ConversationMatch';
 import ConversationPrompt from '@/components/ConversationPrompt';
 import ConversationTopicWithOptions from '@/components/ConversationTopicWithOptions';
 import ConversationNotes from '@/components/ConversationNotes';
@@ -36,15 +35,6 @@ const Conversation = () => {
       />
       
       <div className="flex-grow overflow-auto p-4 win95-window">
-        <div className="mb-4">
-          <ConversationMatch 
-            percentage={conversation.matchPercentage} 
-            matchCount={conversation.matchCount}
-            isFavorite={conversation.isFavorite}
-            isFollowUp={conversation.isFollowUp}
-          />
-        </div>
-        
         <ConversationTopicDisplay
           useTopicsWithOptions={conversation.useTopicsWithOptions}
           getCurrentTopic={conversation.getCurrentTopic}
