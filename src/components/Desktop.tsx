@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Wifi, WifiOff, ChevronUp, X, Minus, Star, Virus } from 'lucide-react';
+import { Clock, Wifi, WifiOff, ChevronUp, X, Minus, Star, Bug } from 'lucide-react';
 import WindowFrame from './WindowFrame';
 import { supabase } from '@/integrations/supabase/client';
 import Lobby from '@/pages/Lobby';
@@ -235,9 +234,9 @@ const Desktop: React.FC = () => {
       component: <Tutorial />
     },
     {
-      id: 'virus',
-      title: 'Virus.exe',
-      icon: '🦠',
+      id: 'bug',
+      title: 'Bug.exe',
+      icon: '🐛',
       component: <VirusReport />
     }
   ];

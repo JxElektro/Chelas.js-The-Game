@@ -26,7 +26,7 @@ const ConversationActions: React.FC<ConversationActionsProps> = ({
 }) => {
   const isMobile = useIsMobile();
   
-  // Empty component - we're moving functionality to the topic display
+  // Empty component - functionality is moved to the topic display
   return null;
 };
 

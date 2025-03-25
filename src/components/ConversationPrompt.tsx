@@ -2,7 +2,6 @@
 import React from 'react';
 import { MessageSquare, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ConversationPromptProps {
   prompt: string;
@@ -13,8 +12,6 @@ const ConversationPrompt: React.FC<ConversationPromptProps> = ({
   prompt, 
   isLoading = false 
 }) => {
-  const isMobile = useIsMobile();
-  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

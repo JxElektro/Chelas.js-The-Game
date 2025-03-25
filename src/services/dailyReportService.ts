@@ -35,6 +35,7 @@ export const fetchReportData = async (userId: string): Promise<ReportData | null
     }
     
     // Fetch conversations with follow-ups and favorites
+    // Fix the query to specify the profiles relationship explicitly
     const { data: conversations, error: convsError } = await supabase
       .from('conversations')
       .select(`
@@ -43,7 +44,7 @@ export const fetchReportData = async (userId: string): Promise<ReportData | null
         follow_up,
         user_b,
         started_at,
-        profiles(name)
+        profiles!conversations_user_b_fkey(name)
       `)
       .eq('user_a', userId)
       .or(`is_favorite.eq.true,follow_up.eq.true`);
