@@ -5,12 +5,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Facebook, Instagram, Twitter } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Button } from '@/components/ui/button';
 
 interface ProfileInfoTabProps {
   profileData: {
     name: string;
-    email: string;
     instagram: string;
     twitter: string;
     facebook: string;
@@ -18,15 +16,13 @@ interface ProfileInfoTabProps {
   onProfileDataChange: (data: Partial<ProfileInfoTabProps['profileData']>) => void;
   personalNote: string;
   onPersonalNoteChange: (value: string) => void;
-  onSaveProfile?: () => void;
 }
 
 const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
   profileData,
   onProfileDataChange,
   personalNote,
-  onPersonalNoteChange,
-  onSaveProfile
+  onPersonalNoteChange
 }) => {
   const isMobile = useIsMobile();
   
@@ -43,19 +39,6 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
             onChange={(e) => onProfileDataChange({ name: e.target.value })}
             className="border-chelas-gray-dark text-black py-1 h-auto text-sm"
             placeholder="Tu nombre"
-          />
-        </div>
-        
-        <div className="space-y-1">
-          <Label htmlFor="email" className="text-black text-xs">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={profileData.email}
-            onChange={(e) => onProfileDataChange({ email: e.target.value })}
-            className="border-chelas-gray-dark text-black py-1 h-auto text-sm"
-            placeholder="tu@email.com"
-            disabled // Disabled since we can't save this field
           />
         </div>
       </div>
@@ -115,17 +98,6 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
           placeholder="Cuéntanos un poco sobre ti..."
         />
       </div>
-      
-      {onSaveProfile && (
-        <div className="flex justify-end mt-4">
-          <Button 
-            onClick={onSaveProfile}
-            className="bg-chelas-yellow hover:bg-chelas-yellow/90 text-black"
-          >
-            Guardar Cambios
-          </Button>
-        </div>
-      )}
     </div>
   );
 };

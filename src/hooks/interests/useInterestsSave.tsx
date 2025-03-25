@@ -15,7 +15,6 @@ export const useInterestsSave = () => {
     personalNote: string,
     profileData: {
       name: string;
-      email: string;
       instagram: string;
       twitter: string;
       facebook: string;

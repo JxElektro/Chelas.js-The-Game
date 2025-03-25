@@ -11,8 +11,6 @@ import Avatar, { AvatarType } from '@/components/Avatar';
 import DinoGame from '@/components/DinoGame';
 import DrinkExpenses from '@/components/DrinkExpenses';
 import Tutorial from '@/pages/Tutorial';
-import ProfileInfoTab from '@/components/ProfileInfoTab';
-import { Json } from '@/integrations/supabase/types';
 
 interface DesktopIcon {
   id: string;
@@ -35,50 +33,6 @@ const Desktop: React.FC = () => {
     avatar?: AvatarType;
   } | null>(null);
   const isMobile = useIsMobile();
-
-  const handleSaveProfile = async (updatedData: {
-    name?: string;
-    personalNote?: string;
-    instagram?: string;
-    twitter?: string;
-    facebook?: string;
-  }) => {
-    if (!currentUser) {
-      toast.error('Debes iniciar sesión para guardar cambios');
-      return;
-    }
-    
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: updatedData.name,
-          descripcion_personal: updatedData.personalNote,
-          super_profile: {
-            redes_sociales: {
-              instagram: updatedData.instagram || '',
-              twitter: updatedData.twitter || '',
-              facebook: updatedData.facebook || ''
-            }
-          }
-        })
-        .eq('id', currentUser.id);
-        
-      if (error) throw error;
-      
-      if (updatedData.name) {
-        setCurrentUser({
-          ...currentUser,
-          name: updatedData.name
-        });
-      }
-      
-      toast.success('Perfil actualizado correctamente');
-    } catch (err) {
-      console.error('Error actualizando perfil:', err);
-      toast.error('Error al guardar los cambios del perfil');
-    }
-  };
 
   const handleToggleAvailability = async () => {
     if (!currentUser) {
@@ -151,11 +105,6 @@ const Desktop: React.FC = () => {
                   </button>
                 </div>
               </div>
-              <ProfileInfoView 
-                userId={currentUser.id} 
-                userName={currentUser.name} 
-                onSaveProfile={handleSaveProfile} 
-              />
             </div>
           )}
         </div>
@@ -479,93 +428,6 @@ const Desktop: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </div>
-  );
-};
-
-const ProfileInfoView: React.FC<{
-  userId: string;
-  userName: string;
-  onSaveProfile: (data: any) => Promise<void>;
-}> = ({ userId, userName, onSaveProfile }) => {
-  const [profileData, setProfileData] = React.useState({
-    name: userName,
-    email: '',
-    instagram: '',
-    twitter: '',
-    facebook: ''
-  });
-  const [personalNote, setPersonalNote] = React.useState('');
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('name, descripcion_personal, super_profile')
-          .eq('id', userId)
-          .single();
-          
-        if (error) throw error;
-        
-        if (data) {
-          const superProfile = data.super_profile ? 
-            (typeof data.super_profile === 'string' ? 
-              JSON.parse(data.super_profile) : data.super_profile) : {};
-          
-          const socialNetworks = superProfile?.redes_sociales || {};
-          
-          setProfileData({
-            name: data.name || userName,
-            email: '',
-            instagram: socialNetworks.instagram || '',
-            twitter: socialNetworks.twitter || '',
-            facebook: socialNetworks.facebook || ''
-          });
-          
-          setPersonalNote(data.descripcion_personal || '');
-        }
-      } catch (err) {
-        console.error('Error al cargar datos del perfil:', err);
-        toast.error('Error al cargar información del perfil');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchProfileData();
-  }, [userId, userName]);
-
-  const handleSave = () => {
-    onSaveProfile({
-      name: profileData.name,
-      personalNote: personalNote,
-      instagram: profileData.instagram,
-      twitter: profileData.twitter,
-      facebook: profileData.facebook
-    });
-  };
-
-  return (
-    <div className="win95-window">
-      <div className="win95-window-title text-sm font-bold">
-        INFORMACIÓN PERSONAL
-      </div>
-      <div className="p-4">
-        {loading ? (
-          <p className="text-sm text-black">Cargando información...</p>
-        ) : (
-          <ProfileInfoTab
-            profileData={profileData}
-            onProfileDataChange={(data) => setProfileData(prev => ({ ...prev, ...data }))}
-            personalNote={personalNote}
-            onPersonalNoteChange={setPersonalNote}
-            onSaveProfile={handleSave}
-          />
-        )}
       </div>
     </div>
   );

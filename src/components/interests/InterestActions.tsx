@@ -55,12 +55,12 @@ const InterestActions: React.FC<InterestActionsProps> = ({
       )}
       
       {showSaveButtons && (
-        <div className="flex justify-end mt-4">
+        <div className="flex justify-between mt-4">
           <Button variant="default" onClick={() => navigate('/')} className="mr-2">
             Cancelar
           </Button>
           <Button variant="primary" onClick={onSave} disabled={loading}>
-            {loading ? 'Guardando...' : 'Aceptar'}
+            {loading ? 'Guardando...' : 'Guardar'}
           </Button>
         </div>
       )}
