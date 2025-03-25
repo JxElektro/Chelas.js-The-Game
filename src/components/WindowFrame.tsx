@@ -74,7 +74,7 @@ const WindowFrame: React.FC<WindowFrameProps> = ({
 
       {/* Contenido principal - optimizado para móvil */}
       <div className={cn(
-        "flex-grow min-h-0 overflow-hidden",
+        "flex-grow min-h-0 overflow-hidden flex flex-col",
         isMobile ? "p-0 sm:p-1" : "p-2"
       )}>
         {children}

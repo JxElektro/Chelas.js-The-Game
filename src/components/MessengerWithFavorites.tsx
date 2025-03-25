@@ -45,7 +45,7 @@ const MessengerWithFavorites: React.FC = () => {
       <Collapsible
         open={isOpen}
         onOpenChange={setIsOpen}
-        className="w-full border-b border-chelas-gray-dark"
+        className="w-full border-b border-chelas-gray-dark flex-shrink-0"
       >
         <div className="flex items-center justify-between p-2 bg-chelas-button-face">
           <div className="flex items-center">
@@ -62,7 +62,7 @@ const MessengerWithFavorites: React.FC = () => {
         </div>
         
         <CollapsibleContent>
-          <ScrollArea className="max-h-24 w-full">
+          <ScrollArea className="max-h-20 w-full">
             {loading ? (
               <div className="p-2 text-center text-xs text-black bg-white">
                 Cargando favoritos...
@@ -90,8 +90,8 @@ const MessengerWithFavorites: React.FC = () => {
         </CollapsibleContent>
       </Collapsible>
       
-      {/* Contenedor para el Lobby con altura dinámica y scroll adecuado */}
-      <div className={`flex-grow min-h-0 overflow-hidden ${isMobile ? 'h-[calc(100vh-200px)]' : ''}`}>
+      {/* Contenedor para el Lobby con altura flexible que toma el espacio restante */}
+      <div className="flex-grow min-h-0 overflow-hidden">
         <Lobby />
       </div>
     </div>

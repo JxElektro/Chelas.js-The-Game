@@ -30,7 +30,7 @@ const UserList: React.FC<UserListProps> = ({
   const isMobile = useIsMobile();
 
   return (
-    <div className="win95-inset py-2 px-1 max-h-48 sm:max-h-64 overflow-y-auto">
+    <div className="win95-inset py-2 px-1 overflow-y-auto flex-grow min-h-0">
       <AnimatePresence>
         {availableUsers.length > 0 ? (
           <motion.div className="space-y-1 sm:space-y-2">
