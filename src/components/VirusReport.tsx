@@ -6,7 +6,14 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { fetchReportData, generateFormattedReport, saveReportToDatabase, getLatestReport } from '@/services/dailyReportService';
+import {
+  fetchReportData,
+  generateFormattedReport,
+  saveReportToDatabase,
+  getLatestReport,
+  clearUserData
+} from '@/services/dailyReportService';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const VirusReport: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -15,6 +22,7 @@ const VirusReport: React.FC = () => {
   const [report, setReport] = useState<string | null>(null);
   const [scanProgress, setScanProgress] = useState(0);
   const [threatCount, setThreatCount] = useState(0);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     checkAuthStatus();
@@ -151,6 +159,32 @@ const VirusReport: React.FC = () => {
     URL.revokeObjectURL(url);
     
     toast.success('Informe descargado');
+    
+    // Mostrar confirmación para borrar datos
+    setShowResetConfirm(true);
+  };
+  
+  const resetUserData = async () => {
+    if (!currentUser) return;
+    
+    try {
+      setIsLoading(true);
+      
+      const success = await clearUserData(currentUser.id);
+      
+      if (success) {
+        toast.success('Datos eliminados correctamente. Se han borrado las notas y gastos registrados hoy.');
+      } else {
+        toast.error('Error al eliminar los datos');
+      }
+      
+    } catch (error) {
+      console.error('Error resetting user data:', error);
+      toast.error('Error al eliminar los datos');
+    } finally {
+      setIsLoading(false);
+      setShowResetConfirm(false);
+    }
   };
 
   if (isLoading) {
@@ -199,6 +233,33 @@ const VirusReport: React.FC = () => {
           )}
         </div>
       </div>
+      
+      {showResetConfirm && (
+        <Alert variant="destructive" className="mb-4 bg-red-900 border-red-500 text-white">
+          <AlertTitle>¿Borrar los datos de hoy?</AlertTitle>
+          <AlertDescription>
+            ¿Deseas borrar tus notas de conversación y registros de gastos de hoy?
+            <div className="flex space-x-2 mt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-white text-white hover:bg-red-700"
+                onClick={resetUserData}
+              >
+                Sí, borrar datos
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-white text-white hover:bg-green-900"
+                onClick={() => setShowResetConfirm(false)}
+              >
+                No, mantener datos
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
       
       {/* Progress bar */}
       <div className="mb-4">

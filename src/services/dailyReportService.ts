@@ -43,7 +43,7 @@ export const fetchReportData = async (userId: string): Promise<ReportData | null
         follow_up,
         user_b,
         started_at,
-        profiles:user_b(name)
+        profiles(name)
       `)
       .eq('user_a', userId)
       .or(`is_favorite.eq.true,follow_up.eq.true`);
@@ -100,12 +100,11 @@ export const generateFormattedReport = async (data: ReportData): Promise<string>
     const favoriteUsers = data.conversations.filter(c => c.is_favorite).map(c => c.user_name);
     const followUpUsers = data.conversations.filter(c => c.follow_up).map(c => c.user_name);
     
-    const topicsDiscussed = data.conversations.flatMap(c => c.topics);
-    
+    // Recopilamos todas las notas (este es el cambio principal)
     const allNotes = data.conversations
       .filter(c => c.notes)
       .map(c => `Notas sobre ${c.user_name}: ${c.notes}`)
-      .join('\n');
+      .join('\n\n');
     
     // Construct a prompt for the AI
     const prompt = `
@@ -114,15 +113,13 @@ export const generateFormattedReport = async (data: ReportData): Promise<string>
       RESUMEN DE GASTOS:
       ${expenseSummary}
       Detalles: ${data.expenses.map(e => `${e.description}: $${Number(e.price).toFixed(2)}`).join(', ')}
+      Total a pagar: $${expenseTotal.toFixed(2)}
       
       PERSONAS DE INTERÉS:
       ${favoriteUsers.length > 0 ? `Usuarios favoritos: ${favoriteUsers.join(', ')}` : 'No hay usuarios favoritos.'}
       ${followUpUsers.length > 0 ? `Seguimiento pendiente: ${followUpUsers.join(', ')}` : 'No hay seguimientos pendientes.'}
       
-      TEMAS DISCUTIDOS:
-      ${topicsDiscussed.length > 0 ? topicsDiscussed.join(', ') : 'No hay temas registrados.'}
-      
-      NOTAS:
+      NOTAS DE CONVERSACIONES:
       ${allNotes || 'No hay notas registradas.'}
       
       Formatea todo como si fuera un informe de "amenazas detectadas" de un software antivirus, con secciones claras, usando emojis relevantes y terminología informática de manera humorística.
@@ -162,14 +159,14 @@ export const generateFormattedReport = async (data: ReportData): Promise<string>
   }
 };
 
-export const saveReportToDatabase = async (userId: string, rawData: ReportData, formattedReport: string): Promise<boolean> => {
+export const saveReportToDatabase = async (userId: string, reportData: any, formattedReport: string): Promise<boolean> => {
   try {
     const { data, error } = await supabase
       .from('daily_reports')
       .upsert({
         user_id: userId,
         report_date: new Date().toISOString().split('T')[0],
-        raw_data: rawData,
+        raw_data: reportData,
         formatted_report: formattedReport,
         updated_at: new Date().toISOString()
       }, {
@@ -184,6 +181,41 @@ export const saveReportToDatabase = async (userId: string, rawData: ReportData, 
     return true;
   } catch (error) {
     console.error('Error in saveReportToDatabase:', error);
+    return false;
+  }
+};
+
+export const clearUserData = async (userId: string): Promise<boolean> => {
+  try {
+    // Delete all conversation notes for the user
+    const { error: notesError } = await supabase
+      .from('conversation_notes')
+      .delete()
+      .eq('user_id', userId);
+      
+    if (notesError) {
+      console.error('Error deleting conversation notes:', notesError);
+      return false;
+    }
+    
+    // Delete all expenses for the user (only today's expenses)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    
+    const { error: expensesError } = await supabase
+      .from('drink_expenses')
+      .delete()
+      .eq('user_id', userId)
+      .gte('created_at', todayStart.toISOString());
+      
+    if (expensesError) {
+      console.error('Error deleting expenses:', expensesError);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error clearing user data:', error);
     return false;
   }
 };
