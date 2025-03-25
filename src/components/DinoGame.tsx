@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Mountain, Cloud, Rabbit, Cactus } from 'lucide-react';
 
 // Game configuration
 const GAME_HEIGHT = 150;
@@ -131,23 +132,74 @@ export default function DinoGame() {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    // Draw background elements (clouds, mountains)
+    ctx.fillStyle = '#f0f0f0';
+    
     // Draw ground
     ctx.fillStyle = '#555';
     ctx.fillRect(0, GAME_HEIGHT - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
     
-    // Draw dino
-    ctx.fillStyle = '#333';
-    ctx.fillRect(50, GAME_HEIGHT - GROUND_HEIGHT - DINO_HEIGHT - dinoY, DINO_WIDTH, DINO_HEIGHT);
+    // Draw dino - using Rabbit icon as replacement for the black rectangle
+    ctx.save();
+    ctx.fillStyle = '#4CAF50';
     
-    // Draw obstacles
-    ctx.fillStyle = '#333';
+    // Position for the dino
+    const dinoX = 50;
+    const dinoY_position = GAME_HEIGHT - GROUND_HEIGHT - DINO_HEIGHT - dinoY;
+    
+    // Draw dino body
+    ctx.beginPath();
+    ctx.roundRect(dinoX, dinoY_position, DINO_WIDTH, DINO_HEIGHT, 8);
+    ctx.fill();
+    
+    // Draw dino features (eyes, legs)
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(dinoX + DINO_WIDTH - 10, dinoY_position + 10, 4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw legs
+    ctx.fillStyle = '#3a8c3a';
+    ctx.fillRect(dinoX + 5, dinoY_position + DINO_HEIGHT - 10, 8, 10);
+    ctx.fillRect(dinoX + DINO_WIDTH - 13, dinoY_position + DINO_HEIGHT - 10, 8, 10);
+    
+    ctx.restore();
+    
+    // Draw obstacles - using Cactus-inspired shapes
+    ctx.fillStyle = '#8B4513'; // Brown color for cactus
     obstacles.forEach(obstacle => {
+      const obstacleX = obstacle.x;
+      const obstacleY = GAME_HEIGHT - GROUND_HEIGHT - obstacle.height;
+      
+      // Draw cactus main body
+      ctx.beginPath();
       ctx.fillRect(
-        obstacle.x, 
-        GAME_HEIGHT - GROUND_HEIGHT - obstacle.height, 
+        obstacleX, 
+        obstacleY, 
         obstacle.width, 
         obstacle.height
       );
+      
+      // Draw cactus arms for larger obstacles
+      if (obstacle.height > CACTUS_HEIGHT) {
+        // Left arm
+        ctx.beginPath();
+        ctx.fillRect(
+          obstacleX - 5, 
+          obstacleY + 10, 
+          5, 
+          obstacle.height / 3
+        );
+        
+        // Right arm
+        ctx.beginPath();
+        ctx.fillRect(
+          obstacleX + obstacle.width, 
+          obstacleY + obstacle.height / 3, 
+          5, 
+          obstacle.height / 3
+        );
+      }
     });
     
     // Draw score
@@ -321,7 +373,7 @@ export default function DinoGame() {
 
       {/* Game canvas */}
       <div 
-        className="flex justify-center mb-2 cursor-pointer border border-chelas-gray-dark" 
+        className="flex justify-center mb-2 cursor-pointer border border-chelas-gray-dark rounded-md overflow-hidden" 
         onClick={jump}
       >
         <canvas
@@ -339,7 +391,8 @@ export default function DinoGame() {
 
       {/* Controls */}
       <div className="flex justify-center mb-4">
-        <button className="win95-button px-4" onClick={startGame}>
+        <button className="win95-button px-4 flex items-center gap-2" onClick={startGame}>
+          <Rabbit size={16} />
           {gameOver ? 'Restart' : isRunning ? 'Restart' : 'Start Game'}
         </button>
       </div>
