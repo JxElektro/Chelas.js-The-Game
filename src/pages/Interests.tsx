@@ -71,20 +71,6 @@ const InterestsPage = () => {
     }
   };
 
-  // Actualizar los datos del perfil
-  const handleProfileDataChange = (data: {
-    name?: string;
-    email?: string;
-    instagram?: string;
-    twitter?: string;
-    facebook?: string;
-  }) => {
-    setProfileData(prevData => ({
-      ...prevData,
-      ...data
-    }));
-  };
-
   // Handle save function
   const onSave = async () => {
     await handleSave(
@@ -100,18 +86,14 @@ const InterestsPage = () => {
 
   // Renderizado de la pestaña actual
   const renderCurrentTab = () => {
-    // Ahora tenemos que ajustar el índice para los datos originales de pestañas
-    const tabData = currentTabIndex === 0 ? null : interestTabs[currentTabIndex - 1];
+    // Ahora el índice corresponde directamente al array de interestTabs 
+    const tabData = interestTabs[currentTabIndex];
     
     return (
       <InterestTabContent
         currentTabIndex={currentTabIndex}
-        personalNote={personalNote}
-        onPersonalNoteChange={setPersonalNote}
         aiAnalysis={aiAnalysis}
         onAiAnalysisChange={handleAiAnalysisChange}
-        profileData={profileData}
-        onProfileDataChange={handleProfileDataChange}
         tabData={tabData}
         selectedInterests={selectedInterests}
         avoidInterests={avoidInterests}
@@ -156,11 +138,11 @@ const InterestsPage = () => {
             onMinimize={() => navigate('/')}
           >
             <div className="flex flex-col h-full">
-              {/* Filtramos las pestañas para eliminar "Opciones avanzadas IA" */}
+              {/* Filtramos las pestañas para mostrar solo las categorías de interés */}
               <Tabs 
-                tabs={['Perfil', ...interestTabs
+                tabs={interestTabs
                   .filter(tab => !tab.categories.some(cat => cat.categoryId === 'externalAnalysis'))
-                  .map(tab => tab.label)]} 
+                  .map(tab => tab.label)} 
                 activeTab={currentTabIndex} 
                 onChange={setCurrentTabIndex}
               >

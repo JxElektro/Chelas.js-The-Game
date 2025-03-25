@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Wifi, WifiOff, ChevronUp, X, Minus } from 'lucide-react';
@@ -11,6 +12,7 @@ import Avatar, { AvatarType } from '@/components/Avatar';
 import DinoGame from '@/components/DinoGame';
 import DrinkExpenses from '@/components/DrinkExpenses';
 import Tutorial from '@/pages/Tutorial';
+import ProfileInfoTab from '@/components/ProfileInfoTab';
 
 interface DesktopIcon {
   id: string;
@@ -32,6 +34,13 @@ const Desktop: React.FC = () => {
     name: string;
     avatar?: AvatarType;
   } | null>(null);
+  const [personalNote, setPersonalNote] = useState('');
+  const [profileData, setProfileData] = useState({
+    name: '',
+    instagram: '',
+    twitter: '',
+    facebook: ''
+  });
   const isMobile = useIsMobile();
 
   const handleToggleAvailability = async () => {
@@ -59,6 +68,52 @@ const Desktop: React.FC = () => {
       console.error('Error changing availability:', err);
       setIsAvailable(!isAvailable);
       toast.error('Error al cambiar tu estado de disponibilidad');
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!currentUser) {
+      toast.error('Debes iniciar sesión para guardar tu perfil');
+      return;
+    }
+    
+    try {
+      // Obtenemos el super_profile actual para actualizarlo con las redes sociales
+      const { data: currentProfileData } = await supabase
+        .from('profiles')
+        .select('super_profile')
+        .eq('id', currentUser.id)
+        .single();
+      
+      const currentSuperProfile = currentProfileData?.super_profile || {};
+      
+      // Actualizamos el super_profile para incluir redes sociales
+      const updatedSuperProfile: any = {
+        ...(typeof currentSuperProfile === 'object' ? currentSuperProfile : {}),
+        redes_sociales: {
+          instagram: profileData.instagram || '',
+          twitter: profileData.twitter || '',
+          facebook: profileData.facebook || ''
+        }
+      };
+      
+      // También actualizamos los datos de perfil básico
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          name: profileData.name,
+          descripcion_personal: personalNote,
+          super_profile: updatedSuperProfile
+        })
+        .eq('id', currentUser.id);
+      
+      if (profileError) throw profileError;
+
+      toast.success('Perfil actualizado correctamente');
+      
+    } catch (err) {
+      console.error('Error al guardar perfil:', err);
+      toast.error('No se pudo guardar el perfil');
     }
   };
 
@@ -91,18 +146,36 @@ const Desktop: React.FC = () => {
                   <div className="flex items-center">
                     <Avatar type={currentUser.avatar || 'user'} size="lg" />
                     <div className="ml-4">
-                      <h2 className="text-black text-lg font-bold">{currentUser.name}</h2>
+                      <h2 className="text-black text-lg font-bold">{profileData.name || currentUser.name}</h2>
                       <p className="text-sm text-chelas-gray-dark">
                         Estado: {isAvailable ? 'Disponible para chatear' : 'No disponible'}
                       </p>
                     </div>
                   </div>
-                  <button 
-                    className="win95-button mt-4"
-                    onClick={() => navigate('/interests')}
-                  >
-                    Editar preferencias
-                  </button>
+                  
+                  <div className="mt-4">
+                    <ProfileInfoTab
+                      profileData={profileData}
+                      onProfileDataChange={(data) => setProfileData({...profileData, ...data})}
+                      personalNote={personalNote}
+                      onPersonalNoteChange={setPersonalNote}
+                    />
+                    
+                    <div className="flex justify-between mt-4">
+                      <button 
+                        className="win95-button mt-4"
+                        onClick={handleSaveProfile}
+                      >
+                        Guardar cambios
+                      </button>
+                      <button 
+                        className="win95-button mt-4"
+                        onClick={() => navigate('/interests')}
+                      >
+                        Editar preferencias
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -157,7 +230,7 @@ const Desktop: React.FC = () => {
       
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('id, name, avatar, is_available')
+        .select('id, name, avatar, is_available, descripcion_personal, super_profile')
         .eq('id', userId)
         .single();
 
@@ -174,6 +247,31 @@ const Desktop: React.FC = () => {
         });
         
         setIsAvailable(userProfile.is_available || true);
+        setPersonalNote(userProfile.descripcion_personal || '');
+        
+        // Cargar datos de redes sociales del super_profile si existen
+        if (userProfile.super_profile) {
+          const superProfile = 
+            typeof userProfile.super_profile === 'string' 
+              ? JSON.parse(userProfile.super_profile)
+              : userProfile.super_profile;
+              
+          if (superProfile && superProfile.redes_sociales) {
+            setProfileData({
+              name: userProfile.name || '',
+              instagram: superProfile.redes_sociales.instagram || '',
+              twitter: superProfile.redes_sociales.twitter || '',
+              facebook: superProfile.redes_sociales.facebook || ''
+            });
+          } else {
+            setProfileData({
+              name: userProfile.name || '',
+              instagram: '',
+              twitter: '',
+              facebook: ''
+            });
+          }
+        }
         
         if (!userProfile.is_available) {
           await supabase

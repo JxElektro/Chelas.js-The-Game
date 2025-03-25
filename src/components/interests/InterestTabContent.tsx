@@ -2,7 +2,6 @@
 import React from 'react';
 import { toast } from 'sonner';
 import AiAnalysisPersonal from '@/components/AiAnalysisPersonal';
-import ProfileInfoTab from '@/components/ProfileInfoTab';
 import { InterestTab } from '@/utils/interestUtils';
 
 // Define TabData type directly since it's not exported from interestUtils
@@ -10,24 +9,8 @@ type TabData = InterestTab;
 
 interface InterestTabContentProps {
   currentTabIndex: number;
-  personalNote: string;
-  onPersonalNoteChange: (note: string) => void;
   aiAnalysis?: string;
   onAiAnalysisChange: (analysis: string) => void;
-  profileData: {
-    name: string;
-    email: string;
-    instagram: string;
-    twitter: string;
-    facebook: string;
-  };
-  onProfileDataChange: (data: {
-    name?: string;
-    email?: string;
-    instagram?: string;
-    twitter?: string;
-    facebook?: string;
-  }) => void;
   tabData: TabData | null;
   selectedInterests: string[];
   avoidInterests: string[];
@@ -37,32 +20,14 @@ interface InterestTabContentProps {
 
 const InterestTabContent: React.FC<InterestTabContentProps> = ({
   currentTabIndex,
-  personalNote,
-  onPersonalNoteChange,
   aiAnalysis,
   onAiAnalysisChange,
-  profileData,
-  onProfileDataChange,
   tabData,
   selectedInterests,
   avoidInterests,
   onToggleInterest,
   userId
 }) => {
-  // Pestaña de Perfil personal
-  if (currentTabIndex === 0) {
-    return (
-      <div className="p-2">
-        <ProfileInfoTab
-          personalNote={personalNote}
-          onPersonalNoteChange={onPersonalNoteChange}
-          profileData={profileData}
-          onProfileDataChange={onProfileDataChange}
-        />
-      </div>
-    );
-  }
-
   // Pestaña de análisis de IA
   if (tabData && tabData.categories.some(cat => cat.categoryId === 'externalAnalysis')) {
     return (
