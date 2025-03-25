@@ -180,7 +180,7 @@ const Desktop: React.FC = () => {
                     profileData={profileData}
                     onProfileDataChange={(data) => {
                       console.log("Updating profile data:", data);
-                      setProfileData({...profileData, ...data});
+                      setProfileData({ ...profileData, ...data });
                     }}
                     personalNote={personalNote}
                     onPersonalNoteChange={(value) => {
@@ -447,7 +447,8 @@ const Desktop: React.FC = () => {
         <h1 className="text-chelas-yellow text-9xl font-pixel tracking-tighter">JS</h1>
       </div>
       
-      <div className="flex-grow relative p-2 md:p-4 overflow-y-auto noise-bg">
+      {/* Área del escritorio con flex-grow y min-h-0 para que se ajuste sin desplazar la barra de tareas */}
+      <div className="flex-grow min-h-0 relative p-2 md:p-4 overflow-y-auto noise-bg">
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-4 content-start">
           {applications.map((app) => (
             <div 
@@ -496,7 +497,8 @@ const Desktop: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      <div className="w-full bg-chelas-button-face border-t-2 border-chelas-button-highlight">
+      {/* Barra de tareas: se agrega flex-shrink-0 para que siempre se mantenga visible */}
+      <div className="flex-shrink-0 w-full bg-chelas-button-face border-t-2 border-chelas-button-highlight">
         <div className="flex items-center justify-between h-12 md:h-10 px-2">
           <div className="flex items-center">
             <button 
