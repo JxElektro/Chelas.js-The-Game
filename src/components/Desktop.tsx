@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Wifi, WifiOff, ChevronUp, X, Minus, Star } from 'lucide-react';
+import { Clock, Wifi, WifiOff, ChevronUp, X, Minus, Star, Virus } from 'lucide-react';
 import WindowFrame from './WindowFrame';
 import { supabase } from '@/integrations/supabase/client';
 import Lobby from '@/pages/Lobby';
@@ -15,6 +15,7 @@ import Tutorial from '@/pages/Tutorial';
 import ProfileInfoTab from '@/components/ProfileInfoTab';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import MessengerWithFavorites from '@/components/MessengerWithFavorites';
+import VirusReport from '@/components/VirusReport';
 
 interface DesktopIcon {
   id: string;
@@ -234,10 +235,10 @@ const Desktop: React.FC = () => {
       component: <Tutorial />
     },
     {
-      id: 'nightsaver',
-      title: 'Jhdjsjksh.exe',
-      icon: '🌙',
-      component: <div className="p-4">Nightsaver will be implemented here</div>
+      id: 'virus',
+      title: 'Virus.exe',
+      icon: '🦠',
+      component: <VirusReport />
     }
   ];
 

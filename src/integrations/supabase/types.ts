@@ -9,6 +9,41 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      conversation_notes: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_notes_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_topics: {
         Row: {
           conversation_id: string
@@ -85,6 +120,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      daily_reports: {
+        Row: {
+          created_at: string
+          formatted_report: string | null
+          id: string
+          raw_data: Json
+          report_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          formatted_report?: string | null
+          id?: string
+          raw_data?: Json
+          report_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          formatted_report?: string | null
+          id?: string
+          raw_data?: Json
+          report_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       dino_high_scores: {
         Row: {
