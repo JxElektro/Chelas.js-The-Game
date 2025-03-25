@@ -13,6 +13,7 @@ import { useInterestsSave } from '@/hooks/interests/useInterestsSave';
 import InterestTabContent from '@/components/interests/InterestTabContent';
 import InterestActions from '@/components/interests/InterestActions';
 import { useDebouncedCallback } from '@/hooks/use-debounced-callback';
+import Button from '@/components/Button';
 
 const InterestsPage = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ const InterestsPage = () => {
   
   const { handleSave } = useInterestsSave();
 
-  // Create a debounced save function to prevent too many saves
+  // Create a debounced save function to prevent too many saves during editing
   const debouncedSave = useDebouncedCallback(async () => {
     if (profileId) {
       setLoading(true);
@@ -65,10 +66,27 @@ const InterestsPage = () => {
     }
   }, 1000);
 
-  // Save automatically when interests change
-  useEffect(() => {
-    debouncedSave();
-  }, [selectedInterests, avoidInterests, aiAnalysis]);
+  // Function to handle manual saving with feedback
+  const handleManualSave = async () => {
+    if (profileId) {
+      setLoading(true);
+      try {
+        await handleSave(
+          profileId,
+          selectedInterests,
+          avoidInterests,
+          aiAnalysis,
+          personalNote,
+          profileData,
+          setLoading
+        );
+        toast.success('Cambios guardados correctamente');
+      } catch (error) {
+        toast.error('No se pudieron guardar los cambios');
+      }
+      setLoading(false);
+    }
+  };
 
   // Alternar selección al hacer clic
   const handleToggleInterest = (interestId: string, isAvoid: boolean) => {
@@ -168,6 +186,23 @@ const InterestsPage = () => {
                   )}
                 </div>
               </Tabs>
+              
+              {/* Single save button at the bottom */}
+              <div className="flex justify-between p-2 mt-4 bg-chelas-button-face">
+                <Button 
+                  variant="default" 
+                  onClick={() => navigate('/')}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  variant="primary" 
+                  onClick={handleManualSave} 
+                  disabled={loading}
+                >
+                  {loading ? 'Guardando...' : 'Guardar Cambios'}
+                </Button>
+              </div>
             </div>
           </WindowFrame>
         </div>
