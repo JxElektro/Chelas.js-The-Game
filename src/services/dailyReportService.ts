@@ -14,6 +14,7 @@ interface ReportData {
     follow_up: boolean;
     topics: string[];
     notes?: string;
+    contact_info?: string; // Añadimos información de contacto
   }[];
 }
 
@@ -44,7 +45,7 @@ export const fetchReportData = async (userId: string): Promise<ReportData | null
         follow_up,
         user_b,
         started_at,
-        profiles!conversations_user_b_fkey(name)
+        profiles!conversations_user_b_fkey(name, super_profile)
       `)
       .eq('user_a', userId)
       .or(`is_favorite.eq.true,follow_up.eq.true`);
@@ -69,13 +70,32 @@ export const fetchReportData = async (userId: string): Promise<ReportData | null
           .eq('conversation_id', conv.id)
           .eq('user_id', userId)
           .maybeSingle();
+        
+        // Extraer información de contacto del super_profile si está disponible
+        let contactInfo = '';
+        if (conv.profiles?.super_profile) {
+          const profile = conv.profiles.super_profile;
+          // Intentamos extraer información de contacto relevante
+          const contactFields = [
+            profile.email && `Email: ${profile.email}`,
+            profile.phone && `Teléfono: ${profile.phone}`,
+            profile.company && `Compañía: ${profile.company}`,
+            profile.position && `Cargo: ${profile.position}`,
+            profile.website && `Web: ${profile.website}`,
+            profile.linkedin && `LinkedIn: ${profile.linkedin}`,
+            profile.twitter && `Twitter: ${profile.twitter}`
+          ].filter(Boolean);
+          
+          contactInfo = contactFields.join(' | ');
+        }
           
         return {
           user_name: conv.profiles?.name || 'Usuario desconocido',
           is_favorite: conv.is_favorite,
           follow_up: conv.follow_up,
           topics: topics?.map(t => t.topic) || [],
-          notes: notes?.notes
+          notes: notes?.notes,
+          contact_info: contactInfo
         };
       })
     );
@@ -99,13 +119,23 @@ export const generateFormattedReport = async (data: ReportData): Promise<string>
       : 'No has registrado gastos hoy.';
       
     const favoriteUsers = data.conversations.filter(c => c.is_favorite).map(c => c.user_name);
-    const followUpUsers = data.conversations.filter(c => c.follow_up).map(c => c.user_name);
+    const followUpUsers = data.conversations.filter(c => c.follow_up);
+    
+    // Formateamos los seguimientos con más detalle
+    const followUpsFormatted = followUpUsers.map(c => {
+      return `- ${c.user_name}${c.contact_info ? ` (${c.contact_info})` : ''}${c.notes ? `\n  Notas: ${c.notes}` : ''}`;
+    }).join('\n\n');
     
     // Recopilamos todas las notas (este es el cambio principal)
     const allNotes = data.conversations
-      .filter(c => c.notes)
+      .filter(c => c.notes && !c.follow_up) // Excluimos las notas de follow-up ya que están arriba
       .map(c => `Notas sobre ${c.user_name}: ${c.notes}`)
       .join('\n\n');
+    
+    // Formateamos todos los gastos con detalle
+    const expensesFormatted = data.expenses.map(e => 
+      `- ${e.description}: $${Number(e.price).toFixed(2)} (${new Date(e.created_at).toLocaleTimeString()})`
+    ).join('\n');
     
     // Construct a prompt for the AI
     const prompt = `
@@ -113,15 +143,18 @@ export const generateFormattedReport = async (data: ReportData): Promise<string>
       
       RESUMEN DE GASTOS:
       ${expenseSummary}
-      Detalles: ${data.expenses.map(e => `${e.description}: $${Number(e.price).toFixed(2)}`).join(', ')}
+      Detalles:
+      ${expensesFormatted || "No hay gastos registrados"}
       Total a pagar: $${expenseTotal.toFixed(2)}
       
-      PERSONAS DE INTERÉS:
-      ${favoriteUsers.length > 0 ? `Usuarios favoritos: ${favoriteUsers.join(', ')}` : 'No hay usuarios favoritos.'}
-      ${followUpUsers.length > 0 ? `Seguimiento pendiente: ${followUpUsers.join(', ')}` : 'No hay seguimientos pendientes.'}
+      CONTACTOS PARA SEGUIMIENTO:
+      ${followUpsFormatted || "No hay contactos marcados para seguimiento."}
       
-      NOTAS DE CONVERSACIONES:
-      ${allNotes || 'No hay notas registradas.'}
+      USUARIOS FAVORITOS:
+      ${favoriteUsers.length > 0 ? favoriteUsers.join(', ') : 'No hay usuarios favoritos.'}
+      
+      NOTAS ADICIONALES:
+      ${allNotes || 'No hay notas adicionales registradas.'}
       
       Formatea todo como si fuera un informe de "amenazas detectadas" de un software antivirus, con secciones claras, usando emojis relevantes y terminología informática de manera humorística.
     `;
