@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 import Avatar, { AvatarType } from '@/components/Avatar';
-import Snake from '@/components/Snake';
+import DinoGame from '@/components/DinoGame';
 import DrinkExpenses from '@/components/DrinkExpenses';
 import Tutorial from '@/pages/Tutorial';
 
@@ -91,10 +91,10 @@ const Desktop: React.FC = () => {
         </div>
     },
     {
-      id: 'snake',
-      title: 'Snake',
-      icon: '🐍',
-      component: <Snake />
+      id: 'dino',
+      title: 'Dino Runner',
+      icon: '🦖',
+      component: <DinoGame />
     },
     {
       id: 'downloads',

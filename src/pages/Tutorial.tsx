@@ -32,10 +32,10 @@ const apps: AppTutorial[] = [
     comingSoon: false,
   },
   {
-    id: "snake",
-    name: "Snake",
-    icon: "🐍",
-    description: "La Culebrita, juega para desestresarte",
+    id: "dino",
+    name: "Dino Runner",
+    icon: "🦖",
+    description: "Juego del dinosaurio para desestresarte",
   },
   {
     id: "nightsaver",
@@ -211,26 +211,26 @@ const TutorialContent: React.FC<{ appId: string }> = ({ appId }) => {
         </div>
       </div>
     ),
-    snake: (
+    dino: (
       <div className="space-y-4 text-black">
-        <h2 className="text-lg font-bold">Snake - El Juego Clásico</h2>
+        <h2 className="text-lg font-bold">Dino Runner - El Juego del Dinosaurio</h2>
         <div className="win95-inset p-3">
           <p className="text-sm mb-3">
-            Relájate jugando al clásico juego de la serpiente mientras tomas un descanso.
+            Relájate jugando al clásico juego del dinosaurio de Chrome mientras tomas un descanso.
           </p>
           <div className="mb-3 border-b border-chelas-gray-dark pb-2">
             <h3 className="text-sm font-bold mb-2">Cómo jugar:</h3>
             <ol className="text-xs space-y-2 list-decimal pl-4">
-              <li>Abre Snake desde el escritorio</li>
-              <li>Usa las flechas para controlar la serpiente</li>
-              <li>Come puntos para crecer y ganar puntos</li>
-              <li>Evita chocar contra los bordes o contra ti mismo</li>
-              <li>Compite por la mejor puntuación</li>
+              <li>Abre Dino Runner desde el escritorio</li>
+              <li>Presiona Espacio o haz clic para saltar</li>
+              <li>Evita los cactus y otros obstáculos</li>
+              <li>Tu puntuación aumenta con el tiempo que sobrevivas</li>
+              <li>¡Compite por la mejor puntuación!</li>
             </ol>
           </div>
           <div className="text-xs">
             <p className="font-bold">Consejo:</p>
-            <p>Es un buen juego para romper el hielo. ¡Reta a alguien a ver quién hace más puntos!</p>
+            <p>Es un buen juego para tomar un descanso. ¡Prueba a ver cuánto tiempo puedes sobrevivir!</p>
           </div>
         </div>
       </div>
