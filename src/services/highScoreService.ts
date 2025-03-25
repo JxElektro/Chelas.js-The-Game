@@ -26,7 +26,17 @@ export class HighScoreService {
   // Get high scores for this game
   async getHighScores(): Promise<HighScore[]> {
     try {
-      const { data, error } = await supabase.rpc(`get_${this.gameType}_high_scores`);
+      let data;
+      let error;
+      
+      if (this.gameType === 'dino') {
+        ({ data, error } = await supabase.rpc('get_dino_high_scores'));
+      } else if (this.gameType === 'snake') {
+        ({ data, error } = await supabase.rpc('get_snake_high_scores'));
+      } else {
+        throw new Error(`Unsupported game type: ${this.gameType}`);
+      }
+      
       if (error) throw error;
       return data as HighScore[];
     } catch (error) {
@@ -43,11 +53,23 @@ export class HighScoreService {
     if (!userId || !userName) return false;
     
     try {
-      const { error } = await supabase.rpc(`add_${this.gameType}_high_score`, {
-        user_id_param: userId,
-        user_name_param: userName,
-        score_param: newScore,
-      });
+      let error;
+      
+      if (this.gameType === 'dino') {
+        ({ error } = await supabase.rpc('add_dino_high_score', {
+          user_id_param: userId,
+          user_name_param: userName,
+          score_param: newScore,
+        }));
+      } else if (this.gameType === 'snake') {
+        ({ error } = await supabase.rpc('add_snake_high_score', {
+          user_id_param: userId,
+          user_name_param: userName,
+          score_param: newScore,
+        }));
+      } else {
+        throw new Error(`Unsupported game type: ${this.gameType}`);
+      }
       
       if (error) throw error;
       
