@@ -1,5 +1,8 @@
+
 import React, { useState } from "react"
 import { ChevronRight } from "lucide-react"
+import { useIsMobile } from "@/hooks/use-mobile"
+import WindowFrame from "@/components/WindowFrame"
 
 // Definimos la interfaz de cada app.
 type AppTutorial = {
@@ -54,6 +57,7 @@ const apps: AppTutorial[] = [
 export default function Tutorial() {
   const [selectedApp, setSelectedApp] = useState<string | null>(null)
   const [message, setMessage] = useState<string>("")
+  const isMobile = useIsMobile()
 
   const handleSelectApp = (appId: string, comingSoon?: boolean) => {
     if (comingSoon) {
@@ -66,53 +70,66 @@ export default function Tutorial() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col border border-chelas-gray-dark shadow-win95">
-      <div className="flex flex-grow overflow-hidden">
-        {/* Sidebar con la lista de aplicaciones */}
-        <aside className="w-1/3 border-r border-chelas-gray-dark flex flex-col">
-          {/* Aquí cambiamos a text-white */}
-          <div className="bg-chelas-window-title px-2 py-1 text-white font-bold text-xs">
-            Aplicaciones
-          </div>
-
-          <div className="flex-grow overflow-auto">
-            {apps.map((app) => (
-              <div
-                key={app.id}
-                className={`
-                  flex items-center p-2 cursor-pointer hover:bg-chelas-gray-light 
-                  border-b border-chelas-gray-dark transition-colors
-                  ${selectedApp === app.id ? "bg-chelas-gray-light" : ""}
-                  ${app.comingSoon ? "opacity-70" : ""}
-                `}
-                onClick={() => handleSelectApp(app.id, app.comingSoon)}
-              >
-                <div className="text-xl mr-2">{app.icon}</div>
-                <div className="flex-grow text-black">
-                  <div className="text-sm font-bold">{app.name}</div>
-                  <div className="text-xs truncate">{app.description}</div>
-                </div>
-                <ChevronRight size={14} className="text-black" />
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        {/* Contenido principal */}
-        <main className="w-2/3 p-3 overflow-auto">
-          {message && (
-            <div className="mb-4 text-red-600 font-semibold text-sm">
-              {message}
+    <div className="w-full h-full flex flex-col">
+      <WindowFrame title="Tutorial de Windows 95" className="flex-grow">
+        <div className="flex flex-col md:flex-row h-full overflow-hidden">
+          {/* Sidebar con la lista de aplicaciones */}
+          <aside className={`${isMobile ? 'w-full' : 'w-1/3'} md:border-r border-chelas-gray-dark flex flex-col ${selectedApp && isMobile ? 'hidden' : 'flex'}`}>
+            {/* Aquí cambiamos a text-white */}
+            <div className="bg-chelas-window-title px-2 py-1 text-white font-bold text-xs">
+              Aplicaciones
             </div>
-          )}
 
-          {selectedApp ? (
-            <TutorialContent appId={selectedApp} />
-          ) : !message ? (
-            <EmptyState />
-          ) : null}
-        </main>
-      </div>
+            <div className="flex-grow overflow-auto">
+              {apps.map((app) => (
+                <div
+                  key={app.id}
+                  className={`
+                    flex items-center p-2 cursor-pointer hover:bg-chelas-gray-light 
+                    border-b border-chelas-gray-dark transition-colors
+                    ${selectedApp === app.id ? "bg-chelas-gray-light" : ""}
+                    ${app.comingSoon ? "opacity-70" : ""}
+                  `}
+                  onClick={() => handleSelectApp(app.id, app.comingSoon)}
+                >
+                  <div className="text-xl mr-2">{app.icon}</div>
+                  <div className="flex-grow text-black">
+                    <div className="text-sm font-bold">{app.name}</div>
+                    <div className="text-xs truncate">{app.description}</div>
+                  </div>
+                  <ChevronRight size={14} className="text-black" />
+                </div>
+              ))}
+            </div>
+          </aside>
+
+          {/* Contenido principal */}
+          <main className={`${isMobile ? 'w-full' : 'w-2/3'} overflow-auto ${!selectedApp && isMobile ? 'hidden' : 'flex flex-col'}`}>
+            {isMobile && selectedApp && (
+              <button 
+                onClick={() => setSelectedApp(null)} 
+                className="win95-button text-black text-xs py-0.5 px-2 mb-2 self-start"
+              >
+                « Volver a la lista
+              </button>
+            )}
+            
+            {message && (
+              <div className="mb-4 text-red-600 font-semibold text-sm">
+                {message}
+              </div>
+            )}
+
+            <div className="flex-grow">
+              {selectedApp ? (
+                <TutorialContent appId={selectedApp} />
+              ) : !message && !isMobile ? (
+                <EmptyState />
+              ) : null}
+            </div>
+          </main>
+        </div>
+      </WindowFrame>
     </div>
   )
 }
@@ -286,7 +303,7 @@ const TutorialContent: React.FC<{ appId: string }> = ({ appId }) => {
 }
 
 /**
- * Componente de “Empty State” cuando no se ha seleccionado ninguna app
+ * Componente de "Empty State" cuando no se ha seleccionado ninguna app
  */
 const EmptyState: React.FC = () => (
   <div className="flex flex-col items-center justify-center h-full text-center p-4 text-black">
