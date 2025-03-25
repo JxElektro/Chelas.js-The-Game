@@ -79,7 +79,7 @@ export default function DinoGame() {
   const fetchHighScores = async () => {
     setLoadingScores(true);
     try {
-      // Call your RPC or table
+      // Call the correct RPC function
       const { data, error } = await supabase.rpc('get_dino_high_scores');
       if (error) throw error;
       if (data) {
@@ -105,6 +105,7 @@ export default function DinoGame() {
   const saveHighScore = async (newScore: number) => {
     if (!userId || !userName) return;
     try {
+      // Call the correct RPC function
       const { error } = await supabase.rpc('add_dino_high_score', {
         user_id_param: userId,
         user_name_param: userName,

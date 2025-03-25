@@ -86,6 +86,30 @@ export type Database = {
           },
         ]
       }
+      dino_high_scores: {
+        Row: {
+          created_at: string
+          id: string
+          score: number
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          score: number
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          score?: number
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: []
+      }
       drink_expenses: {
         Row: {
           created_at: string
@@ -235,6 +259,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_dino_high_score: {
+        Args: {
+          user_id_param: string
+          user_name_param: string
+          score_param: number
+        }
+        Returns: undefined
+      }
       add_snake_high_score: {
         Args: {
           user_id_param: string
@@ -242,6 +274,16 @@ export type Database = {
           score_param: number
         }
         Returns: undefined
+      }
+      get_dino_high_scores: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          id: string
+          score: number
+          user_id: string
+          user_name: string
+        }[]
       }
       get_snake_high_scores: {
         Args: Record<PropertyKey, never>
