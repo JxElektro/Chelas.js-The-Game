@@ -44,7 +44,7 @@ const InterestTabContent: React.FC<InterestTabContentProps> = ({
 
   // Procesamos la pestaña de intereses normal
   if (!tabData) {
-    return <p>Selecciona una pestaña para ver su contenido</p>;
+    return <p>Selecciona una pestaña para ver sus preferencias</p>;
   }
 
   const getInterestsByCategory = (categoryId: string) => {

@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Wifi, WifiOff, ChevronUp, X, Minus } from 'lucide-react';
+import { Clock, Wifi, WifiOff, ChevronUp, X, Minus, Star } from 'lucide-react';
 import WindowFrame from './WindowFrame';
 import { supabase } from '@/integrations/supabase/client';
 import Lobby from '@/pages/Lobby';
@@ -13,6 +12,7 @@ import DinoGame from '@/components/DinoGame';
 import DrinkExpenses from '@/components/DrinkExpenses';
 import Tutorial from '@/pages/Tutorial';
 import ProfileInfoTab from '@/components/ProfileInfoTab';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface DesktopIcon {
   id: string;
@@ -135,52 +135,49 @@ const Desktop: React.FC = () => {
       title: 'Mi PC',
       icon: '💻',
       component: 
-        <div className="p-4">
-          {currentUser && (
-            <div className="flex flex-col">
-              <div className="win95-window mb-4">
-                <div className="win95-window-title text-sm font-bold">
-                  TU PERFIL
-                </div>
-                <div className="p-4">
-                  <div className="flex items-center">
-                    <Avatar type={currentUser.avatar || 'user'} size="lg" />
-                    <div className="ml-4">
-                      <h2 className="text-black text-lg font-bold">{profileData.name || currentUser.name}</h2>
-                      <p className="text-sm text-chelas-gray-dark">
-                        Estado: {isAvailable ? 'Disponible para chatear' : 'No disponible'}
-                      </p>
-                    </div>
+        <ScrollArea className="h-full overflow-auto">
+          <div className="p-4">
+            {currentUser && (
+              <div className="flex flex-col">
+                <div className="flex items-center mb-4">
+                  <Avatar type={currentUser.avatar || 'user'} size="lg" />
+                  <div className="ml-4">
+                    <h2 className="text-black text-lg font-bold">{profileData.name || currentUser.name}</h2>
+                    <p className="text-sm text-chelas-gray-dark">
+                      Estado: {isAvailable ? 'Disponible para chatear' : 'No disponible'}
+                    </p>
                   </div>
+                </div>
+                
+                <div className="mt-4">
+                  <ProfileInfoTab
+                    profileData={profileData}
+                    onProfileDataChange={(data) => setProfileData({...profileData, ...data})}
+                    personalNote={personalNote}
+                    onPersonalNoteChange={setPersonalNote}
+                  />
                   
-                  <div className="mt-4">
-                    <ProfileInfoTab
-                      profileData={profileData}
-                      onProfileDataChange={(data) => setProfileData({...profileData, ...data})}
-                      personalNote={personalNote}
-                      onPersonalNoteChange={setPersonalNote}
-                    />
+                  <div className="flex justify-between mt-4">
+                    <button 
+                      className="win95-button mt-4"
+                      onClick={handleSaveProfile}
+                    >
+                      Guardar cambios
+                    </button>
                     
-                    <div className="flex justify-between mt-4">
-                      <button 
-                        className="win95-button mt-4"
-                        onClick={handleSaveProfile}
-                      >
-                        Guardar cambios
-                      </button>
-                      <button 
-                        className="win95-button mt-4"
-                        onClick={() => navigate('/interests')}
-                      >
-                        Editar preferencias
-                      </button>
-                    </div>
+                    <button 
+                      className="win95-button mt-4 flex items-center"
+                      onClick={() => navigate('/interests')}
+                    >
+                      <Star size={18} className="mr-2 text-black" />
+                      Preferencias
+                    </button>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </ScrollArea>
     },
     {
       id: 'dino',
