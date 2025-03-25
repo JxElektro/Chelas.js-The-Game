@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Mountain, Cloud, Rabbit } from 'lucide-react';
+import { Rabbit } from 'lucide-react';
+import HighScoreTable from './highscores/HighScoreTable';
+import { useHighScores } from '@/hooks/useHighScores';
 
 // Game configuration
 const GAME_HEIGHT = 150;
@@ -16,27 +18,20 @@ const GRAVITY = 0.6;
 const INITIAL_SPEED = 5;
 const SPEED_INCREMENT = 0.001;
 
-// Score structure
-interface HighScore {
-  id: string;
-  user_id: string;
-  user_name: string;
-  score: number;
-  created_at: string;
-}
-
 export default function DinoGame() {
   // Game state
   const [isRunning, setIsRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
-  const [highScore, setHighScore] = useState(0);
-  const [highScores, setHighScores] = useState<HighScore[]>([]);
-  const [loadingScores, setLoadingScores] = useState(false);
-
-  // User data
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
+  
+  // Hook to handle high scores
+  const { 
+    highScores,
+    userHighScore, 
+    loading: loadingScores, 
+    saveScore,
+    userInfo
+  } = useHighScores('dino');
 
   // Game elements
   const [dinoY, setDinoY] = useState(0);
@@ -53,72 +48,6 @@ export default function DinoGame() {
   // Responsive sizing
   const isMobile = useIsMobile();
   const gameWidth = isMobile ? 320 : 600;
-
-  // Initialize user and high scores
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data?.session) {
-        setUserId(data.session.user.id);
-        // Get profile name
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('name')
-          .eq('id', data.session.user.id)
-          .single();
-        if (profileData) {
-          setUserName(profileData.name);
-        }
-      }
-    };
-    checkUser();
-    fetchHighScores();
-  }, []);
-
-  // Fetch high scores
-  const fetchHighScores = async () => {
-    setLoadingScores(true);
-    try {
-      // Call the correct RPC function
-      const { data, error } = await supabase.rpc('get_dino_high_scores');
-      if (error) throw error;
-      if (data) {
-        setHighScores(data as HighScore[]);
-        // Find user's high score
-        if (userId) {
-          const userScore = data.find((s: HighScore) => s.user_id === userId);
-          if (userScore) {
-            setHighScore(userScore.score);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching high scores:', error);
-      toast.error('Error loading scores');
-      setHighScores([]);
-    } finally {
-      setLoadingScores(false);
-    }
-  };
-
-  // Save high score
-  const saveHighScore = async (newScore: number) => {
-    if (!userId || !userName) return;
-    try {
-      // Call the correct RPC function
-      const { error } = await supabase.rpc('add_dino_high_score', {
-        user_id_param: userId,
-        user_name_param: userName,
-        score_param: newScore,
-      });
-      if (error) throw error;
-      toast.success('Score saved!');
-      fetchHighScores();
-    } catch (error) {
-      console.error('Error saving high score:', error);
-      toast.error('Error saving score');
-    }
-  };
 
   // Game rendering
   const drawGame = useCallback(() => {
@@ -205,9 +134,9 @@ export default function DinoGame() {
     ctx.fillStyle = '#000';
     ctx.font = '16px Arial';
     ctx.fillText(`Score: ${score}`, 10, 25);
-    ctx.fillText(`High Score: ${Math.max(highScore, score)}`, 10, 50);
+    ctx.fillText(`High Score: ${Math.max(userHighScore, score)}`, 10, 50);
     
-  }, [dinoY, obstacles, score, highScore]);
+  }, [dinoY, obstacles, score, userHighScore]);
 
   // Game over handler
   const handleGameOver = useCallback(() => {
@@ -216,11 +145,10 @@ export default function DinoGame() {
     cancelAnimationFrame(animationFrameRef.current);
     
     // Save score if higher than high score
-    if (score > highScore && userId && userName) {
-      saveHighScore(score);
-      setHighScore(score);
+    if (score > userHighScore) {
+      saveScore(score);
     }
-  }, [score, highScore, userId, userName]);
+  }, [score, userHighScore, saveScore]);
 
   // Check collisions
   const checkCollisions = useCallback(() => {
@@ -408,40 +336,12 @@ export default function DinoGame() {
         </button>
       </div>
 
-      {/* High scores */}
-      <div className="border-2 border-chelas-gray-dark flex-grow overflow-auto p-2">
-        <h3 className="font-bold text-sm mb-2">High Scores</h3>
-        {loadingScores ? (
-          <p className="text-center text-sm">Loading...</p>
-        ) : highScores.length > 0 ? (
-          <div className="win95-inset p-2">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-chelas-gray-dark">
-                  <th className="text-left p-1">Player</th>
-                  <th className="text-right p-1">Score</th>
-                  <th className="text-right p-1">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {highScores.map(score => (
-                  <tr key={score.id} className="border-b border-gray-200">
-                    <td className="p-1">{score.user_name}</td>
-                    <td className="text-right p-1">{score.score}</td>
-                    <td className="text-right p-1 text-xs">
-                      {new Date(score.created_at).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-center text-sm">
-            No high scores yet. Be the first!
-          </p>
-        )}
-      </div>
+      {/* High scores table - using the reusable component */}
+      <HighScoreTable 
+        scores={highScores} 
+        loading={loadingScores} 
+        title="High Scores"
+      />
     </div>
   );
 }
