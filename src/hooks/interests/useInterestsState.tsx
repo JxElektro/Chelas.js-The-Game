@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,7 +26,7 @@ export const useInterestsState = () => {
     email: '',
     instagram: '',
     twitter: '',
-    facebook: ''
+    linkedin: ''
   });
 
   useEffect(() => {
@@ -110,7 +109,7 @@ export const useInterestsState = () => {
           email: '', // No tenemos acceso a email en la tabla de perfiles
           instagram: '', // Estos campos aún no existen en la tabla
           twitter: '', 
-          facebook: ''
+          linkedin: ''
         });
       }
       

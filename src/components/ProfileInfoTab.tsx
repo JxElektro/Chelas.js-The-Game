@@ -10,13 +10,13 @@ interface ProfileInfoTabProps {
     name: string;
     instagram: string;
     twitter: string;
-    facebook: string;
+    linkedin: string; // Changed from facebook to linkedin
   };
   onProfileDataChange: (data: {
     name?: string;
     instagram?: string;
     twitter?: string;
-    facebook?: string;
+    linkedin?: string; // Changed from facebook to linkedin
   }) => void;
   personalNote: string;
   onPersonalNoteChange: (value: string) => void;
@@ -34,27 +34,38 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
 
   return (
     <Tabs defaultValue="general" className="w-full">
-      <TabsList className="mb-4">
-        <TabsTrigger value="general">General</TabsTrigger>
-        <TabsTrigger value="social">Redes Sociales</TabsTrigger>
+      <TabsList className="mb-4 bg-chelas-button-face border border-chelas-gray-dark">
+        <TabsTrigger 
+          value="general" 
+          className="text-black data-[state=active]:bg-chelas-button-face data-[state=active]:shadow-win95-button-pressed"
+        >
+          General
+        </TabsTrigger>
+        <TabsTrigger 
+          value="social" 
+          className="text-black data-[state=active]:bg-chelas-button-face data-[state=active]:shadow-win95-button-pressed"
+        >
+          Redes Sociales
+        </TabsTrigger>
       </TabsList>
       
       <TabsContent value="general" className="space-y-4">
         <div>
-          <Label htmlFor="user-name">Nombre de Usuario</Label>
+          <Label htmlFor="user-name" className="text-black">Nombre de Usuario</Label>
           <Input
             id="user-name"
             value={profileData.name || ''}
             onChange={(e) => onProfileDataChange({ name: e.target.value })}
             placeholder="Tu nombre de usuario"
+            className="win95-inset bg-white text-black border-chelas-gray-dark"
           />
         </div>
         
         <div>
-          <Label htmlFor="personal-note">Descripción Personal</Label>
+          <Label htmlFor="personal-note" className="text-black">Descripción Personal</Label>
           <Textarea
             id="personal-note"
-            className="min-h-[120px] win95-inset p-2"
+            className="min-h-[120px] win95-inset bg-white text-black border-chelas-gray-dark p-2"
             value={personalNote || ''}
             onChange={(e) => onPersonalNoteChange(e.target.value)}
             placeholder="Escribe una breve descripción sobre ti..."
@@ -64,32 +75,35 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
       
       <TabsContent value="social" className="space-y-4">
         <div>
-          <Label htmlFor="instagram">Instagram</Label>
+          <Label htmlFor="instagram" className="text-black">Instagram</Label>
           <Input
             id="instagram"
             value={profileData.instagram || ''}
             onChange={(e) => onProfileDataChange({ instagram: e.target.value })}
             placeholder="@usuario"
+            className="win95-inset bg-white text-black border-chelas-gray-dark"
           />
         </div>
         
         <div>
-          <Label htmlFor="twitter">Twitter / X</Label>
+          <Label htmlFor="twitter" className="text-black">Twitter / X</Label>
           <Input
             id="twitter"
             value={profileData.twitter || ''}
             onChange={(e) => onProfileDataChange({ twitter: e.target.value })}
             placeholder="@usuario"
+            className="win95-inset bg-white text-black border-chelas-gray-dark"
           />
         </div>
         
         <div>
-          <Label htmlFor="facebook">Facebook</Label>
+          <Label htmlFor="linkedin" className="text-black">LinkedIn</Label>
           <Input
-            id="facebook"
-            value={profileData.facebook || ''}
-            onChange={(e) => onProfileDataChange({ facebook: e.target.value })}
+            id="linkedin"
+            value={profileData.linkedin || ''}
+            onChange={(e) => onProfileDataChange({ linkedin: e.target.value })}
             placeholder="URL o nombre de usuario"
+            className="win95-inset bg-white text-black border-chelas-gray-dark"
           />
         </div>
       </TabsContent>

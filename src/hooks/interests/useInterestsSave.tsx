@@ -17,7 +17,7 @@ export const useInterestsSave = () => {
       name: string;
       instagram: string;
       twitter: string;
-      facebook: string;
+      linkedin: string; // Changed from facebook to linkedin
     },
     setLoading: (loading: boolean) => void
   ) => {
@@ -53,7 +53,7 @@ export const useInterestsSave = () => {
         redes_sociales: {
           instagram: profileData.instagram || '',
           twitter: profileData.twitter || '',
-          facebook: profileData.facebook || ''
+          linkedin: profileData.linkedin || '' // Changed from facebook to linkedin
         }
       };
       

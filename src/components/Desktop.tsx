@@ -39,7 +39,7 @@ const Desktop: React.FC = () => {
     name: '',
     instagram: '',
     twitter: '',
-    facebook: ''
+    linkedin: ''
   });
   const [isLoading, setIsLoading] = useState(true);
   const isMobile = useIsMobile();
@@ -85,11 +85,10 @@ const Desktop: React.FC = () => {
         redes: {
           instagram: profileData.instagram,
           twitter: profileData.twitter,
-          facebook: profileData.facebook
+          linkedin: profileData.linkedin
         }
       });
       
-      // Obtenemos el super_profile actual para actualizarlo con las redes sociales
       const { data: currentProfileData, error: fetchError } = await supabase
         .from('profiles')
         .select('super_profile')
@@ -105,19 +104,17 @@ const Desktop: React.FC = () => {
       
       const currentSuperProfile = currentProfileData?.super_profile || {};
       
-      // Actualizamos el super_profile para incluir redes sociales
       const updatedSuperProfile: any = {
         ...(typeof currentSuperProfile === 'object' ? currentSuperProfile : {}),
         redes_sociales: {
           instagram: profileData.instagram || '',
           twitter: profileData.twitter || '',
-          facebook: profileData.facebook || ''
+          linkedin: profileData.linkedin || ''
         }
       };
       
       console.log("Updated super_profile:", updatedSuperProfile);
       
-      // También actualizamos los datos de perfil básico
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -297,15 +294,13 @@ const Desktop: React.FC = () => {
         setIsAvailable(userProfile.is_available || true);
         setPersonalNote(userProfile.descripcion_personal || '');
         
-        // Inicializar datos de perfil
         const newProfileData = {
           name: userProfile.name || '',
           instagram: '',
           twitter: '',
-          facebook: ''
+          linkedin: ''
         };
         
-        // Cargar datos de redes sociales del super_profile si existen
         if (userProfile.super_profile) {
           console.log("Super profile found:", userProfile.super_profile);
           const superProfile = 
@@ -317,14 +312,13 @@ const Desktop: React.FC = () => {
             console.log("Social networks found:", superProfile.redes_sociales);
             newProfileData.instagram = superProfile.redes_sociales.instagram || '';
             newProfileData.twitter = superProfile.redes_sociales.twitter || '';
-            newProfileData.facebook = superProfile.redes_sociales.facebook || '';
+            newProfileData.linkedin = superProfile.redes_sociales.linkedin || '';
           }
         }
         
         setProfileData(newProfileData);
         console.log("Profile data set:", newProfileData);
         
-        // Asegurar que el usuario esté disponible
         if (!userProfile.is_available) {
           try {
             await supabase
