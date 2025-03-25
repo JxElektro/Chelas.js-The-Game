@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Mountain, Cloud, Rabbit, Cactus } from 'lucide-react';
+import { Mountain, Cloud, Rabbit } from 'lucide-react';
 
 // Game configuration
 const GAME_HEIGHT = 150;
@@ -54,7 +53,7 @@ export default function DinoGame() {
   // Responsive sizing
   const isMobile = useIsMobile();
   const gameWidth = isMobile ? 320 : 600;
-  
+
   // Initialize user and high scores
   useEffect(() => {
     const checkUser = async () => {
@@ -226,12 +225,24 @@ export default function DinoGame() {
   // Check collisions
   const checkCollisions = useCallback(() => {
     for (const obstacle of obstacles) {
-      // Simplified hitbox
+      // Dino hitbox
+      const dinoLeft = 50;
+      const dinoRight = 50 + DINO_WIDTH;
+      const dinoTop = GAME_HEIGHT - GROUND_HEIGHT - DINO_HEIGHT - dinoY;
+      const dinoBottom = GAME_HEIGHT - GROUND_HEIGHT - dinoY;
+      
+      // Obstacle hitbox
+      const obstacleLeft = obstacle.x;
+      const obstacleRight = obstacle.x + obstacle.width;
+      const obstacleTop = GAME_HEIGHT - GROUND_HEIGHT - obstacle.height;
+      const obstacleBottom = GAME_HEIGHT - GROUND_HEIGHT;
+      
+      // Check for collision
       if (
-        obstacle.x < 50 + DINO_WIDTH && 
-        obstacle.x + obstacle.width > 50 && 
-        GAME_HEIGHT - GROUND_HEIGHT - obstacle.height > GAME_HEIGHT - GROUND_HEIGHT - DINO_HEIGHT - dinoY &&
-        GAME_HEIGHT - GROUND_HEIGHT - dinoY < GAME_HEIGHT - GROUND_HEIGHT
+        dinoRight > obstacleLeft && 
+        dinoLeft < obstacleRight && 
+        dinoBottom > obstacleTop && 
+        dinoTop < obstacleBottom
       ) {
         handleGameOver();
         return true;
