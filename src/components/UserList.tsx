@@ -175,10 +175,7 @@ const UserList: React.FC<UserListProps> = ({
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleToggleFavorite(user.id);
-                  }}
+                  onClick={() => handleToggleFavorite(user.id)}
                   className={`ml-1 mr-1 p-0 h-6 w-6 ${(userFavorites[user.id] || user.isFavorite) ? 'text-yellow-500' : 'text-gray-400'}`}
                 >
                   <Star size={isMobile ? 12 : 14} className="p-0" />
