@@ -10,6 +10,7 @@ import ConversationPrompt from '@/components/ConversationPrompt';
 import ConversationTopicWithOptions from '@/components/ConversationTopicWithOptions';
 import ConversationNotes from '@/components/ConversationNotes';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { TopicWithOptions } from '@/types/conversation';
 
 const Conversation = () => {
   const { userId } = useParams<{ userId: string }>();
