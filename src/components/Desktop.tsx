@@ -80,6 +80,34 @@ const Desktop: React.FC = () => {
     }
   };
 
+  const handleToggleAvailability = async () => {
+    if (!currentUser) {
+      toast.error('Debes iniciar sesión para cambiar tu disponibilidad');
+      return;
+    }
+    
+    try {
+      const newStatus = !isAvailable;
+      setIsAvailable(newStatus);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_available: newStatus })
+        .eq('id', currentUser.id);
+        
+      if (error) throw error;
+      
+      toast.success(newStatus 
+        ? 'Ahora estás disponible para chatear' 
+        : 'Ya no estás disponible para chatear');
+        
+    } catch (err) {
+      console.error('Error changing availability:', err);
+      setIsAvailable(!isAvailable);
+      toast.error('Error al cambiar tu estado de disponibilidad');
+    }
+  };
+
   const applications: DesktopIcon[] = [
     {
       id: 'msn',
