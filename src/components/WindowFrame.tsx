@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { X, Minus } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -71,13 +72,10 @@ const WindowFrame: React.FC<WindowFrameProps> = ({
         </div>
       </div>
 
-      {/* Contenido principal */}
-      {/* 1) flex-grow para ocupar el espacio disponible
-          2) min-h-0 para permitir scroll si es necesario
-          3) overflow-auto si quieres forzar scroll interno, o deja "overflow-auto" en el contenedor hijo */}
+      {/* Contenido principal - optimizado para móvil */}
       <div className={cn(
-        "flex-grow min-h-0",
-        isMobile ? "p-1 sm:p-2" : "p-4"
+        "flex-grow min-h-0 overflow-hidden",
+        isMobile ? "p-0 sm:p-1" : "p-2"
       )}>
         {children}
       </div>

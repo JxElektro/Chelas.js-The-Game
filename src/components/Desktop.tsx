@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Wifi, WifiOff, ChevronUp, X, Minus, Star } from 'lucide-react';
@@ -13,6 +14,7 @@ import DrinkExpenses from '@/components/DrinkExpenses';
 import Tutorial from '@/pages/Tutorial';
 import ProfileInfoTab from '@/components/ProfileInfoTab';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import MessengerWithFavorites from '@/components/MessengerWithFavorites';
 
 interface DesktopIcon {
   id: string;
@@ -140,9 +142,9 @@ const Desktop: React.FC = () => {
   const applications: DesktopIcon[] = [
     {
       id: 'msn',
-      title: 'MSN Messenger',
-      icon: '💬',
-      component: <Lobby />
+      title: 'MSN Live',
+      icon: '🦋',
+      component: <MessengerWithFavorites />
     },
     {
       id: 'excel',

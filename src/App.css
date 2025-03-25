@@ -11,6 +11,16 @@
   #root {
     padding: 0;
   }
+  
+  /* Ensure contents fit better on mobile screens */
+  .win95-window {
+    overflow: hidden;
+  }
+  
+  /* Removes unnecessary padding on mobile */
+  .win95-window > div:last-child {
+    padding: 0.5rem;
+  }
 }
 
 .logo {
@@ -62,5 +72,20 @@
   
   .win95-window-title {
     padding: 0.3rem 0.5rem;
+  }
+  
+  /* Fix for unnecessary gray space in mobile */
+  .scrollable-container {
+    max-height: calc(100vh - 150px) !important;
+    overflow-y: auto;
+  }
+}
+
+/* Fix for window frames in mobile views */
+@media (max-width: 640px) {
+  .win95-window-content {
+    height: auto !important;
+    min-height: 0;
+    flex: 1;
   }
 }
