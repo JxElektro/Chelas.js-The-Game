@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { generateTopicWithOptions } from './deepseekService';
 import { Json } from '@/integrations/supabase/types';
@@ -14,7 +15,7 @@ interface ReportData {
     follow_up: boolean;
     topics: string[];
     notes?: string;
-    contact_info?: string; // Añadimos información de contacto
+    contact_info?: string;
   }[];
 }
 
@@ -36,7 +37,6 @@ export const fetchReportData = async (userId: string): Promise<ReportData | null
     }
     
     // Fetch conversations with follow-ups and favorites
-    // Fix the query to specify the profiles relationship explicitly
     const { data: conversations, error: convsError } = await supabase
       .from('conversations')
       .select(`
@@ -71,18 +71,18 @@ export const fetchReportData = async (userId: string): Promise<ReportData | null
           .eq('user_id', userId)
           .maybeSingle();
         
-        // Extraer información de contacto del super_profile si está disponible
+        // Extract contact info from super_profile if available
         let contactInfo = '';
         if (conv.profiles?.super_profile) {
-          // Tratamos de manera segura el objeto super_profile
+          // Treat super_profile safely
           const profile = conv.profiles.super_profile;
           
-          // Verificamos si es un objeto con propiedades
+          // Check if it's an object with properties
           if (typeof profile === 'object' && profile !== null) {
-            // Creamos una lista de campos de contacto que existen
+            // Create a list of contact fields that exist
             const contactFields: string[] = [];
             
-            // Extraer de forma segura los campos utilizando indexación de tipo
+            // Extract fields safely using type indexing
             const typedProfile = profile as Record<string, unknown>;
             
             if (hasProperty(typedProfile, 'email')) contactFields.push(`Email: ${String(typedProfile['email'])}`);
@@ -90,8 +90,14 @@ export const fetchReportData = async (userId: string): Promise<ReportData | null
             if (hasProperty(typedProfile, 'company')) contactFields.push(`Compañía: ${String(typedProfile['company'])}`);
             if (hasProperty(typedProfile, 'position')) contactFields.push(`Cargo: ${String(typedProfile['position'])}`);
             if (hasProperty(typedProfile, 'website')) contactFields.push(`Web: ${String(typedProfile['website'])}`);
-            if (hasProperty(typedProfile, 'linkedin')) contactFields.push(`LinkedIn: ${String(typedProfile['linkedin'])}`);
-            if (hasProperty(typedProfile, 'twitter')) contactFields.push(`Twitter: ${String(typedProfile['twitter'])}`);
+            
+            // Check for redes_sociales object
+            if (hasProperty(typedProfile, 'redes_sociales') && typeof typedProfile['redes_sociales'] === 'object') {
+              const socialNetworks = typedProfile['redes_sociales'] as Record<string, unknown>;
+              if (hasProperty(socialNetworks, 'linkedin')) contactFields.push(`LinkedIn: ${String(socialNetworks['linkedin'])}`);
+              if (hasProperty(socialNetworks, 'twitter')) contactFields.push(`Twitter: ${String(socialNetworks['twitter'])}`);
+              if (hasProperty(socialNetworks, 'instagram')) contactFields.push(`Instagram: ${String(socialNetworks['instagram'])}`);
+            }
             
             contactInfo = contactFields.join(' | ');
           }
@@ -134,18 +140,18 @@ export const generateFormattedReport = async (data: ReportData): Promise<string>
     const favoriteUsers = data.conversations.filter(c => c.is_favorite).map(c => c.user_name);
     const followUpUsers = data.conversations.filter(c => c.follow_up);
     
-    // Formateamos los seguimientos con más detalle
+    // Format follow-ups with more details
     const followUpsFormatted = followUpUsers.map(c => {
       return `- ${c.user_name}${c.contact_info ? ` (${c.contact_info})` : ''}${c.notes ? `\n  Notas: ${c.notes}` : ''}`;
     }).join('\n\n');
     
-    // Recopilamos todas las notas (este es el cambio principal)
+    // Collect all notes
     const allNotes = data.conversations
-      .filter(c => c.notes && !c.follow_up) // Excluimos las notas de follow-up ya que están arriba
+      .filter(c => c.notes && !c.follow_up) // Exclude follow-up notes as they're already listed above
       .map(c => `Notas sobre ${c.user_name}: ${c.notes}`)
       .join('\n\n');
     
-    // Formateamos todos los gastos con detalle
+    // Format expenses with details
     const expensesFormatted = data.expenses.map(e => 
       `- ${e.description}: $${Number(e.price).toFixed(2)} (${new Date(e.created_at).toLocaleTimeString()})`
     ).join('\n');
@@ -185,8 +191,6 @@ export const generateFormattedReport = async (data: ReportData): Promise<string>
     });
     
     // Extract the formatted report from the response
-    // Since we're using the topic generator in a non-standard way,
-    // we'll just concatenate the questions as our report
     let formattedReport = "INFORME DE SEGURIDAD - JAVASCRIPT SUMMIT\n\n";
     
     formattedData.forEach(section => {
@@ -208,21 +212,52 @@ export const generateFormattedReport = async (data: ReportData): Promise<string>
 
 export const saveReportToDatabase = async (userId: string, reportData: any, formattedReport: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    // Check if a report already exists for today
+    const { data: existingReport, error: checkError } = await supabase
       .from('daily_reports')
-      .upsert({
-        user_id: userId,
-        report_date: new Date().toISOString().split('T')[0],
-        raw_data: reportData,
-        formatted_report: formattedReport,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id, report_date'
-      });
+      .select('id')
+      .eq('user_id', userId)
+      .eq('report_date', currentDate)
+      .maybeSingle();
       
-    if (error) {
-      console.error('Error saving report:', error);
+    if (checkError) {
+      console.error('Error checking existing report:', checkError);
       return false;
+    }
+    
+    if (existingReport) {
+      // Update existing report
+      const { error: updateError } = await supabase
+        .from('daily_reports')
+        .update({
+          raw_data: reportData,
+          formatted_report: formattedReport,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingReport.id);
+        
+      if (updateError) {
+        console.error('Error updating report:', updateError);
+        return false;
+      }
+    } else {
+      // Insert new report
+      const { error: insertError } = await supabase
+        .from('daily_reports')
+        .insert({
+          user_id: userId,
+          report_date: currentDate,
+          raw_data: reportData,
+          formatted_report: formattedReport,
+          updated_at: new Date().toISOString()
+        });
+        
+      if (insertError) {
+        console.error('Error saving report:', insertError);
+        return false;
+      }
     }
     
     return true;
@@ -291,20 +326,48 @@ export const getLatestReport = async (userId: string): Promise<string | null> =>
 
 export const saveConversationNotes = async (userId: string, conversationId: string, notes: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
+    // Check if notes already exist
+    const { data: existingNotes, error: checkError } = await supabase
       .from('conversation_notes')
-      .upsert({
-        user_id: userId,
-        conversation_id: conversationId,
-        notes,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id, conversation_id'
-      });
+      .select('id')
+      .eq('user_id', userId)
+      .eq('conversation_id', conversationId)
+      .maybeSingle();
       
-    if (error) {
-      console.error('Error saving conversation notes:', error);
+    if (checkError) {
+      console.error('Error checking existing notes:', checkError);
       return false;
+    }
+    
+    if (existingNotes) {
+      // Update existing notes
+      const { error: updateError } = await supabase
+        .from('conversation_notes')
+        .update({
+          notes: notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingNotes.id);
+        
+      if (updateError) {
+        console.error('Error updating notes:', updateError);
+        return false;
+      }
+    } else {
+      // Insert new notes
+      const { error: insertError } = await supabase
+        .from('conversation_notes')
+        .insert({
+          user_id: userId,
+          conversation_id: conversationId,
+          notes: notes,
+          updated_at: new Date().toISOString()
+        });
+        
+      if (insertError) {
+        console.error('Error inserting notes:', insertError);
+        return false;
+      }
     }
     
     return true;
