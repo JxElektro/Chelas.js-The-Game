@@ -23,6 +23,10 @@ const VirusReport: React.FC = () => {
   const [scanProgress, setScanProgress] = useState(0);
   const [threatCount, setThreatCount] = useState(0);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [dinoRunerData, setDinoRunerData] = useState<{ played: boolean; score: number }>({
+    played: false,
+    score: 0
+  });
 
   useEffect(() => {
     checkAuthStatus();
@@ -31,6 +35,7 @@ const VirusReport: React.FC = () => {
   useEffect(() => {
     if (currentUser) {
       loadLatestReport();
+      fetchDinoRunerData();
     }
   }, [currentUser]);
 
@@ -103,6 +108,68 @@ const VirusReport: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  // Función para obtener datos del juego Dino Runer
+  const fetchDinoRunerData = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('dino_high_scores')
+        .select('score')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('Error fetching dino scores:', error);
+        return;
+      }
+      
+      if (data) {
+        setDinoRunerData({
+          played: true,
+          score: data.score
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching dino data:', error);
+    }
+  };
+  
+  // Función que genera el contexto para el informe
+  const generateVirusReportContext = async () => {
+    if (!currentUser) return null;
+    
+    try {
+      // Obtener datos para el informe
+      const reportData = await fetchReportData(currentUser.id);
+      
+      if (!reportData) {
+        toast.error('Error al obtener datos para el informe');
+        return null;
+      }
+      
+      // Crear el objeto de contexto para la IA
+      const contextData = {
+        socialMediaInfo: {}, // Se extraerá de los perfiles
+        followUps: reportData.conversations.filter(c => c.follow_up),
+        expenses: reportData.expenses,
+        expensesTotal: reportData.expenses.reduce((sum, exp) => sum + Number(exp.price), 0),
+        conversationNotes: reportData.conversations
+          .filter(c => c.notes)
+          .map(c => ({ user: c.user_name, notes: c.notes })),
+        dinoRuner: dinoRunerData,
+        reportPrompt: "Informe de virus: Resumen de la noche, incluyendo gastos, follow ups y resultados de Dino Runer."
+      };
+      
+      return contextData;
+    } catch (error) {
+      console.error('Error generating context:', error);
+      return null;
+    }
+  };
   
   const generateReport = async () => {
     if (!currentUser) {
@@ -127,11 +194,19 @@ const VirusReport: React.FC = () => {
         return;
       }
       
-      // Generar informe formateado usando IA
+      // Generar el contexto completo con todos los datos requeridos
+      const contextData = await generateVirusReportContext();
+      
+      if (!contextData) {
+        setIsGenerating(false);
+        return;
+      }
+      
+      // Generar informe formateado usando IA con el contexto completo
       const formattedReport = await generateFormattedReport(reportData);
       
       // Guardar el informe en la base de datos
-      await saveReportToDatabase(currentUser.id, reportData, formattedReport);
+      await saveReportToDatabase(currentUser.id, contextData, formattedReport);
       
       // Actualizar el estado con el informe generado
       setReport(formattedReport);
@@ -139,6 +214,57 @@ const VirusReport: React.FC = () => {
     } catch (error) {
       console.error('Error generating report:', error);
       toast.error('Error al generar el informe');
+    } finally {
+      setIsGenerating(false);
+      setScanProgress(100);
+    }
+  };
+  
+  // Simular el escaneo de virus (equivalente a Avast Antivirus (A))
+  const simulateVirusScan = async () => {
+    if (!currentUser) {
+      toast.error('Debes iniciar sesión para escanear virus');
+      return;
+    }
+    
+    setIsGenerating(true);
+    setScanProgress(0);
+    setThreatCount(0);
+    toast.info('Iniciando escaneo de virus...');
+    
+    try {
+      // Simular proceso de escaneo
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Generar el contexto completo igual que para el informe normal
+      const contextData = await generateVirusReportContext();
+      
+      if (!contextData) {
+        setIsGenerating(false);
+        return;
+      }
+      
+      // Obtener datos para el informe
+      const reportData = await fetchReportData(currentUser.id);
+      
+      if (!reportData) {
+        toast.error('Error al obtener datos para el informe');
+        setIsGenerating(false);
+        return;
+      }
+      
+      // Generar informe formateado usando IA con el mismo contexto
+      const formattedReport = await generateFormattedReport(reportData);
+      
+      // Guardar el informe en la base de datos
+      await saveReportToDatabase(currentUser.id, contextData, formattedReport);
+      
+      // Actualizar el estado con el informe generado
+      setReport(formattedReport);
+      toast.success('Escaneo completado. Se han encontrado amenazas.');
+    } catch (error) {
+      console.error('Error in virus scan:', error);
+      toast.error('Error durante el escaneo de virus');
     } finally {
       setIsGenerating(false);
       setScanProgress(100);
@@ -217,7 +343,18 @@ const VirusReport: React.FC = () => {
             ) : (
               <RefreshCw className="w-4 h-4 mr-2" />
             )}
-            {isGenerating ? 'Escaneando...' : 'Escanear ahora'}
+            {isGenerating ? 'Escaneando...' : 'Follow Up'}
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-red-500 text-red-500 hover:bg-red-900"
+            onClick={simulateVirusScan}
+            disabled={isGenerating}
+          >
+            <Bug className="w-4 h-4 mr-2" />
+            Avast Antivirus (A)
           </Button>
           
           {report && (
@@ -297,7 +434,7 @@ const VirusReport: React.FC = () => {
           <div className="h-full flex flex-col items-center justify-center text-green-500">
             <Bug className="w-16 h-16 mb-4" />
             <p className="text-sm">No hay informes disponibles.</p>
-            <p className="text-sm mt-2">Haz clic en "Escanear ahora" para generar un informe.</p>
+            <p className="text-sm mt-2">Haz clic en "Follow Up" o "Avast Antivirus (A)" para generar un informe.</p>
           </div>
         )}
       </ScrollArea>
