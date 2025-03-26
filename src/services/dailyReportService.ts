@@ -1,6 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { generateTopicWithOptions } from './deepseekService';
+import { Json } from '@/integrations/supabase/types';
 
 interface ReportData {
   expenses: {
@@ -74,19 +74,25 @@ export const fetchReportData = async (userId: string): Promise<ReportData | null
         // Extraer información de contacto del super_profile si está disponible
         let contactInfo = '';
         if (conv.profiles?.super_profile) {
+          // Tratamos de manera segura el objeto super_profile
           const profile = conv.profiles.super_profile;
-          // Intentamos extraer información de contacto relevante
-          const contactFields = [
-            profile.email && `Email: ${profile.email}`,
-            profile.phone && `Teléfono: ${profile.phone}`,
-            profile.company && `Compañía: ${profile.company}`,
-            profile.position && `Cargo: ${profile.position}`,
-            profile.website && `Web: ${profile.website}`,
-            profile.linkedin && `LinkedIn: ${profile.linkedin}`,
-            profile.twitter && `Twitter: ${profile.twitter}`
-          ].filter(Boolean);
           
-          contactInfo = contactFields.join(' | ');
+          // Verificamos si es un objeto con propiedades
+          if (typeof profile === 'object' && profile !== null) {
+            // Creamos una lista de campos de contacto que existen
+            const contactFields: string[] = [];
+            
+            // Extraer de forma segura los campos
+            if (hasProperty(profile, 'email')) contactFields.push(`Email: ${profile.email}`);
+            if (hasProperty(profile, 'phone')) contactFields.push(`Teléfono: ${profile.phone}`);
+            if (hasProperty(profile, 'company')) contactFields.push(`Compañía: ${profile.company}`);
+            if (hasProperty(profile, 'position')) contactFields.push(`Cargo: ${profile.position}`);
+            if (hasProperty(profile, 'website')) contactFields.push(`Web: ${profile.website}`);
+            if (hasProperty(profile, 'linkedin')) contactFields.push(`LinkedIn: ${profile.linkedin}`);
+            if (hasProperty(profile, 'twitter')) contactFields.push(`Twitter: ${profile.twitter}`);
+            
+            contactInfo = contactFields.join(' | ');
+          }
         }
           
         return {
@@ -109,6 +115,11 @@ export const fetchReportData = async (userId: string): Promise<ReportData | null
     return null;
   }
 };
+
+// Helper function to safely check if a property exists in an object
+function hasProperty(obj: any, property: string): boolean {
+  return obj && typeof obj === 'object' && property in obj;
+}
 
 export const generateFormattedReport = async (data: ReportData): Promise<string> => {
   try {
