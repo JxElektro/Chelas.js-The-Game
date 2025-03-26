@@ -319,6 +319,48 @@ export type Database = {
           },
         ]
       }
+      virus_reports: {
+        Row: {
+          created_at: string | null
+          dino_score: number | null
+          expenses_data: Json | null
+          follow_up_data: Json | null
+          id: string
+          report_content: string
+          report_title: string
+          scan_type: string
+          social_media_data: Json | null
+          threat_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          dino_score?: number | null
+          expenses_data?: Json | null
+          follow_up_data?: Json | null
+          id?: string
+          report_content: string
+          report_title: string
+          scan_type: string
+          social_media_data?: Json | null
+          threat_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          dino_score?: number | null
+          expenses_data?: Json | null
+          follow_up_data?: Json | null
+          id?: string
+          report_content?: string
+          report_title?: string
+          scan_type?: string
+          social_media_data?: Json | null
+          threat_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Wifi, WifiOff, ChevronUp, X, Minus, Star, Bug } from 'lucide-react';
+import { Clock, Wifi, WifiOff, ChevronUp, X, Minus, Star, Shield } from 'lucide-react';
 import WindowFrame from './WindowFrame';
 import { supabase } from '@/integrations/supabase/client';
 import Lobby from '@/pages/Lobby';
@@ -225,7 +225,7 @@ const Desktop: React.FC = () => {
       id: 'downloads',
       title: 'Descargas',
       icon: '📁',
-      component: <div className="p-4">Downloads folder will be implemented here</div>
+      component: <VirusReport />
     },
     {
       id: 'tutorial',
@@ -234,9 +234,9 @@ const Desktop: React.FC = () => {
       component: <Tutorial />
     },
     {
-      id: 'bug',
-      title: 'Bug.exe',
-      icon: '🐛',
+      id: 'avast',
+      title: 'Avast Antivirus',
+      icon: '🛡️',
       component: <VirusReport />
     }
   ];
@@ -447,7 +447,6 @@ const Desktop: React.FC = () => {
         <h1 className="text-chelas-yellow text-9xl font-pixel tracking-tighter">JS</h1>
       </div>
       
-      {/* Área del escritorio: se le agrega un padding bottom para reservar espacio para la taskbar */}
       <div className="h-full pb-16 md:pb-10 p-2 md:p-4 overflow-y-auto noise-bg">
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-4 content-start">
           {applications.map((app) => (
@@ -497,7 +496,6 @@ const Desktop: React.FC = () => {
         </AnimatePresence>
       </div>
       
-      {/* Barra de tareas fija al fondo */}
       <div className="fixed bottom-0 left-0 w-full bg-chelas-button-face border-t-2 border-chelas-button-highlight z-50">
         <div className="flex items-center justify-between h-12 md:h-10 px-2">
           <div className="flex items-center">
@@ -592,3 +590,4 @@ const Desktop: React.FC = () => {
 };
 
 export default Desktop;
+

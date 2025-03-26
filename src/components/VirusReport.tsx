@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Bug, RefreshCw, Download, X, Loader2 } from 'lucide-react';
+import { Bug, RefreshCw, Download, X, Loader2, FolderOpen, Shield, FileWarning, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -11,9 +11,19 @@ import {
   generateFormattedReport,
   saveReportToDatabase,
   getLatestReport,
-  clearUserData
+  clearUserData,
+  saveVirusReport
 } from '@/services/dailyReportService';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const VirusReport: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +37,15 @@ const VirusReport: React.FC = () => {
     played: false,
     score: 0
   });
+  const [savedReports, setSavedReports] = useState<Array<{
+    id: string;
+    report_title: string;
+    scan_type: string;
+    created_at: string;
+    threat_count: number;
+  }>>([]);
+  const [showDownloads, setShowDownloads] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuthStatus();
@@ -36,6 +55,7 @@ const VirusReport: React.FC = () => {
     if (currentUser) {
       loadLatestReport();
       fetchDinoRunerData();
+      fetchSavedReports();
     }
   }, [currentUser]);
 
@@ -106,6 +126,30 @@ const VirusReport: React.FC = () => {
       console.error('Error loading latest report:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Función para obtener los informes guardados
+  const fetchSavedReports = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('virus_reports')
+        .select('id, report_title, scan_type, created_at, threat_count')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error('Error fetching saved reports:', error);
+        return;
+      }
+      
+      if (data) {
+        setSavedReports(data);
+      }
+    } catch (error) {
+      console.error('Error fetching saved reports:', error);
     }
   };
 
@@ -208,9 +252,25 @@ const VirusReport: React.FC = () => {
       // Guardar el informe en la base de datos
       await saveReportToDatabase(currentUser.id, contextData, formattedReport);
       
+      // Guardar el informe en la tabla virus_reports
+      await saveVirusReport({
+        userId: currentUser.id,
+        reportTitle: `Análisis Follow Up - ${new Date().toLocaleDateString()}`,
+        reportContent: formattedReport,
+        scanType: 'follow_up',
+        threatCount: threatCount,
+        socialMediaData: contextData.socialMediaInfo,
+        expensesData: { items: contextData.expenses, total: contextData.expensesTotal },
+        followUpData: { contacts: contextData.followUps },
+        dinoScore: contextData.dinoRuner.score
+      });
+      
       // Actualizar el estado con el informe generado
       setReport(formattedReport);
       toast.success('Informe generado correctamente');
+      
+      // Actualizar la lista de informes guardados
+      fetchSavedReports();
     } catch (error) {
       console.error('Error generating report:', error);
       toast.error('Error al generar el informe');
@@ -220,7 +280,7 @@ const VirusReport: React.FC = () => {
     }
   };
   
-  // Simular el escaneo de virus (equivalente a Avast Antivirus (A))
+  // Simular el escaneo de virus (Avast Antivirus)
   const simulateVirusScan = async () => {
     if (!currentUser) {
       toast.error('Debes iniciar sesión para escanear virus');
@@ -259,9 +319,25 @@ const VirusReport: React.FC = () => {
       // Guardar el informe en la base de datos
       await saveReportToDatabase(currentUser.id, contextData, formattedReport);
       
+      // Guardar el informe en la tabla virus_reports
+      await saveVirusReport({
+        userId: currentUser.id,
+        reportTitle: `Análisis de virus - ${new Date().toLocaleDateString()}`,
+        reportContent: formattedReport,
+        scanType: 'antivirus',
+        threatCount: threatCount,
+        socialMediaData: contextData.socialMediaInfo,
+        expensesData: { items: contextData.expenses, total: contextData.expensesTotal },
+        followUpData: { contacts: contextData.followUps },
+        dinoScore: contextData.dinoRuner.score
+      });
+      
       // Actualizar el estado con el informe generado
       setReport(formattedReport);
       toast.success('Escaneo completado. Se han encontrado amenazas.');
+      
+      // Actualizar la lista de informes guardados
+      fetchSavedReports();
     } catch (error) {
       console.error('Error in virus scan:', error);
       toast.error('Error durante el escaneo de virus');
@@ -313,6 +389,50 @@ const VirusReport: React.FC = () => {
     }
   };
 
+  // Función para cargar un informe guardado
+  const loadSavedReport = async (reportId: string) => {
+    if (!currentUser) return;
+    
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('virus_reports')
+        .select('report_content')
+        .eq('id', reportId)
+        .eq('user_id', currentUser.id)
+        .single();
+        
+      if (error) {
+        console.error('Error loading saved report:', error);
+        toast.error('Error al cargar el informe');
+        return;
+      }
+      
+      if (data) {
+        setReport(data.report_content);
+        setSelectedReport(reportId);
+      }
+    } catch (error) {
+      console.error('Error loading saved report:', error);
+      toast.error('Error al cargar el informe');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Formatear fecha para mostrar
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -326,11 +446,21 @@ const VirusReport: React.FC = () => {
     <div className="h-full flex flex-col bg-black p-4 text-green-500 font-mono" style={{ fontFamily: 'monospace' }}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
-          <Bug className="w-6 h-6 text-red-500 mr-2" />
-          <h2 className="text-xl font-bold text-red-500">VIRUS SCAN v1.0</h2>
+          <Shield className="w-6 h-6 text-yellow-500 mr-2" />
+          <h2 className="text-xl font-bold text-yellow-500">AVAST ANTIVIRUS</h2>
         </div>
         
         <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-green-500 text-green-500 hover:bg-green-900"
+            onClick={() => setShowDownloads(!showDownloads)}
+          >
+            <FolderOpen className="w-4 h-4 mr-2" />
+            Descargas
+          </Button>
+          
           <Button 
             variant="outline" 
             size="sm" 
@@ -349,15 +479,15 @@ const VirusReport: React.FC = () => {
           <Button 
             variant="outline" 
             size="sm" 
-            className="border-red-500 text-red-500 hover:bg-red-900"
+            className="border-yellow-500 text-yellow-500 hover:bg-yellow-900"
             onClick={simulateVirusScan}
             disabled={isGenerating}
           >
-            <Bug className="w-4 h-4 mr-2" />
-            Avast Antivirus (A)
+            <Shield className="w-4 h-4 mr-2" />
+            Avast Antivirus
           </Button>
           
-          {report && (
+          {report && !showDownloads && (
             <Button 
               variant="outline" 
               size="sm" 
@@ -399,48 +529,125 @@ const VirusReport: React.FC = () => {
       )}
       
       {/* Progress bar */}
-      <div className="mb-4">
-        <div className="h-6 bg-chelas-gray-dark border border-green-500 relative overflow-hidden">
-          <motion.div 
-            className="h-full bg-green-500"
-            style={{ width: `${scanProgress}%` }}
-            initial={{ width: 0 }}
-            animate={{ width: `${scanProgress}%` }}
-            transition={{ type: 'spring', stiffness: 50 }}
-          />
-          <div className="absolute inset-0 flex items-center justify-between px-2">
-            <span className="text-xs text-black font-bold">
-              {isGenerating ? 'SCANNING SYSTEM...' : 'SCAN COMPLETE'}
-            </span>
-            <span className="text-xs text-black font-bold">
-              {scanProgress.toFixed(0)}%
-            </span>
+      {!showDownloads && (
+        <div className="mb-4">
+          <div className="h-6 bg-chelas-gray-dark border border-green-500 relative overflow-hidden">
+            <motion.div 
+              className="h-full bg-green-500"
+              style={{ width: `${scanProgress}%` }}
+              initial={{ width: 0 }}
+              animate={{ width: `${scanProgress}%` }}
+              transition={{ type: 'spring', stiffness: 50 }}
+            />
+            <div className="absolute inset-0 flex items-center justify-between px-2">
+              <span className="text-xs text-black font-bold">
+                {isGenerating ? 'SCANNING SYSTEM...' : 'SCAN COMPLETE'}
+              </span>
+              <span className="text-xs text-black font-bold">
+                {scanProgress.toFixed(0)}%
+              </span>
+            </div>
           </div>
+          
+          {isGenerating && (
+            <div className="mt-2 text-xs">
+              <span className="text-red-500 mr-2">Amenazas detectadas: {threatCount}</span>
+              <span className="text-green-500">Escaneando archivos del sistema...</span>
+            </div>
+          )}
         </div>
-        
-        {isGenerating && (
-          <div className="mt-2 text-xs">
-            <span className="text-red-500 mr-2">Amenazas detectadas: {threatCount}</span>
-            <span className="text-green-500">Escaneando archivos del sistema...</span>
+      )}
+      
+      {/* Content area - Downloads or Report display */}
+      <div className="flex-grow border border-green-500">
+        {showDownloads ? (
+          <div className="h-full">
+            <div className="bg-green-900 text-green-100 p-2 font-bold border-b border-green-500">
+              Informes Guardados
+            </div>
+            <ScrollArea className="h-[calc(100%-2.5rem)] bg-black">
+              {savedReports.length > 0 ? (
+                <Table>
+                  <TableHeader className="bg-green-900 bg-opacity-20">
+                    <TableRow>
+                      <TableHead className="text-green-400">Título</TableHead>
+                      <TableHead className="text-green-400">Tipo</TableHead>
+                      <TableHead className="text-green-400">Fecha</TableHead>
+                      <TableHead className="text-green-400">Amenazas</TableHead>
+                      <TableHead className="text-green-400">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {savedReports.map((report) => (
+                      <TableRow key={report.id} className={selectedReport === report.id ? 'bg-green-900 bg-opacity-20' : ''}>
+                        <TableCell className="text-green-300">{report.report_title}</TableCell>
+                        <TableCell className="text-green-300">
+                          {report.scan_type === 'antivirus' ? (
+                            <div className="flex items-center">
+                              <Shield className="w-4 h-4 text-yellow-500 mr-1" />
+                              <span>Antivirus</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center">
+                              <RefreshCw className="w-4 h-4 text-green-500 mr-1" />
+                              <span>Follow Up</span>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-green-300">
+                          <div className="flex items-center">
+                            <Calendar className="w-4 h-4 mr-1" />
+                            {formatDate(report.created_at)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-red-400">
+                          <div className="flex items-center">
+                            <FileWarning className="w-4 h-4 mr-1" />
+                            {report.threat_count}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button 
+                            variant="outline"
+                            size="sm"
+                            className="border-green-500 text-green-500 hover:bg-green-900"
+                            onClick={() => {
+                              loadSavedReport(report.id);
+                              setShowDownloads(false);
+                            }}
+                          >
+                            Ver
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-green-500 p-4">
+                  <FileWarning className="w-16 h-16 mb-4" />
+                  <p>No hay informes guardados todavía</p>
+                </div>
+              )}
+            </ScrollArea>
           </div>
+        ) : (
+          <ScrollArea className="h-full bg-chelas-gray-dark p-2 font-mono">
+            {report ? (
+              <pre className="text-green-400 text-xs whitespace-pre-wrap">{report}</pre>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-green-500">
+                <Shield className="w-16 h-16 mb-4" />
+                <p className="text-sm">No hay informes disponibles.</p>
+                <p className="text-sm mt-2">Haz clic en "Follow Up" o "Avast Antivirus" para generar un informe.</p>
+              </div>
+            )}
+          </ScrollArea>
         )}
       </div>
       
-      {/* Report display */}
-      <ScrollArea className="flex-grow bg-chelas-gray-dark border border-green-500 p-2 font-mono">
-        {report ? (
-          <pre className="text-green-400 text-xs whitespace-pre-wrap">{report}</pre>
-        ) : (
-          <div className="h-full flex flex-col items-center justify-center text-green-500">
-            <Bug className="w-16 h-16 mb-4" />
-            <p className="text-sm">No hay informes disponibles.</p>
-            <p className="text-sm mt-2">Haz clic en "Follow Up" o "Avast Antivirus (A)" para generar un informe.</p>
-          </div>
-        )}
-      </ScrollArea>
-      
       <div className="mt-4 text-xs text-green-400">
-        <p>JAVASCRIPT SUMMIT VIRUS REPORT v1.0 - SISTEMA DE SEGURIDAD</p>
+        <p>AVAST ANTIVIRUS SECURITY REPORT - SISTEMA DE SEGURIDAD</p>
         <p className="mt-1">Todos los datos están cifrados y protegidos.</p>
       </div>
     </div>

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { generateTopicWithOptions } from './deepseekService';
 import { Json } from '@/integrations/supabase/types';
@@ -312,5 +311,65 @@ export const saveConversationNotes = async (userId: string, conversationId: stri
   } catch (error) {
     console.error('Error in saveConversationNotes:', error);
     return false;
+  }
+};
+
+interface VirusReportData {
+  userId: string;
+  reportTitle: string;
+  reportContent: string;
+  scanType: string;
+  threatCount: number;
+  socialMediaData?: any;
+  expensesData?: any;
+  followUpData?: any;
+  dinoScore?: number;
+}
+
+export const saveVirusReport = async (data: VirusReportData): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('virus_reports')
+      .insert({
+        user_id: data.userId,
+        report_title: data.reportTitle,
+        report_content: data.reportContent,
+        scan_type: data.scanType,
+        threat_count: data.threatCount,
+        social_media_data: data.socialMediaData || {},
+        expenses_data: data.expensesData || {},
+        follow_up_data: data.followUpData || {},
+        dino_score: data.dinoScore
+      });
+      
+    if (error) {
+      console.error('Error saving virus report:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in saveVirusReport:', error);
+    return false;
+  }
+};
+
+export const getSavedVirusReports = async (userId: string): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('virus_reports')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error('Error fetching virus reports:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error in getSavedVirusReports:', error);
+    return [];
   }
 };
