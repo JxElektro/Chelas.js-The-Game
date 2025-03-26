@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { generateTopicWithOptions } from './deepseekService';
 import { Json } from '@/integrations/supabase/types';
@@ -82,14 +83,16 @@ export const fetchReportData = async (userId: string): Promise<ReportData | null
             // Creamos una lista de campos de contacto que existen
             const contactFields: string[] = [];
             
-            // Extraer de forma segura los campos
-            if (hasProperty(profile, 'email')) contactFields.push(`Email: ${profile.email}`);
-            if (hasProperty(profile, 'phone')) contactFields.push(`Teléfono: ${profile.phone}`);
-            if (hasProperty(profile, 'company')) contactFields.push(`Compañía: ${profile.company}`);
-            if (hasProperty(profile, 'position')) contactFields.push(`Cargo: ${profile.position}`);
-            if (hasProperty(profile, 'website')) contactFields.push(`Web: ${profile.website}`);
-            if (hasProperty(profile, 'linkedin')) contactFields.push(`LinkedIn: ${profile.linkedin}`);
-            if (hasProperty(profile, 'twitter')) contactFields.push(`Twitter: ${profile.twitter}`);
+            // Extraer de forma segura los campos utilizando indexación de tipo
+            const typedProfile = profile as Record<string, unknown>;
+            
+            if (hasProperty(typedProfile, 'email')) contactFields.push(`Email: ${String(typedProfile['email'])}`);
+            if (hasProperty(typedProfile, 'phone')) contactFields.push(`Teléfono: ${String(typedProfile['phone'])}`);
+            if (hasProperty(typedProfile, 'company')) contactFields.push(`Compañía: ${String(typedProfile['company'])}`);
+            if (hasProperty(typedProfile, 'position')) contactFields.push(`Cargo: ${String(typedProfile['position'])}`);
+            if (hasProperty(typedProfile, 'website')) contactFields.push(`Web: ${String(typedProfile['website'])}`);
+            if (hasProperty(typedProfile, 'linkedin')) contactFields.push(`LinkedIn: ${String(typedProfile['linkedin'])}`);
+            if (hasProperty(typedProfile, 'twitter')) contactFields.push(`Twitter: ${String(typedProfile['twitter'])}`);
             
             contactInfo = contactFields.join(' | ');
           }
