@@ -1,7 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { generateTopicWithOptions } from './deepseekService';
 import { Json } from '@/integrations/supabase/types';
+import { SystemOS, SystemContextData } from './systemContextService';
 
 interface ReportData {
   expenses: {
@@ -129,16 +129,25 @@ function hasProperty(obj: any, property: string): boolean {
   return obj && typeof obj === 'object' && property in obj;
 }
 
-export const generateFormattedReport = async (data: ReportData): Promise<string> => {
+export const generateFormattedReport = async (data: ReportData | SystemContextData): Promise<string> => {
   try {
+    // Si es un SystemContextData, convertirlo a ReportData
+    if ('dinoRunner' in data) {
+      const contextData = data as SystemContextData;
+      return await SystemOS.generateSystemReport();
+    }
+    
+    // Si es ReportData tradicional
+    const reportData = data as ReportData;
+    
     // Create a structured report from the data
-    const expenseTotal = data.expenses.reduce((sum, exp) => sum + Number(exp.price), 0);
-    const expenseSummary = data.expenses.length > 0 
-      ? `Has gastado un total de $${expenseTotal.toFixed(2)} en ${data.expenses.length} compras hoy.` 
+    const expenseTotal = reportData.expenses.reduce((sum, exp) => sum + Number(exp.price), 0);
+    const expenseSummary = reportData.expenses.length > 0 
+      ? `Has gastado un total de $${expenseTotal.toFixed(2)} en ${reportData.expenses.length} compras hoy.` 
       : 'No has registrado gastos hoy.';
       
-    const favoriteUsers = data.conversations.filter(c => c.is_favorite).map(c => c.user_name);
-    const followUpUsers = data.conversations.filter(c => c.follow_up);
+    const favoriteUsers = reportData.conversations.filter(c => c.is_favorite).map(c => c.user_name);
+    const followUpUsers = reportData.conversations.filter(c => c.follow_up);
     
     // Format follow-ups with more details
     const followUpsFormatted = followUpUsers.map(c => {
@@ -146,13 +155,13 @@ export const generateFormattedReport = async (data: ReportData): Promise<string>
     }).join('\n\n');
     
     // Collect all notes
-    const allNotes = data.conversations
+    const allNotes = reportData.conversations
       .filter(c => c.notes && !c.follow_up) // Exclude follow-up notes as they're already listed above
       .map(c => `Notas sobre ${c.user_name}: ${c.notes}`)
       .join('\n\n');
     
     // Format expenses with details
-    const expensesFormatted = data.expenses.map(e => 
+    const expensesFormatted = reportData.expenses.map(e => 
       `- ${e.description}: $${Number(e.price).toFixed(2)} (${new Date(e.created_at).toLocaleTimeString()})`
     ).join('\n');
     
@@ -377,7 +386,7 @@ export const saveConversationNotes = async (userId: string, conversationId: stri
   }
 };
 
-interface VirusReportData {
+export interface VirusReportData {
   userId: string;
   reportTitle: string;
   reportContent: string;
@@ -393,7 +402,7 @@ export const saveVirusReport = async (data: VirusReportData): Promise<boolean> =
   try {
     const { error } = await supabase
       .from('virus_reports')
-      .insert({
+      .upsert({
         user_id: data.userId,
         report_title: data.reportTitle,
         report_content: data.reportContent,
@@ -403,6 +412,9 @@ export const saveVirusReport = async (data: VirusReportData): Promise<boolean> =
         expenses_data: data.expensesData || {},
         follow_up_data: data.followUpData || {},
         dino_score: data.dinoScore
+      }, {
+        onConflict: 'user_id, report_title',  // Ahora con la constraint añadida esto funcionará
+        ignoreDuplicates: false
       });
       
     if (error) {
