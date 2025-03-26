@@ -263,24 +263,24 @@ const TutorialContent: React.FC<{ appId: string }> = ({ appId }) => {
     ),
     downloads: (
       <div className="space-y-4 text-black">
-        <h2 className="text-lg font-bold">Descargas - Archivos de Windows</h2>
+        <h2 className="text-lg font-bold">Descargas - Historial de Noches</h2>
         <div className="win95-inset p-3">
           <p className="text-sm mb-3">
-            Accede a los archivos generados por el instalador de Windows y documentación del sistema.
+            Accede al historial de tus noches y eventos guardados anteriormente.
           </p>
           <div className="mb-3 border-b border-chelas-gray-dark pb-2">
             <h3 className="text-sm font-bold mb-2">Cómo usar:</h3>
             <ol className="text-xs space-y-2 list-decimal pl-4">
               <li>Abre la carpeta "Descargas" desde el escritorio</li>
-              <li>Navega por los archivos generados por el instalador</li>
-              <li>Haz clic en un archivo para ver su contenido</li>
-              <li>Revisa manuales, controladores y registros de instalación</li>
-              <li>Guarda los archivos importantes si lo deseas</li>
+              <li>Navega por las noches guardadas</li>
+              <li>Haz clic en una noche para ver sus detalles</li>
+              <li>Revisa fotos, notas y contactos de esa noche</li>
+              <li>Exporta memorias o compártelas si lo deseas</li>
             </ol>
           </div>
           <div className="text-xs">
             <p className="font-bold">Consejo:</p>
-            <p>Los archivos de documentación contienen información importante sobre tu sistema.</p>
+            <p>Las noches más antiguas se archivan automáticamente, pero siempre puedes acceder a ellas.</p>
           </div>
         </div>
       </div>

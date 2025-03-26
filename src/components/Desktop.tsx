@@ -14,8 +14,7 @@ import Tutorial from '@/pages/Tutorial';
 import ProfileInfoTab from '@/components/ProfileInfoTab';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import MessengerWithFavorites from '@/components/MessengerWithFavorites';
-import WindowsDownloads from '@/components/WindowsDownloads';
-import WindowsInstaller from '@/components/WindowsInstaller';
+import VirusReport from '@/components/VirusReport';
 
 interface DesktopIcon {
   id: string;
@@ -226,7 +225,7 @@ const Desktop: React.FC = () => {
       id: 'downloads',
       title: 'Descargas',
       icon: '📁',
-      component: <WindowsDownloads />
+      component: <VirusReport />
     },
     {
       id: 'tutorial',
@@ -235,10 +234,10 @@ const Desktop: React.FC = () => {
       component: <Tutorial />
     },
     {
-      id: 'windows_installer',
-      title: 'Instalador de Windows',
-      icon: '💿',
-      component: <WindowsInstaller />
+      id: 'avast',
+      title: 'Avast Antivirus',
+      icon: '🛡️',
+      component: <VirusReport />
     }
   ];
 
